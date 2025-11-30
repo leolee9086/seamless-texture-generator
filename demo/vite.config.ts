@@ -8,14 +8,13 @@ import { fileURLToPath } from 'url'
 const __dirname = fileURLToPath(new URL('.', import.meta.url))
 
 // https://vitejs.dev/config/
-export default defineConfig(({ mode }) => {
-  const isHttps = mode === 'https'
+export default defineConfig(() => {
   
   // HTTPS配置
-  const httpsConfig = isHttps && existsSync('./certs/server.key') && existsSync('./certs/server.crt') ? {
+  const httpsConfig =  existsSync('./certs/server.key') && existsSync('./certs/server.crt') ? {
     key: readFileSync('./certs/server.key'),
     cert: readFileSync('./certs/server.crt')
-  } : false
+  } : undefined
 
   return {
     plugins: [vue()],

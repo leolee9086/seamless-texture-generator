@@ -35,7 +35,23 @@ export const 获取WebGPU设备 = async (): Promise<GPUDevice> => {
     throw new Error('无法获取 WebGPU 适配器');
   }
 
-  缓存.设备 = await 缓存.适配器.requestDevice();
+  // 获取适配器限制信息
+  const 适配器限制 = 缓存.适配器.limits;
+  
+  // 计算所需的存储缓冲区大小限制
+  // 根据错误信息，我们需要至少201326592字节（约192MB）的缓冲区
+  // 但为了安全性和未来扩展，我们请求适配器支持的最大值
+  const 所需存储缓冲区限制 = Math.min(
+    适配器限制.maxStorageBufferBindingSize || 134217728, // 默认128MB
+    2147483644 // 错误信息中提到的适配器支持的最大值
+  );
+
+  // 请求设备时指定更高的存储缓冲区绑定大小限制
+  缓存.设备 = await 缓存.适配器.requestDevice({
+    requiredLimits: {
+      maxStorageBufferBindingSize: 所需存储缓冲区限制
+    }
+  });
   if (!缓存.设备) {
     throw new Error('无法获取 WebGPU 设备');
   }

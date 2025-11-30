@@ -1,57 +1,50 @@
 <template>
-  <div class="camera-container" :class="{ 'fullscreen': isFullscreen }">
-    <!-- 隐藏的文件输入，支持 capture=camera -->
-    <input
-      ref="fileInputRef"
-      type="file"
-      accept="image/*"
-      capture="environment"
-      @change="handleFileInput"
-      style="display: none"
-    />
-    
-    <video
-      ref="videoRef"
-      autoplay
-      muted
-      playsinline
-      webkit-playsinline
-      class="camera-preview"
-      :class="{ 'fullscreen-video': isFullscreen }"
-      @loadedmetadata="onVideoLoaded"
-      @error="onVideoError"
-      @click="handleVideoClick"
-      @touchstart="handleVideoTouch"
-    ></video>
-    
-    <!-- 全屏模式下的浮动控制按钮 -->
-    <div class="floating-controls" v-if="isFullscreen">
-      <button @click="capturePhoto" :disabled="isCapturing" class="capture-btn floating-btn">
-        {{ isCapturing ? '拍照中...' : '拍照' }}
-      </button>
-      <button @click="switchCamera" v-if="hasMultipleCameras" class="switch-camera-btn floating-btn">
-        切换摄像头
-      </button>
-      <button @click="exitFullscreen" class="exit-fullscreen-btn floating-btn">
-        退出全屏
-      </button>
-    </div>
-    
-    <!-- 非全屏模式下的控制按钮 -->
-    <div class="camera-controls" v-else>
-      <button @click="capturePhoto" :disabled="isCapturing" class="capture-btn">
-        {{ isCapturing ? '拍照中...' : '拍照' }}
-      </button>
+      <!-- 支持原生相机时，只显示原生相机按钮 -->
+    <template v-if="supportsNativeCamera" >
+      <input ref="fileInputRef" type="file" accept="image/*" capture="environment" @change="handleFileInput"
+        style="display: none" />
       <button @click="openNativeCamera" class="native-camera-btn">
-        原生相机
+        拍照
       </button>
-      <button @click="switchCamera" v-if="hasMultipleCameras" class="switch-camera-btn">
-        切换摄像头
-      </button>
-      <button @click="enterFullscreen" v-if="fullscreenSupported" class="fullscreen-btn">
-        全屏
-      </button>
-    </div>
+    </template>
+
+  <div  v-else class="camera-container" :class="{ 'fullscreen': isFullscreen }">
+    <!-- 隐藏的文件输入，支持 capture=camera -->
+
+
+
+    <!-- 不支持原生相机时，显示完整的摄像头预览界面 -->
+    <template>
+      <video ref="videoRef" autoplay muted playsinline webkit-playsinline class="camera-preview"
+        :class="{ 'fullscreen-video': isFullscreen }" @loadedmetadata="onVideoLoaded" @error="onVideoError"
+        @click="handleVideoClick" @touchstart="handleVideoTouch"></video>
+
+      <!-- 全屏模式下的浮动控制按钮 -->
+      <div class="floating-controls" v-if="isFullscreen">
+        <button @click="capturePhoto" :disabled="isCapturing" class="capture-btn floating-btn">
+          {{ isCapturing ? '拍照中...' : '拍照' }}
+        </button>
+        <button @click="switchCamera" v-if="hasMultipleCameras" class="switch-camera-btn floating-btn">
+          切换摄像头
+        </button>
+        <button @click="exitFullscreen" class="exit-fullscreen-btn floating-btn">
+          退出全屏
+        </button>
+      </div>
+
+      <!-- 非全屏模式下的控制按钮 -->
+      <div class="camera-controls" v-else>
+        <button @click="capturePhoto" :disabled="isCapturing" class="capture-btn">
+          {{ isCapturing ? '拍照中...' : '拍照' }}
+        </button>
+        <button @click="switchCamera" v-if="hasMultipleCameras" class="switch-camera-btn">
+          切换摄像头
+        </button>
+        <button @click="enterFullscreen" v-if="fullscreenSupported" class="fullscreen-btn">
+          全屏
+        </button>
+      </div>
+    </template>
   </div>
 </template>
 
@@ -86,6 +79,7 @@ const availableCameras = ref<MediaDeviceInfo[]>([])
 const isCapturing = ref(false)
 const isFullscreen = ref(false)
 const fullscreenSupported = ref(false)
+const supportsNativeCamera = ref(false)
 
 // 计算属性
 const cameraActive = computed({
@@ -105,6 +99,18 @@ const detectMobileDevice = () => {
   isTouchDevice.value = 'ontouchstart' in window || navigator.maxTouchPoints > 0
 }
 
+// 检测是否支持原生相机
+const checkNativeCameraSupport = () => {
+  // 检测是否是移动设备
+  const isMobileDevice = /Android|webOS|iPhone|iPad|iPod|BlackBerry|IEMobile|Opera Mini/i.test(navigator.userAgent)
+
+  // 检测是否支持capture属性
+  const hasCaptureSupport = 'capture' in document.createElement('input')
+
+  // 移动设备通常支持原生相机
+  supportsNativeCamera.value = isMobileDevice && hasCaptureSupport
+}
+
 // 检查浏览器是否支持摄像头
 const checkCameraSupport = (): boolean => {
   return !!(navigator.mediaDevices && navigator.mediaDevices.getUserMedia)
@@ -116,14 +122,14 @@ const checkMobileCompatibility = (): { compatible: boolean; reason?: string } =>
   if (!checkCameraSupport()) {
     return { compatible: false, reason: '浏览器不支持摄像头访问API' }
   }
-  
+
   // 检查HTTPS环境
   if (location.protocol !== 'https:' &&
-      location.hostname !== 'localhost' &&
-      location.hostname !== '127.0.0.1') {
+    location.hostname !== 'localhost' &&
+    location.hostname !== '127.0.0.1') {
     return { compatible: false, reason: '移动端摄像头需要HTTPS环境' }
   }
-  
+
   // 检查iOS版本
   const isIOS = /iPad|iPhone|iPod/.test(navigator.userAgent)
   if (isIOS) {
@@ -135,7 +141,7 @@ const checkMobileCompatibility = (): { compatible: boolean; reason?: string } =>
       return { compatible: false, reason: 'iOS 11+才支持摄像头访问' }
     }
   }
-  
+
   // 检查Android版本
   const isAndroid = /Android/.test(navigator.userAgent)
   if (isAndroid) {
@@ -146,7 +152,7 @@ const checkMobileCompatibility = (): { compatible: boolean; reason?: string } =>
       return { compatible: false, reason: 'Android 6.0+才支持摄像头访问' }
     }
   }
-  
+
   return { compatible: true }
 }
 
@@ -156,7 +162,7 @@ const getAvailableCameras = async () => {
     if (!checkCameraSupport()) {
       throw new Error('您的浏览器不支持摄像头访问功能')
     }
-    
+
     const devices = await navigator.mediaDevices.enumerateDevices()
     availableCameras.value = devices.filter(device => device.kind === 'videoinput')
   } catch (error) {
@@ -173,14 +179,14 @@ const startCamera = async () => {
     if (!compatibility.compatible) {
       throw new Error(compatibility.reason || '设备不兼容摄像头功能')
     }
-    
+
     // 先获取摄像头列表
     await getAvailableCameras()
-    
+
     // 使用专门的摄像头工具函数
     const stream = await requestCameraPermission()
     currentStream.value = stream
-    
+
     if (videoRef.value) {
       // 关键修复：完全按照captureImage的成功逻辑来设置视频
       videoRef.value.srcObject = stream
@@ -188,7 +194,7 @@ const startCamera = async () => {
       videoRef.value.playsInline = true
       videoRef.value.setAttribute('playsinline', 'true')
       videoRef.value.setAttribute('webkit-playsinline', 'true')
-      
+
       // 关键修复：直接尝试播放，不依赖事件处理器
       try {
         // 等待视频元数据加载完成
@@ -196,7 +202,7 @@ const startCamera = async () => {
           const timeout = setTimeout(() => {
             reject(new Error('视频加载超时'))
           }, 5000)
-          
+
           const checkReady = () => {
             if (videoRef.value && videoRef.value.readyState >= 2) { // HAVE_CURRENT_DATA
               clearTimeout(timeout)
@@ -205,18 +211,18 @@ const startCamera = async () => {
               setTimeout(checkReady, 100)
             }
           }
-          
+
           checkReady()
         })
-        
+
         // 直接尝试播放
         await videoRef.value.play()
         console.log('摄像头预览播放成功')
-        
+
       } catch (playError) {
         console.warn('视频自动播放失败，需要用户交互:', playError)
         emit('error', '请点击视频区域开始预览')
-        
+
         // 添加点击事件监听器来启动播放
         const startPlayback = async () => {
           try {
@@ -226,20 +232,20 @@ const startCamera = async () => {
             console.warn('用户交互后视频播放仍然失败:', error)
           }
         }
-        
+
         // 移除之前的事件监听器，避免重复绑定
         videoRef.value.removeEventListener('click', startPlayback)
         videoRef.value.removeEventListener('touchstart', startPlayback)
-        
+
         videoRef.value.addEventListener('click', startPlayback, { once: true })
         videoRef.value.addEventListener('touchstart', startPlayback, { once: true })
       }
     }
-    
+
     cameraActive.value = true
   } catch (error) {
     console.error('启动摄像头失败:', error)
-    
+
     // 提供更详细的错误信息
     let errorMessageText = '无法访问摄像头'
     if (error instanceof Error) {
@@ -259,7 +265,7 @@ const startCamera = async () => {
     } else {
       errorMessageText = '摄像头访问失败: 未知错误'
     }
-    
+
     emit('error', errorMessageText)
   }
 }
@@ -270,22 +276,22 @@ const stopCamera = () => {
     currentStream.value.getTracks().forEach((track: MediaStreamTrack) => track.stop())
     currentStream.value = null
   }
-  
+
   if (videoRef.value) {
     videoRef.value.srcObject = null
   }
-  
+
   cameraActive.value = false
 }
 
 // 切换摄像头
 const switchCamera = async () => {
   if (!hasMultipleCameras.value) return
-  
+
   const currentIndex = availableCameras.value.findIndex((camera: MediaDeviceInfo) => camera.deviceId === currentCameraId.value)
   const nextIndex = (currentIndex + 1) % availableCameras.value.length
   currentCameraId.value = availableCameras.value[nextIndex].deviceId
-  
+
   // 先停止当前摄像头，再启动新的
   stopCamera()
   await startCamera()
@@ -294,30 +300,30 @@ const switchCamera = async () => {
 // 拍照
 const capturePhoto = async () => {
   if (!videoRef.value || isCapturing.value || !currentStream.value) return
-  
+
   isCapturing.value = true
-  
+
   try {
     // 使用专门的摄像头工具函数进行拍照
     const img = await captureImage(currentStream.value, videoRef.value)
-    
+
     // 将图片转换为dataURL
     const canvas = document.createElement('canvas')
     canvas.width = img.width || videoRef.value.videoWidth
     canvas.height = img.height || videoRef.value.videoHeight
     const ctx = canvas.getContext('2d')
-    
+
     if (!ctx) {
       throw new Error('无法获取canvas上下文')
     }
-    
+
     // 绘制图片到canvas
     ctx.drawImage(img, 0, 0, canvas.width, canvas.height)
-    
+
     // 转换为dataURL并发送事件
     const imageData = canvas.toDataURL('image/jpeg', 0.9)
     emit('photo-captured', imageData)
-    
+
     // 关闭摄像头
     stopCamera()
   } catch (error) {
@@ -359,7 +365,7 @@ const enterFullscreen = async () => {
 
   try {
     const videoElement = videoRef.value as any
-    
+
     // 使用不同浏览器的前缀
     if (videoElement.requestFullscreen) {
       await videoElement.requestFullscreen()
@@ -418,7 +424,7 @@ const handleVideoTouch = (event: TouchEvent) => {
 const onVideoLoaded = async () => {
   console.log('视频流加载完成')
   console.log('视频元素尺寸:', videoRef.value?.videoWidth, 'x', videoRef.value?.videoHeight)
-  
+
   // 确保视频在移动端正确播放
   if (videoRef.value && isMobile.value) {
     try {
@@ -448,7 +454,7 @@ const openNativeCamera = () => {
 const handleFileInput = (event: Event) => {
   const target = event.target as HTMLInputElement
   const file = target.files?.[0]
-  
+
   if (file) {
     const reader = new FileReader()
     reader.onload = (e) => {
@@ -462,7 +468,7 @@ const handleFileInput = (event: Event) => {
     }
     reader.readAsDataURL(file)
   }
-  
+
   // 清空input值，允许重复选择同一文件
   target.value = ''
 }
@@ -479,14 +485,15 @@ const handleCameraActiveChange = async (newValue: boolean) => {
 // 初始化
 onMounted(() => {
   detectMobileDevice()
+  checkNativeCameraSupport()
   checkFullscreenSupport()
-  
+
   // 监听全屏状态变化
   document.addEventListener('fullscreenchange', handleFullscreenChange)
   document.addEventListener('webkitfullscreenchange', handleFullscreenChange)
   document.addEventListener('mozfullscreenchange', handleFullscreenChange)
   document.addEventListener('MSFullscreenChange', handleFullscreenChange)
-  
+
   // 如果初始状态为开启，则启动摄像头
   if (props.modelValue) {
     startCamera()
@@ -515,6 +522,7 @@ watch(() => props.modelValue, handleCameraActiveChange)
   background-color: #000;
   position: relative;
 }
+
 
 .camera-preview {
   width: 100%;
@@ -650,17 +658,17 @@ watch(() => props.modelValue, handleCameraActiveChange)
     flex-direction: column;
     gap: 0.5rem;
   }
-  
+
   .camera-preview {
     max-height: 200px;
   }
-  
+
   .floating-controls {
     bottom: 1rem;
     padding: 0.75rem;
     gap: 0.5rem;
   }
-  
+
   .floating-btn {
     padding: 0.5rem 1rem;
     font-size: 0.9rem;
