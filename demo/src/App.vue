@@ -28,7 +28,7 @@
 </template>
 
 <script setup lang="ts">
-import { ref, onMounted } from 'vue'
+import { ref, onMounted, watch } from 'vue'
 import { makeTileable } from '../../src/lib/HistogramPreservingBlendMakeTileable'
 import Controls from './components/Controls.vue'
 import Viewer from './components/Viewer.vue'
@@ -37,6 +37,7 @@ import type { ControlEvent } from './types/controlEvents'
 
 // 响应式数据
 const originalImage = ref<string | null>(null)
+const rawOriginalImage = ref<string | null>(null)
 const processedImage = ref<string | null>(null)
 const borderSize = ref(20)
 const maxResolution = ref(4096) // 默认最大分辨率为4096
@@ -136,7 +137,7 @@ const handleImageUpload = (event: Event) => {
   if (file) {
     const reader = new FileReader()
     reader.onload = (e) => {
-      originalImage.value = e.target?.result as string
+      rawOriginalImage.value = e.target?.result as string
       processedImage.value = null
       errorMessage.value = ''
     }
@@ -147,7 +148,7 @@ const handleImageUpload = (event: Event) => {
 // 加载示例图像
 const loadSampleImage = () => {
   // 使用一个在线示例图像
-  originalImage.value = 'https://picsum.photos/seed/texture/512/512.jpg'
+  rawOriginalImage.value = 'https://picsum.photos/seed/texture/512/512.jpg'
   processedImage.value = null
   errorMessage.value = ''
 }
@@ -159,7 +160,7 @@ const toggleCamera = () => {
 
 // 处理摄像头拍照结果
 const handlePhotoCaptured = (imageData: string) => {
-  originalImage.value = imageData
+  rawOriginalImage.value = imageData
   processedImage.value = null
   errorMessage.value = ''
 }
@@ -203,6 +204,33 @@ const scaleImageToMaxResolution = (img: HTMLImageElement, maxRes: number): HTMLC
 
   return canvas
 }
+
+const loadImage = (src: string): Promise<HTMLImageElement> => {
+  return new Promise((resolve, reject) => {
+    const img = new Image()
+    img.crossOrigin = 'anonymous'
+    img.onload = () => resolve(img)
+    img.onerror = reject
+    img.src = src
+  })
+}
+
+// 监听原始图像和最大分辨率的变化，更新显示的图像
+watch([rawOriginalImage, maxResolution], async ([newRaw, newMaxRes]) => {
+  if (!newRaw) {
+    originalImage.value = null
+    return
+  }
+
+  try {
+    const img = await loadImage(newRaw)
+    const scaledCanvas = scaleImageToMaxResolution(img, newMaxRes)
+    originalImage.value = scaledCanvas.toDataURL()
+  } catch (error) {
+    console.error('加载或缩放图像时出错:', error)
+    errorMessage.value = '加载图像失败'
+  }
+})
 
 // 处理图像
 const processImage = async () => {
