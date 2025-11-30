@@ -25,7 +25,8 @@
         <!-- Konva Stage -->
         <div ref="containerRef" class="w-full h-full bg-gray-900">
             <v-stage ref="stageRef" :config="stageConfig" @wheel="handleWheel" @dragstart="handleDragStart"
-                @dragend="handleDragEnd">
+                @dragend="handleDragEnd" @touchstart="handleTouchStart" @touchmove="handleTouchMove"
+                @touchend="handleTouchEnd">
                 <v-layer>
                     <!-- Group for Image and Points (Zoomable/Pannable) -->
                     <!-- 
@@ -252,6 +253,81 @@ const handleMouseLeave = (e: any) => {
 // We don't need special drag start/end for points unless we want to track history
 const handleDragStart = () => { }
 const handleDragEnd = () => { }
+
+// Touch Handling for Pinch-to-Zoom
+let lastCenter: { x: number, y: number } | null = null
+let lastDist = 0
+
+const getDistance = (p1: { x: number, y: number }, p2: { x: number, y: number }) => {
+    return Math.sqrt(Math.pow(p2.x - p1.x, 2) + Math.pow(p2.y - p1.y, 2))
+}
+
+const getCenter = (p1: { x: number, y: number }, p2: { x: number, y: number }) => {
+    return {
+        x: (p1.x + p2.x) / 2,
+        y: (p1.y + p2.y) / 2
+    }
+}
+
+const handleTouchStart = (e: any) => {
+    const evt = e.evt
+    const touches = evt.touches
+
+    if (touches.length === 2) {
+        // Stop dragging if we are pinching
+        const stage = stageRef.value.getStage()
+        stage.stopDrag()
+
+        const p1 = { x: touches[0].clientX, y: touches[0].clientY }
+        const p2 = { x: touches[1].clientX, y: touches[1].clientY }
+
+        lastCenter = getCenter(p1, p2)
+        lastDist = getDistance(p1, p2)
+    }
+}
+
+const handleTouchMove = (e: any) => {
+    const evt = e.evt
+    const touches = evt.touches
+
+    if (touches.length === 2 && lastCenter) {
+        evt.preventDefault() // Prevent native scrolling
+
+        const stage = stageRef.value.getStage()
+        const p1 = { x: touches[0].clientX, y: touches[0].clientY }
+        const p2 = { x: touches[1].clientX, y: touches[1].clientY }
+
+        const newCenter = getCenter(p1, p2)
+        const newDist = getDistance(p1, p2)
+
+        // Calculate scale
+        const pointTo = {
+            x: (lastCenter.x - stage.x()) / stage.scaleX(),
+            y: (lastCenter.y - stage.y()) / stage.scaleX()
+        }
+
+        const scale = stage.scaleX() * (newDist / lastDist)
+
+        stage.scale({ x: scale, y: scale })
+
+        // Calculate new position
+        const newPos = {
+            x: newCenter.x - pointTo.x * scale,
+            y: newCenter.y - pointTo.y * scale
+        }
+
+        stage.position(newPos)
+        stage.batchDraw()
+
+        lastDist = newDist
+        lastCenter = newCenter
+    }
+}
+
+const handleTouchEnd = () => {
+    lastCenter = null
+    lastDist = 0
+}
 
 const cancel = () => {
     emit('close')
