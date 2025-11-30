@@ -1,8 +1,8 @@
 <template>
-  <div class="relative w-full h-full flex-center bg-darkglass-100">
+  <div ref="containerRef" class="relative w-full h-full flex-center bg-darkglass-100">
     <div v-if="originalImage" class="w-full h-full relative">
       <SplitViewer ref="splitViewerRef" :leftImage="originalImage" :rightImage="processedImage || originalImage"
-        :width="1000" :height="600" :splitPosition="splitPosition" :magnifier="magnifierConfig"
+        :width="containerWidth" :height="containerHeight" :splitPosition="splitPosition" :magnifier="magnifierConfig"
         @split-change="handleSplitChange" @image-load="handleImageLoad" class="w-full h-full" />
     </div>
 
@@ -25,7 +25,7 @@
 </template>
 
 <script setup lang="ts">
-import { ref, computed, watch, nextTick } from 'vue'
+import { ref, computed, watch, nextTick, onMounted, onUnmounted } from 'vue'
 import { SplitViewer } from '@leolee9086/split-viewer'
 
 const props = defineProps<{
@@ -41,6 +41,11 @@ const props = defineProps<{
 const emit = defineEmits(['update:splitPosition', 'image-load'])
 
 const splitViewerRef = ref()
+const containerRef = ref<HTMLElement | null>(null)
+const containerWidth = ref(1000)
+const containerHeight = ref(600)
+
+let resizeObserver: ResizeObserver | null = null
 
 const magnifierConfig = computed(() => ({
   enabled: props.magnifierEnabled,
@@ -82,6 +87,28 @@ const resetZoom = async () => {
 }
 
 watch(() => props.zoomLevel, handleZoomChange)
+
+onMounted(() => {
+  if (containerRef.value) {
+    resizeObserver = new ResizeObserver((entries) => {
+      for (const entry of entries) {
+        const { width, height } = entry.contentRect
+        // Avoid 0 dimensions which might break canvas
+        if (width > 0 && height > 0) {
+          containerWidth.value = width
+          containerHeight.value = height
+        }
+      }
+    })
+    resizeObserver.observe(containerRef.value)
+  }
+})
+
+onUnmounted(() => {
+  if (resizeObserver) {
+    resizeObserver.disconnect()
+  }
+})
 
 defineExpose({
   resetZoom

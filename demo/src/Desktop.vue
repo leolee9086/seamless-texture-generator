@@ -8,21 +8,21 @@
             <div class="i-carbon-logo-github text-xl"></div>
         </a>
 
-        <!-- Viewer Area (Left) -->
-        <div class="flex-1 relative z-0 overflow-hidden m-4 rounded-3xl shadow-inner bg-darkglass-200">
-            <Viewer ref="viewerRef" :original-image="originalImage" :processed-image="processedImage"
-                v-model:split-position="splitPosition" :magnifier-enabled="magnifierEnabled"
-                :is-processing="isProcessing" :error-message="errorMessage" :zoom-level="zoomLevel"
-                class="w-full h-full object-contain" />
-        </div>
-
-        <!-- Controls Area (Right) -->
-        <div class="z-20 p-4 glass-panel m-4 ml-0 w-96 min-w-96 overflow-y-auto scrollbar-hide">
+        <!-- Controls Area (Left) -->
+        <div class="z-20 p-4 glass-panel m-4 mr-0 w-96 min-w-96 overflow-y-auto scrollbar-hide">
             <Controls :is-processing="isProcessing" :camera-active="cameraActive"
                 :supports-native-camera="supportsNativeCamera" :original-image="originalImage"
                 :processed-image="processedImage" :max-resolution="maxResolution" :border-size="borderSize"
                 :split-position="splitPosition" :magnifier-enabled="magnifierEnabled" :zoom-level="zoomLevel"
                 @control-event="handleControlEvent" />
+        </div>
+
+        <!-- Viewer Area (Right) -->
+        <div class="flex-1 relative z-0 overflow-hidden m-4 rounded-3xl shadow-inner bg-darkglass-200">
+            <Viewer ref="viewerRef" :original-image="originalImage" :processed-image="processedImage"
+                v-model:split-position="splitPosition" :magnifier-enabled="magnifierEnabled"
+                :is-processing="isProcessing" :error-message="errorMessage" :zoom-level="zoomLevel"
+                class="w-full h-full object-contain" />
         </div>
 
 
