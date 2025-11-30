@@ -1,5 +1,11 @@
 <template>
   <div class="mobile-container flex flex-col">
+    <!-- GitHub Link -->
+    <a href="https://github.com/leolee9086/seamless-texture-generator" target="_blank" rel="noopener noreferrer"
+      class="fixed top-4 left-4 z-30 w-10 h-10 flex items-center justify-center bg-gradient-to-br from-gray-700/80 to-gray-900/80 text-white rounded-full shadow-md transition-all duration-300 hover:shadow-lg hover:scale-110 active:scale-95backdrop-blur-sm"
+      title="View on GitHub">
+      <div class="i-carbon-logo-github text-xl"></div>
+    </a>
 
     <!-- Main Content -->
     <main class="flex-1 relative overflow-hidden flex flex-col">

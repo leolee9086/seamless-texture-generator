@@ -1,12 +1,11 @@
 <template>
   <div class="fixed bottom-5 right-5 z-[9999]">
-    <!-- Debug Toggle Button -->
+    <!-- Debug Toggle Button - Small Icon -->
     <button v-if="showDebugButton" @click="toggleConsole"
-      class="flex items-center gap-2 px-4 py-3 bg-gradient-to-br from-blue-500 to-purple-600 text-white border-none rounded-full cursor-pointer text-sm font-medium shadow-lg transition-all duration-300 hover:-translate-y-0.5 hover:shadow-xl active:scale-95"
-      :class="{ 'animate-pulse bg-gradient-to-br from-pink-400 to-red-500': isConsoleActive }"
+      class="w-8 h-8 flex items-center justify-center bg-gradient-to-br from-blue-500/80 to-purple-600/80 text-white border-none rounded-full cursor-pointer shadow-md transition-all duration-300 hover:shadow-lg hover:scale-110 active:scale-95 backdrop-blur-sm"
+      :class="{ 'animate-pulse bg-gradient-to-br from-pink-400/80 to-red-500/80': isConsoleActive }"
       :title="isConsoleActive ? 'Close Debug Console' : 'Open Debug Console'">
-      <div class="i-carbon-debug text-lg"></div>
-      <span class="font-semibold">{{ isConsoleActive ? 'Debugging' : 'Debug' }}</span>
+      <div class="i-carbon-debug text-base"></div>
     </button>
 
     <!-- Debug Info Panel -->
