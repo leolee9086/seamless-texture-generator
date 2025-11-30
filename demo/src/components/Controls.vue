@@ -12,54 +12,44 @@
     </div>
 
     <!-- 摄像头组件 -->
-    <CameraComponent :modelValue="cameraActive" @update:modelValue="toggleCamera" @photo-captured="handlePhotoCaptured" @error="handleCameraError" />
+    <CameraComponent :modelValue="cameraActive" @update:modelValue="toggleCamera" @photo-captured="handlePhotoCaptured"
+      @error="handleCameraError" />
 
-    <div class="control-group" v-if="originalImage">
-      <label for="max-resolution">最大分辨率:</label>
-      <div class="slider-container">
-        <input id="max-resolution" type="range" min="512" max="8192" step="512" :value="maxResolution" @input="updateMaxResolution" class="slider" />
-        <span>{{ maxResolution }}px</span>
-      </div>
-    </div>
+    <!-- 使用Slider组件替换原生滑块 -->
+    <div class="slider-section" v-if="originalImage || processedImage">
+      <Slider :items="sliderItems" @updateValue="handleSliderUpdate" />
 
-    <div class="control-group" v-if="originalImage">
-      <label for="border-size">边界大小 (%):</label>
-      <div class="slider-container">
-        <input id="border-size" type="range" min="5" max="100" :value="borderSize" @input="updateBorderSize" class="slider" />
-        <span>{{ borderSize }}%</span>
+      <!-- 处理按钮 -->
+      <div class="control-group" v-if="originalImage">
+        <button @click="processImage" :disabled="isProcessing || !originalImage">
+          {{ isProcessing ? '处理中...' : '开始无缝化处理' }}
+        </button>
       </div>
-      <button @click="processImage" :disabled="isProcessing || !originalImage">
-        {{ isProcessing ? '处理中...' : '开始无缝化处理' }}
-      </button>
-    </div>
 
-    <div class="control-group" v-if="processedImage">
-      <label for="split-position">分割线位置:</label>
-      <div class="slider-container">
-        <input id="split-position" type="range" min="0" max="1" step="0.01" :value="splitPosition" @input="updateSplitPosition" class="slider" />
-        <span>{{ (splitPosition * 100).toFixed(0) }}%</span>
+      <!-- 放大镜按钮 -->
+      <div class="control-group" v-if="processedImage">
+        <button @click="toggleMagnifier">
+          {{ magnifierEnabled ? '关闭' : '开启' }}放大镜
+        </button>
       </div>
-      <button @click="toggleMagnifier">
-        {{ magnifierEnabled ? '关闭' : '开启' }}放大镜
-      </button>
-    </div>
 
-    <!-- 缩放控制 - 移动端和桌面端都支持 -->
-    <div class="control-group zoom-control" v-if="originalImage">
-      <label for="zoom-level">缩放级别:</label>
-      <div class="slider-container">
-        <input id="zoom-level" type="range" min="0.1" max="5" step="0.1" :value="zoomLevel" @input="updateZoomLevel" class="slider" />
-        <span>{{ (zoomLevel * 100).toFixed(0) }}%</span>
+      <!-- 重置缩放按钮 -->
+      <div class="control-group zoom-control" v-if="originalImage">
+        <button @click="resetZoom">重置缩放</button>
       </div>
-      <button @click="resetZoom">重置缩放</button>
     </div>
   </div>
 </template>
 
 <script setup lang="ts">
+import { computed } from 'vue'
 import CameraComponent from './CameraComponent.vue'
+import { Slider } from '@leolee9086/slider-component'
+import '@leolee9086/slider-component/dist/slider-component.css'
+import { createButtonClickEvent, createUpdateDataEvent } from '../types/controlEvents'
+import type { ControlEvent } from '../types/controlEvents'
 
-defineProps<{
+const props = defineProps<{
   isProcessing: boolean,
   cameraActive: boolean,
   supportsNativeCamera: boolean,
@@ -72,67 +62,133 @@ defineProps<{
   zoomLevel: number
 }>()
 
-const emit = defineEmits([
-  'update:maxResolution',
-  'update:borderSize',
-  'update:splitPosition',
-  'update:zoomLevel',
-  'handleImageUpload',
-  'loadSampleImage',
-  'toggleCamera',
-  'photoCaptured',
-  'cameraError',
-  'processImage',
-  'toggleMagnifier',
-  'resetZoom'
-])
+// 创建滑块配置数据
+const sliderItems = computed(() => {
+  const items = []
+
+  if (props.originalImage) {
+    // 最大分辨率滑块
+    items.push({
+      id: 'max-resolution',
+      label: '最大分辨率',
+      value: props.maxResolution,
+      min: 512,
+      max: 8192,
+      step: 512,
+      valuePosition: 'after' as const,
+      showRuler: false
+    })
+
+    // 边界大小滑块
+    items.push({
+      id: 'border-size',
+      label: '边界大小 (%)',
+      value: props.borderSize,
+      min: 5,
+      max: 100,
+      step: 1,
+      valuePosition: 'after' as const,
+      showRuler: false
+    })
+
+    // 缩放级别滑块
+    items.push({
+      id: 'zoom-level',
+      label: '缩放级别',
+      value: props.zoomLevel,
+      min: 0.1,
+      max: 5,
+      step: 0.1,
+      valuePosition: 'after' as const,
+      showRuler: false
+    })
+  }
+
+  if (props.processedImage) {
+    // 分割线位置滑块
+    items.push({
+      id: 'split-position',
+      label: '分割线位置',
+      value: props.splitPosition,
+      min: 0,
+      max: 1,
+      step: 0.01,
+      valuePosition: 'after' as const,
+      showRuler: false
+    })
+  }
+
+  return items
+})
+
+const emit = defineEmits<{
+  controlEvent: [event: ControlEvent]
+}>()
 
 const handleImageUpload = (event: Event) => {
-  emit('handleImageUpload', event)
+  emit('controlEvent', createUpdateDataEvent('image-upload', event))
 }
 
 const loadSampleImage = () => {
-  emit('loadSampleImage')
+  emit('controlEvent', createButtonClickEvent('load-sample-image'))
 }
 
 const toggleCamera = () => {
-  emit('toggleCamera')
+  emit('controlEvent', createButtonClickEvent('toggle-camera'))
 }
 
 const handlePhotoCaptured = (imageData: string) => {
-  emit('photoCaptured', imageData)
+  emit('controlEvent', createUpdateDataEvent('photo-captured', imageData))
 }
 
 const handleCameraError = (message: string) => {
-  emit('cameraError', message)
+  emit('controlEvent', createUpdateDataEvent('camera-error', message))
 }
 
-const updateMaxResolution = (event: Event) => {
-  emit('update:maxResolution', parseInt((event.target as HTMLInputElement).value))
+const updateMaxResolution = (value: number) => {
+  emit('controlEvent', createUpdateDataEvent('max-resolution', value))
 }
 
-const updateBorderSize = (event: Event) => {
-  emit('update:borderSize', parseInt((event.target as HTMLInputElement).value))
+const updateBorderSize = (value: number) => {
+  emit('controlEvent', createUpdateDataEvent('border-size', value))
 }
 
 const processImage = () => {
-  emit('processImage')
+  emit('controlEvent', createButtonClickEvent('process-image'))
 }
 
-const updateSplitPosition = (event: Event) => {
-  emit('update:splitPosition', parseFloat((event.target as HTMLInputElement).value))
+const updateSplitPosition = (value: number) => {
+  emit('controlEvent', createUpdateDataEvent('split-position', value))
 }
 
 const toggleMagnifier = () => {
-  emit('toggleMagnifier')
+  emit('controlEvent', createButtonClickEvent('toggle-magnifier'))
 }
 
-const updateZoomLevel = (event: Event) => {
-  emit('update:zoomLevel', parseFloat((event.target as HTMLInputElement).value))
+const updateZoomLevel = (value: number) => {
+  emit('controlEvent', createUpdateDataEvent('zoom-level', value))
+}
+
+// 处理滑块值更新
+const handleSliderUpdate = ({ id, value }: { id: string; value: number }) => {
+  switch (id) {
+    case 'max-resolution':
+      updateMaxResolution(value)
+      break
+    case 'border-size':
+      updateBorderSize(value)
+      break
+    case 'split-position':
+      updateSplitPosition(value)
+      break
+    case 'zoom-level':
+      updateZoomLevel(value)
+      break
+  }
 }
 
 const resetZoom = () => {
-  emit('resetZoom')
+  emit('controlEvent', createButtonClickEvent('reset-zoom'))
 }
 </script>
 
@@ -167,16 +223,12 @@ label {
   min-width: 200px;
 }
 
-.slider-container {
-  display: flex;
-  align-items: center;
-  gap: 0.5rem;
-  flex: 1;
-  min-width: 250px;
+.slider-section {
+  margin-bottom: 1rem;
 }
 
-.slider {
-  flex: 1;
+.slider-section .control-group {
+  margin-top: 1rem;
 }
 
 button {

@@ -6,19 +6,12 @@
       :supports-native-camera="supportsNativeCamera"
       :original-image="originalImage"
       :processed-image="processedImage"
-      v-model:max-resolution="maxResolution"
-      v-model:border-size="borderSize"
-      v-model:split-position="splitPosition"
+      :max-resolution="maxResolution"
+      :border-size="borderSize"
+      :split-position="splitPosition"
       :magnifier-enabled="magnifierEnabled"
-      v-model:zoom-level="zoomLevel"
-      @handle-image-upload="handleImageUpload"
-      @load-sample-image="loadSampleImage"
-      @toggle-camera="toggleCamera"
-      @photo-captured="handlePhotoCaptured"
-      @camera-error="handleCameraError"
-      @process-image="processImage"
-      @toggle-magnifier="toggleMagnifier"
-      @reset-zoom="resetZoom"
+      :zoom-level="zoomLevel"
+      @control-event="handleControlEvent"
     />
 
     <Viewer
@@ -43,6 +36,7 @@ import { makeTileable } from '../../src/lib/HistogramPreservingBlendMakeTileable
 import Controls from './components/Controls.vue'
 import Viewer from './components/Viewer.vue'
 import DebugConsole from './components/DebugConsole.vue'
+import type { ControlEvent } from './types/controlEvents'
 
 // 响应式数据
 const originalImage = ref<string | null>(null)
@@ -84,6 +78,55 @@ const checkNativeCameraSupport = () => {
 onMounted(() => {
   checkNativeCameraSupport()
 })
+
+// 统一的事件处理器
+const handleControlEvent = (event: ControlEvent) => {
+  const { type, detail } = event
+  
+  if (type === 'button-click') {
+    switch (detail.action) {
+      case 'load-sample-image':
+        loadSampleImage()
+        break
+      case 'toggle-camera':
+        toggleCamera()
+        break
+      case 'process-image':
+        processImage()
+        break
+      case 'toggle-magnifier':
+        toggleMagnifier()
+        break
+      case 'reset-zoom':
+        resetZoom()
+        break
+    }
+  } else if (type === 'update-data') {
+    switch (detail.action) {
+      case 'image-upload':
+        handleImageUpload(detail.data)
+        break
+      case 'photo-captured':
+        handlePhotoCaptured(detail.data)
+        break
+      case 'camera-error':
+        handleCameraError(detail.data)
+        break
+      case 'max-resolution':
+        maxResolution.value = detail.data
+        break
+      case 'border-size':
+        borderSize.value = detail.data
+        break
+      case 'split-position':
+        splitPosition.value = detail.data
+        break
+      case 'zoom-level':
+        zoomLevel.value = detail.data
+        break
+    }
+  }
+}
 
 // 处理图像上传
 const handleImageUpload = (event: Event) => {
