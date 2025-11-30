@@ -17,7 +17,9 @@
     "vite": "^7.2.4"
   },
   "dependencies": {
+    "@leolee9086/split-viewer": "link:../split-viewer",
     "@tensorflow/tfjs": "^4.22.0",
+    "@tensorflow/tfjs-backend-webgpu": "^4.22.0",
     "gpu.js": "^2.16.0"
   }
 }

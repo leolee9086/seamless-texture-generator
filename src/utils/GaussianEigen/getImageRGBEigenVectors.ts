@@ -1,9 +1,13 @@
 import * as tf from "@tensorflow/tfjs";
+import '@tensorflow/tfjs-backend-webgpu';
 import type { 图像输入 } from "../../types/imageProcessing";
 import { withPerformanceLogging } from "../performanceRun";
 import { computeEigenValuesAndVectors } from "./computeEigenValuesAndVectors";
 
 export async function getImageRGBEigenVectors(input: 图像输入, eigenVectors: number[][]): Promise<number[][]> {
+    // 确保 TensorFlow.js WebGPU 后端已初始化
+    await tf.setBackend('webgpu');
+    await tf.ready();
     // 直接从RGBA数据中提取RGB数据，创建一个二维数组
     const pixelCount = input.data.length / 4; // 每个像素4个值(RGBA)
     

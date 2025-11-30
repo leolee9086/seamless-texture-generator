@@ -26,6 +26,7 @@ import '@tensorflow/tfjs-backend-webgpu';
  */
 export async function computeEigenValuesAndVectors(covarMat: tf.Tensor<tf.Rank.R2>): Promise<特征值和特征向量结果> {
     await tf.setBackend('webgpu');
+    await tf.ready(); // 等待 WebGPU 后端完全初始化
     // 验证后端是否设置成功
     console.log(`当前 TensorFlow.js 后端: ${tf.getBackend()}`); // 应输出 'webgpu'
 
