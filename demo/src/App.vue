@@ -5,17 +5,27 @@
     <div class="controls">
       <div class="control-group">
         <label for="image-upload">选择图像:</label>
-        <input 
-          id="image-upload" 
-          type="file" 
-          accept="image/*" 
+        <input
+          id="image-upload"
+          type="file"
+          accept="image/*"
           @change="handleImageUpload"
           class="file-input"
         />
         <button @click="loadSampleImage" :disabled="isProcessing">
           加载示例图像
         </button>
+        <button @click="toggleCamera" :disabled="isProcessing" class="camera-btn">
+          {{ cameraActive ? '关闭摄像头' : '打开摄像头' }}
+        </button>
       </div>
+      
+      <!-- 摄像头组件 -->
+      <CameraComponent
+        v-model="cameraActive"
+        @photo-captured="handlePhotoCaptured"
+        @error="handleCameraError"
+      />
       
       <div class="control-group" v-if="originalImage">
         <label for="border-size">边界大小 (%):</label>
@@ -24,7 +34,7 @@
             id="border-size"
             type="range" 
             min="5" 
-            max="50" 
+            max="100" 
             v-model="borderSize"
             class="slider"
           />
@@ -79,6 +89,9 @@
     <div class="error" v-if="errorMessage">
       {{ errorMessage }}
     </div>
+    
+    <!-- 调试控制台组件 -->
+    <DebugConsole />
   </div>
 </template>
 
@@ -86,6 +99,8 @@
 import { ref, computed } from 'vue'
 import { SplitViewer } from '@leolee9086/split-viewer'
 import { makeTileable } from '../../src/lib/HistogramPreservingBlendMakeTileable'
+import CameraComponent from './components/CameraComponent.vue'
+import DebugConsole from './components/DebugConsole.vue'
 
 // 响应式数据
 const originalImage = ref<string | null>(null)
@@ -95,6 +110,10 @@ const splitPosition = ref(0.5)
 const isProcessing = ref(false)
 const errorMessage = ref('')
 const splitViewerRef = ref()
+
+// 摄像头相关状态
+const cameraActive = ref(false)
+
 
 // 放大镜配置
 const magnifierEnabled = ref(true)
@@ -127,6 +146,23 @@ const loadSampleImage = () => {
   originalImage.value = 'https://picsum.photos/seed/texture/512/512.jpg'
   processedImage.value = null
   errorMessage.value = ''
+}
+
+// 打开/关闭摄像头
+const toggleCamera = () => {
+  cameraActive.value = !cameraActive.value
+}
+
+// 处理摄像头拍照结果
+const handlePhotoCaptured = (imageData: string) => {
+  originalImage.value = imageData
+  processedImage.value = null
+  errorMessage.value = ''
+}
+
+// 处理摄像头错误
+const handleCameraError = (message: string) => {
+  errorMessage.value = message
 }
 
 // 处理图像
@@ -263,6 +299,14 @@ button:hover:not(:disabled) {
 button:disabled {
   background-color: #6c757d;
   cursor: not-allowed;
+}
+
+.camera-btn {
+  background-color: #28a745;
+}
+
+.camera-btn:hover:not(:disabled) {
+  background-color: #218838;
 }
 
 .viewer-container {
