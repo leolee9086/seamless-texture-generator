@@ -68,6 +68,7 @@
 <script setup lang="ts">
 import { computed } from 'vue'
 import CameraComponent from './CameraComponent.vue'
+//@ts-ignore
 import { Slider } from '@leolee9086/slider-component'
 import '@leolee9086/slider-component/dist/slider-component.css'
 import { createButtonClickEvent, createUpdateDataEvent } from '../types/controlEvents'

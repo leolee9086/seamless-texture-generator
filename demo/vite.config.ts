@@ -18,6 +18,7 @@ export default defineConfig(() => {
   } : undefined
 
   return {
+    base: '/seamless-texture-generator/',
     plugins: [vue(), UnoCSS()],
     resolve: {
       alias: {
