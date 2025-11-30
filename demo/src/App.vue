@@ -1,32 +1,29 @@
 <template>
-  <div class="container">
-    <Controls
-      :is-processing="isProcessing"
-      :camera-active="cameraActive"
-      :supports-native-camera="supportsNativeCamera"
-      :original-image="originalImage"
-      :processed-image="processedImage"
-      :max-resolution="maxResolution"
-      :border-size="borderSize"
-      :split-position="splitPosition"
-      :magnifier-enabled="magnifierEnabled"
-      :zoom-level="zoomLevel"
-      @control-event="handleControlEvent"
-    />
+  <div class="mobile-container flex flex-col">
 
-    <Viewer
-      ref="viewerRef"
-      :original-image="originalImage"
-      :processed-image="processedImage"
-      v-model:split-position="splitPosition"
-      :magnifier-enabled="magnifierEnabled"
-      :is-processing="isProcessing"
-      :error-message="errorMessage"
-      :zoom-level="zoomLevel"
-    />
+    <!-- Main Content -->
+    <main class="flex-1 relative overflow-hidden flex flex-col">
+      <!-- Viewer Area -->
+      <div class="flex-1 relative z-0 overflow-hidden m-4 mt-0 rounded-3xl shadow-inner bg-darkglass-200">
+        <Viewer ref="viewerRef" :original-image="originalImage" :processed-image="processedImage"
+          v-model:split-position="splitPosition" :magnifier-enabled="magnifierEnabled" :is-processing="isProcessing"
+          :error-message="errorMessage" :zoom-level="zoomLevel" class="w-full h-full object-contain" />
+      </div>
 
-    <!-- 调试控制台组件 -->
-    <DebugConsole />
+      <!-- Controls Area (Bottom Sheet style) -->
+      <div class="z-20 p-4 glass-panel m-4 mt-0 max-h-[40vh] overflow-y-auto scrollbar-hide">
+        <Controls :is-processing="isProcessing" :camera-active="cameraActive"
+          :supports-native-camera="supportsNativeCamera" :original-image="originalImage"
+          :processed-image="processedImage" :max-resolution="maxResolution" :border-size="borderSize"
+          :split-position="splitPosition" :magnifier-enabled="magnifierEnabled" :zoom-level="zoomLevel"
+          @control-event="handleControlEvent" />
+      </div>
+    </main>
+
+    <!-- Debug Console (Hidden or minimized by default, maybe toggleable) -->
+    <div class="fixed top-0 right-0 z-50 opacity-50 hover:opacity-100 pointer-events-none">
+      <DebugConsole />
+    </div>
   </div>
 </template>
 
@@ -82,7 +79,7 @@ onMounted(() => {
 // 统一的事件处理器
 const handleControlEvent = (event: ControlEvent) => {
   const { type, detail } = event
-  
+
   if (type === 'button-click') {
     switch (detail.action) {
       case 'load-sample-image':
@@ -173,10 +170,10 @@ const handleCameraError = (message: string) => {
 const scaleImageToMaxResolution = (img: HTMLImageElement, maxRes: number): HTMLCanvasElement => {
   const canvas = document.createElement('canvas')
   const ctx = canvas.getContext('2d')!
-  
+
   // 计算缩放比例
   const maxDimension = Math.max(img.width, img.height)
-  
+
   // 如果图像尺寸小于等于最大分辨率，直接返回原图
   if (maxDimension <= maxRes) {
     canvas.width = img.width
@@ -184,23 +181,23 @@ const scaleImageToMaxResolution = (img: HTMLImageElement, maxRes: number): HTMLC
     ctx.drawImage(img, 0, 0)
     return canvas
   }
-  
+
   // 计算缩放比例
   const scale = maxRes / maxDimension
   const newWidth = Math.round(img.width * scale)
   const newHeight = Math.round(img.height * scale)
-  
+
   // 设置canvas尺寸
   canvas.width = newWidth
   canvas.height = newHeight
-  
+
   // 使用高质量缩放
   ctx.imageSmoothingEnabled = true
   ctx.imageSmoothingQuality = 'high'
-  
+
   // 绘制缩放后的图像
   ctx.drawImage(img, 0, 0, newWidth, newHeight)
-  
+
   return canvas
 }
 
@@ -224,7 +221,7 @@ const processImage = async () => {
 
     // 先缩放图像到最大分辨率
     const scaledCanvas = scaleImageToMaxResolution(img, maxResolution.value)
-    
+
     // 获取缩放后的图像数据
     const imageData = scaledCanvas.getContext('2d')!.getImageData(0, 0, scaledCanvas.width, scaledCanvas.height)
 
@@ -260,25 +257,14 @@ const resetZoom = () => {
 }
 </script>
 
-<style scoped>
-.container {
-  max-width: 1200px;
-  margin: 0 auto;
-  padding: 2rem;
+<style>
+/* Global scrollbar hide */
+.scrollbar-hide::-webkit-scrollbar {
+  display: none;
 }
 
-h1 {
-  text-align: center;
-  margin-bottom: 2rem;
-  color: #333;
-}
-
-@media (max-width: 768px) {
-  .mobile-zoom {
-    background-color: #e9ecef;
-    padding: 1rem;
-    border-radius: 8px;
-    margin-top: 1rem;
-  }
+.scrollbar-hide {
+  -ms-overflow-style: none;
+  scrollbar-width: none;
 }
 </style>

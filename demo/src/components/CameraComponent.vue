@@ -1,47 +1,52 @@
 <template>
-      <!-- 支持原生相机时，只显示原生相机按钮 -->
-    <template v-if="supportsNativeCamera" >
-      <input ref="fileInputRef" type="file" accept="image/*" capture="environment" @change="handleFileInput"
-        style="display: none" />
-      <button @click="openNativeCamera" class="native-camera-btn">
-        拍照
-      </button>
-    </template>
+  <!-- 支持原生相机时，只显示原生相机按钮 -->
+  <template v-if="supportsNativeCamera">
+    <input ref="fileInputRef" type="file" accept="image/*" capture="environment" @change="handleFileInput"
+      style="display: none" />
+    <button @click="openNativeCamera"
+      class="glass-btn w-full flex-center gap-2 bg-green-500/20 hover:bg-green-500/30 border-green-500/30">
+      <div class="i-carbon-camera text-lg"></div>
+      <span>Take Photo</span>
+    </button>
+  </template>
 
-  <div  v-else class="camera-container" :class="{ 'fullscreen': isFullscreen }">
+  <div v-else class="relative w-full aspect-video bg-black rounded-xl overflow-hidden shadow-glass group">
     <!-- 隐藏的文件输入，支持 capture=camera -->
-
-
 
     <!-- 不支持原生相机时，显示完整的摄像头预览界面 -->
     <template>
-      <video ref="videoRef" autoplay muted playsinline webkit-playsinline class="camera-preview"
-        :class="{ 'fullscreen-video': isFullscreen }" @loadedmetadata="onVideoLoaded" @error="onVideoError"
+      <video ref="videoRef" autoplay muted playsinline webkit-playsinline class="w-full h-full object-cover"
+        :class="{ 'fixed inset-0 z-50': isFullscreen }" @loadedmetadata="onVideoLoaded" @error="onVideoError"
         @click="handleVideoClick" @touchstart="handleVideoTouch"></video>
 
       <!-- 全屏模式下的浮动控制按钮 -->
-      <div class="floating-controls" v-if="isFullscreen">
-        <button @click="capturePhoto" :disabled="isCapturing" class="capture-btn floating-btn">
-          {{ isCapturing ? '拍照中...' : '拍照' }}
+      <div class="absolute bottom-8 left-0 right-0 flex justify-center gap-4 z-[60]" v-if="isFullscreen">
+        <button @click="capturePhoto" :disabled="isCapturing"
+          class="w-16 h-16 rounded-full border-4 border-white bg-white/20 backdrop-blur-md flex-center active:scale-95 transition-transform">
+          <div class="w-12 h-12 rounded-full bg-white"></div>
         </button>
-        <button @click="switchCamera" v-if="hasMultipleCameras" class="switch-camera-btn floating-btn">
-          切换摄像头
+        <button @click="switchCamera" v-if="hasMultipleCameras"
+          class="absolute right-8 bottom-4 glass-btn rounded-full p-3">
+          <div class="i-carbon-camera-action text-xl"></div>
         </button>
-        <button @click="exitFullscreen" class="exit-fullscreen-btn floating-btn">
-          退出全屏
+        <button @click="exitFullscreen" class="absolute left-8 bottom-4 glass-btn rounded-full p-3">
+          <div class="i-carbon-minimize text-xl"></div>
         </button>
       </div>
 
       <!-- 非全屏模式下的控制按钮 -->
-      <div class="camera-controls" v-else>
-        <button @click="capturePhoto" :disabled="isCapturing" class="capture-btn">
-          {{ isCapturing ? '拍照中...' : '拍照' }}
+      <div
+        class="absolute bottom-4 left-0 right-0 flex justify-center gap-3 z-10 opacity-0 group-hover:opacity-100 transition-opacity duration-300"
+        v-else>
+        <button @click="capturePhoto" :disabled="isCapturing"
+          class="glass-btn rounded-full p-3 bg-white/20 hover:bg-white/30 border-white/40">
+          <div class="i-carbon-camera text-xl"></div>
         </button>
-        <button @click="switchCamera" v-if="hasMultipleCameras" class="switch-camera-btn">
-          切换摄像头
+        <button @click="switchCamera" v-if="hasMultipleCameras" class="glass-btn rounded-full p-3">
+          <div class="i-carbon-camera-action text-xl"></div>
         </button>
-        <button @click="enterFullscreen" v-if="fullscreenSupported" class="fullscreen-btn">
-          全屏
+        <button @click="enterFullscreen" v-if="fullscreenSupported" class="glass-btn rounded-full p-3">
+          <div class="i-carbon-maximize text-xl"></div>
         </button>
       </div>
     </template>
@@ -512,186 +517,3 @@ onUnmounted(() => {
 // 监听props变化
 watch(() => props.modelValue, handleCameraActiveChange)
 </script>
-
-<style scoped>
-.camera-container {
-  margin-top: 1rem;
-  border: 1px solid #dee2e6;
-  border-radius: 8px;
-  overflow: hidden;
-  background-color: #000;
-  position: relative;
-}
-
-
-.camera-preview {
-  width: 100%;
-  max-height: 300px;
-  object-fit: cover;
-  display: block;
-  background-color: #000;
-  /* 移动端视频播放优化 */
-  -webkit-transform: translateZ(0);
-  transform: translateZ(0);
-  /* 确保在iOS上正确显示 */
-  -webkit-appearance: none;
-  appearance: none;
-  /* 确保视频元素有最小尺寸 */
-  min-width: 320px;
-  min-height: 240px;
-}
-
-.camera-controls {
-  display: flex;
-  justify-content: center;
-  gap: 1rem;
-  padding: 1rem;
-  background-color: #f8f9fa;
-}
-
-.capture-btn {
-  background-color: #dc3545;
-  padding: 0.75rem 1.5rem;
-  font-weight: bold;
-}
-
-.capture-btn:hover:not(:disabled) {
-  background-color: #c82333;
-}
-
-.switch-camera-btn {
-  background-color: #6c757d;
-}
-
-.switch-camera-btn:hover:not(:disabled) {
-  background-color: #5a6268;
-}
-
-.fullscreen-btn {
-  background-color: #17a2b8;
-}
-
-.fullscreen-btn:hover:not(:disabled) {
-  background-color: #138496;
-}
-
-.native-camera-btn {
-  background-color: #28a745;
-}
-
-.native-camera-btn:hover:not(:disabled) {
-  background-color: #218838;
-}
-
-/* 全屏模式样式 */
-.fullscreen {
-  position: fixed;
-  top: 0;
-  left: 0;
-  width: 100vw;
-  height: 100vh;
-  z-index: 9999;
-  border: none;
-  border-radius: 0;
-}
-
-.fullscreen-video {
-  width: 100vw;
-  height: 100vh;
-  max-height: none;
-  object-fit: cover;
-}
-
-/* 浮动控制按钮样式 */
-.floating-controls {
-  position: absolute;
-  bottom: 2rem;
-  left: 50%;
-  transform: translateX(-50%);
-  display: flex;
-  gap: 1rem;
-  z-index: 10000;
-  background-color: rgba(0, 0, 0, 0.7);
-  padding: 1rem;
-  border-radius: 2rem;
-  backdrop-filter: blur(10px);
-}
-
-.floating-btn {
-  padding: 0.75rem 1.5rem;
-  border: none;
-  border-radius: 2rem;
-  color: white;
-  cursor: pointer;
-  transition: all 0.2s;
-  font-weight: bold;
-  backdrop-filter: blur(5px);
-}
-
-.floating-btn:hover:not(:disabled) {
-  transform: scale(1.05);
-  filter: brightness(1.1);
-}
-
-.floating-btn:disabled {
-  background-color: #6c757d;
-  cursor: not-allowed;
-  opacity: 0.7;
-}
-
-.floating-btn.capture-btn {
-  background-color: #dc3545;
-}
-
-.floating-btn.switch-camera-btn {
-  background-color: #6c757d;
-}
-
-.floating-btn.exit-fullscreen-btn {
-  background-color: #ffc107;
-  color: #212529;
-}
-
-/* 移动端适配 */
-@media (max-width: 768px) {
-  .camera-controls {
-    flex-direction: column;
-    gap: 0.5rem;
-  }
-
-  .camera-preview {
-    max-height: 200px;
-  }
-
-  .floating-controls {
-    bottom: 1rem;
-    padding: 0.75rem;
-    gap: 0.5rem;
-  }
-
-  .floating-btn {
-    padding: 0.5rem 1rem;
-    font-size: 0.9rem;
-  }
-}
-
-/* 通用按钮样式 */
-button {
-  padding: 0.5rem 1rem;
-  border: none;
-  border-radius: 4px;
-  background-color: #007bff;
-  color: white;
-  cursor: pointer;
-  transition: background-color 0.2s;
-}
-
-button:hover:not(:disabled) {
-  background-color: #0056b3;
-}
-
-button:disabled {
-  background-color: #6c757d;
-  cursor: not-allowed;
-}
-</style>

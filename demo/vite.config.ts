@@ -1,5 +1,6 @@
 import { defineConfig, loadEnv } from 'vite'
 import vue from '@vitejs/plugin-vue'
+import UnoCSS from 'unocss/vite'
 import { resolve } from 'path'
 import { readFileSync, existsSync } from 'fs'
 import { fileURLToPath } from 'url'
@@ -9,15 +10,15 @@ const __dirname = fileURLToPath(new URL('.', import.meta.url))
 
 // https://vitejs.dev/config/
 export default defineConfig(() => {
-  
+
   // HTTPS配置
-  const httpsConfig =  existsSync('./certs/server.key') && existsSync('./certs/server.crt') ? {
+  const httpsConfig = existsSync('./certs/server.key') && existsSync('./certs/server.crt') ? {
     key: readFileSync('./certs/server.key'),
     cert: readFileSync('./certs/server.crt')
   } : undefined
 
   return {
-    plugins: [vue()],
+    plugins: [vue(), UnoCSS()],
     resolve: {
       alias: {
         '@': resolve(__dirname, './src'),

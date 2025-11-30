@@ -1,42 +1,60 @@
 <template>
-  <div class="controls">
-    <div class="control-group">
-      <label for="image-upload">选择图像:</label>
-      <input id="image-upload" type="file" accept="image/*" @change="handleImageUpload" class="file-input" />
-      <button @click="loadSampleImage" :disabled="isProcessing">
-        加载示例图像
-      </button>
-      <button @click="toggleCamera" :disabled="isProcessing" class="camera-btn" v-if="!supportsNativeCamera">
-        {{ cameraActive ? '关闭摄像头' : '打开摄像头' }}
-      </button>
+  <div class="flex flex-col gap-4">
+    <!-- Image Selection Group -->
+    <div class="flex flex-col gap-2">
+      <div class="flex items-center justify-between">
+        <span class="text-sm font-medium text-gray-200">Image Source</span>
+        <div class="flex gap-2">
+          <button @click="loadSampleImage" :disabled="isProcessing" class="glass-btn text-xs py-1 px-3">
+            Sample
+          </button>
+          <button v-if="!supportsNativeCamera" @click="toggleCamera" :disabled="isProcessing"
+            class="glass-btn text-xs py-1 px-3 bg-green-500/20 hover:bg-green-500/30 border-green-500/30">
+            {{ cameraActive ? 'Close Cam' : 'Open Cam' }}
+          </button>
+        </div>
+      </div>
+
+      <label class="glass-input flex items-center justify-between cursor-pointer hover:bg-glass-300 group">
+        <span class="text-sm truncate opacity-80 group-hover:opacity-100">
+          {{ originalImage ? 'Change Image' : 'Select Image' }}
+        </span>
+        <div class="i-carbon-image text-lg opacity-80"></div>
+        <input type="file" accept="image/*" @change="handleImageUpload" class="hidden" />
+      </label>
     </div>
 
-    <!-- 摄像头组件 -->
+    <!-- Camera Component -->
     <CameraComponent :modelValue="cameraActive" @update:modelValue="toggleCamera" @photo-captured="handlePhotoCaptured"
-      @error="handleCameraError" />
+      @error="handleCameraError" class="rounded-xl overflow-hidden shadow-glass" />
 
-    <!-- 使用Slider组件替换原生滑块 -->
-    <div class="slider-section" v-if="originalImage || processedImage">
-      <Slider :items="sliderItems" @updateValue="handleSliderUpdate" />
+    <!-- Controls Section -->
+    <div v-if="originalImage || processedImage" class="flex flex-col gap-4 animate-fade-in">
+      <!-- Sliders -->
+      <div class="bg-darkglass-200 rounded-xl p-3 border border-glass-100">
+        <Slider :items="sliderItems" @updateValue="handleSliderUpdate" />
+      </div>
 
-      <!-- 处理按钮 -->
-      <div class="control-group" v-if="originalImage">
-        <button @click="processImage" :disabled="isProcessing || !originalImage">
-          {{ isProcessing ? '处理中...' : '开始无缝化处理' }}
+      <!-- Action Buttons -->
+      <div class="grid grid-cols-2 gap-3">
+        <button v-if="originalImage" @click="processImage" :disabled="isProcessing || !originalImage"
+          class="glass-btn bg-blue-500/20 hover:bg-blue-500/30 border-blue-500/30 w-full flex-center gap-2">
+          <div v-if="isProcessing" class="i-carbon-circle-dash animate-spin"></div>
+          <div v-else class="i-carbon-magic-wand"></div>
+          <span>{{ isProcessing ? 'Processing...' : 'Make Seamless' }}</span>
+        </button>
+
+        <button v-if="originalImage" @click="resetZoom" class="glass-btn w-full flex-center gap-2">
+          <div class="i-carbon-center-circle"></div>
+          <span>Reset Zoom</span>
         </button>
       </div>
 
-      <!-- 放大镜按钮 -->
-      <div class="control-group" v-if="processedImage">
-        <button @click="toggleMagnifier">
-          {{ magnifierEnabled ? '关闭' : '开启' }}放大镜
-        </button>
-      </div>
-
-      <!-- 重置缩放按钮 -->
-      <div class="control-group zoom-control" v-if="originalImage">
-        <button @click="resetZoom">重置缩放</button>
-      </div>
+      <button v-if="processedImage" @click="toggleMagnifier" class="glass-btn w-full flex-center gap-2"
+        :class="magnifierEnabled ? 'bg-purple-500/20 border-purple-500/30' : ''">
+        <div class="i-carbon-zoom-in"></div>
+        <span>{{ magnifierEnabled ? 'Disable Magnifier' : 'Enable Magnifier' }}</span>
+      </button>
     </div>
   </div>
 </template>
@@ -70,7 +88,7 @@ const sliderItems = computed(() => {
     // 最大分辨率滑块
     items.push({
       id: 'max-resolution',
-      label: '最大分辨率',
+      label: 'Max Res',
       value: props.maxResolution,
       min: 512,
       max: 8192,
@@ -82,7 +100,7 @@ const sliderItems = computed(() => {
     // 边界大小滑块
     items.push({
       id: 'border-size',
-      label: '边界大小 (%)',
+      label: 'Border (%)',
       value: props.borderSize,
       min: 5,
       max: 100,
@@ -94,7 +112,7 @@ const sliderItems = computed(() => {
     // 缩放级别滑块
     items.push({
       id: 'zoom-level',
-      label: '缩放级别',
+      label: 'Zoom',
       value: props.zoomLevel,
       min: 0.1,
       max: 5,
@@ -108,7 +126,7 @@ const sliderItems = computed(() => {
     // 分割线位置滑块
     items.push({
       id: 'split-position',
-      label: '分割线位置',
+      label: 'Split Pos',
       value: props.splitPosition,
       min: 0,
       max: 1,
@@ -192,80 +210,26 @@ const resetZoom = () => {
 }
 </script>
 
-<style scoped>
-.controls {
-  background-color: #f8f9fa;
-  padding: 1.5rem;
-  border-radius: 8px;
-  margin-bottom: 2rem;
-  box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+<style>
+/* Override slider styles for glass theme */
+.slider-container {
+  --slider-track-bg: rgba(255, 255, 255, 0.1) !important;
+  --slider-track-fill: rgba(255, 255, 255, 0.8) !important;
+  --slider-thumb-bg: #fff !important;
+  --slider-thumb-border: 2px solid rgba(255, 255, 255, 0.5) !important;
+  --slider-text-color: rgba(255, 255, 255, 0.9) !important;
+  padding: 0.5rem 0 !important;
 }
 
-.control-group {
-  display: flex;
-  align-items: center;
-  gap: 1rem;
-  margin-bottom: 1rem;
-  flex-wrap: wrap;
+.slider-label {
+  font-size: 0.875rem !important;
+  font-weight: 500 !important;
 }
 
-.control-group:last-child {
-  margin-bottom: 0;
-}
-
-label {
-  font-weight: 500;
-  min-width: 120px;
-}
-
-.file-input {
-  flex: 1;
-  min-width: 200px;
-}
-
-.slider-section {
-  margin-bottom: 1rem;
-}
-
-.slider-section .control-group {
-  margin-top: 1rem;
-}
-
-button {
-  padding: 0.5rem 1rem;
-  border: none;
-  border-radius: 4px;
-  background-color: #007bff;
-  color: white;
-  cursor: pointer;
-  transition: background-color 0.2s;
-}
-
-button:hover:not(:disabled) {
-  background-color: #0056b3;
-}
-
-button:disabled {
-  background-color: #6c757d;
-  cursor: not-allowed;
-}
-
-.camera-btn {
-  background-color: #28a745;
-}
-
-.camera-btn:hover:not(:disabled) {
-  background-color: #218838;
-}
-
-@media (max-width: 768px) {
-  .control-group {
-    flex-direction: column;
-    align-items: stretch;
-  }
-
-  .slider-container {
-    min-width: auto;
-  }
+.slider-value {
+  font-family: monospace !important;
+  background: rgba(0, 0, 0, 0.3) !important;
+  padding: 2px 6px !important;
+  border-radius: 4px !important;
 }
 </style>
