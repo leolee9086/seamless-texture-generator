@@ -1,74 +1,36 @@
 <template>
   <div class="container">
-    <div class="controls">
-      <div class="control-group">
-        <label for="image-upload">选择图像:</label>
-        <input id="image-upload" type="file" accept="image/*" @change="handleImageUpload" class="file-input" />
-        <button @click="loadSampleImage" :disabled="isProcessing">
-          加载示例图像
-        </button>
-        <button @click="toggleCamera" :disabled="isProcessing" class="camera-btn" v-if="!supportsNativeCamera">
-          {{ cameraActive ? '关闭摄像头' : '打开摄像头' }}
-        </button>
-      </div>
+    <Controls
+      :is-processing="isProcessing"
+      :camera-active="cameraActive"
+      :supports-native-camera="supportsNativeCamera"
+      :original-image="originalImage"
+      :processed-image="processedImage"
+      v-model:max-resolution="maxResolution"
+      v-model:border-size="borderSize"
+      v-model:split-position="splitPosition"
+      :magnifier-enabled="magnifierEnabled"
+      v-model:zoom-level="zoomLevel"
+      @handle-image-upload="handleImageUpload"
+      @load-sample-image="loadSampleImage"
+      @toggle-camera="toggleCamera"
+      @photo-captured="handlePhotoCaptured"
+      @camera-error="handleCameraError"
+      @process-image="processImage"
+      @toggle-magnifier="toggleMagnifier"
+      @reset-zoom="resetZoom"
+    />
 
-      <!-- 摄像头组件 -->
-      <CameraComponent v-model="cameraActive" @photo-captured="handlePhotoCaptured" @error="handleCameraError" />
-
-      <div class="control-group" v-if="originalImage">
-        <label for="max-resolution">最大分辨率:</label>
-        <div class="slider-container">
-          <input id="max-resolution" type="range" min="512" max="8192" step="512" v-model="maxResolution" class="slider" />
-          <span>{{ maxResolution }}px</span>
-        </div>
-      </div>
-
-      <div class="control-group" v-if="originalImage">
-        <label for="border-size">边界大小 (%):</label>
-        <div class="slider-container">
-          <input id="border-size" type="range" min="5" max="100" v-model="borderSize" class="slider" />
-          <span>{{ borderSize }}%</span>
-        </div>
-        <button @click="processImage" :disabled="isProcessing || !originalImage">
-          {{ isProcessing ? '处理中...' : '开始无缝化处理' }}
-        </button>
-      </div>
-
-      <div class="control-group" v-if="processedImage">
-        <label for="split-position">分割线位置:</label>
-        <div class="slider-container">
-          <input id="split-position" type="range" min="0" max="1" step="0.01" v-model="splitPosition" class="slider" />
-          <span>{{ (splitPosition * 100).toFixed(0) }}%</span>
-        </div>
-        <button @click="toggleMagnifier">
-          {{ magnifierEnabled ? '关闭' : '开启' }}放大镜
-        </button>
-      </div>
-
-      <!-- 缩放控制 - 移动端和桌面端都支持 -->
-      <div class="control-group zoom-control" v-if="originalImage">
-        <label for="zoom-level">缩放级别:</label>
-        <div class="slider-container">
-          <input id="zoom-level" type="range" min="0.1" max="5" step="0.1" v-model="zoomLevel" class="slider" />
-          <span>{{ (zoomLevel * 100).toFixed(0) }}%</span>
-        </div>
-        <button @click="resetZoom">重置缩放</button>
-      </div>
-    </div>
-
-    <div class="viewer-container" v-show="originalImage">
-      <SplitViewer ref="splitViewerRef" :leftImage="originalImage" :rightImage="processedImage || originalImage"
-        :width="1000" :height="600" :splitPosition="splitPosition" :magnifier="magnifierConfig"
-        @split-change="handleSplitChange" @image-load="handleImageLoad" />
-    </div>
-
-    <div class="loading" v-if="isProcessing">
-      正在处理图像，请稍候...
-    </div>
-
-    <div class="error" v-if="errorMessage">
-      {{ errorMessage }}
-    </div>
+    <Viewer
+      ref="viewerRef"
+      :original-image="originalImage"
+      :processed-image="processedImage"
+      v-model:split-position="splitPosition"
+      :magnifier-enabled="magnifierEnabled"
+      :is-processing="isProcessing"
+      :error-message="errorMessage"
+      :zoom-level="zoomLevel"
+    />
 
     <!-- 调试控制台组件 -->
     <DebugConsole />
@@ -76,10 +38,10 @@
 </template>
 
 <script setup lang="ts">
-import { ref, computed, onMounted, watch, nextTick } from 'vue'
-import { SplitViewer } from '@leolee9086/split-viewer'
+import { ref, onMounted } from 'vue'
 import { makeTileable } from '../../src/lib/HistogramPreservingBlendMakeTileable'
-import CameraComponent from './components/CameraComponent.vue'
+import Controls from './components/Controls.vue'
+import Viewer from './components/Viewer.vue'
 import DebugConsole from './components/DebugConsole.vue'
 
 // 响应式数据
@@ -90,7 +52,7 @@ const maxResolution = ref(4096) // 默认最大分辨率为4096
 const splitPosition = ref(0.5)
 const isProcessing = ref(false)
 const errorMessage = ref('')
-const splitViewerRef = ref()
+const viewerRef = ref()
 
 // 摄像头相关状态
 const cameraActive = ref(false)
@@ -101,6 +63,9 @@ const isMobile = ref(false)
 
 // 缩放相关状态
 const zoomLevel = ref(1)
+
+// 放大镜配置
+const magnifierEnabled = ref(true)
 
 // 检测是否支持原生相机
 const checkNativeCameraSupport = () => {
@@ -119,16 +84,6 @@ const checkNativeCameraSupport = () => {
 onMounted(() => {
   checkNativeCameraSupport()
 })
-
-
-// 放大镜配置
-const magnifierEnabled = ref(true)
-const magnifierConfig = computed(() => ({
-  enabled: magnifierEnabled.value,
-  size: 150,
-  zoomLevel: 2,
-  followCursor: true
-}))
 
 // 处理图像上传
 const handleImageUpload = (event: Event) => {
@@ -254,45 +209,12 @@ const toggleMagnifier = () => {
   magnifierEnabled.value = !magnifierEnabled.value
 }
 
-// 处理分割线变化
-const handleSplitChange = (position: number) => {
-  splitPosition.value = position
-}
-
-// 处理图像加载
-const handleImageLoad = async (side: string) => {
-  console.log('图像加载完成:', side)
-  
-  // 确保在图像加载完成后应用当前的缩放级别
-  if (side === 'all' || side === 'left') {
-    await nextTick()
-    if (splitViewerRef.value) {
-      splitViewerRef.value.setZoom(zoomLevel.value)
-    }
-  }
-}
-
-// 缩放相关方法
-const handleZoomChange = async () => {
-  // 使用 nextTick 确保 DOM 更新完成后再调用方法
-  await nextTick()
-  if (splitViewerRef.value) {
-    console.log(splitViewerRef.value)
-    splitViewerRef.value.setZoom(zoomLevel.value)
-  }
-}
-
-const resetZoom = async () => {
+const resetZoom = () => {
   zoomLevel.value = 1
-  // 使用 nextTick 确保 DOM 更新完成后再调用方法
-  await nextTick()
-  if (splitViewerRef.value) {
-    splitViewerRef.value.resetZoom()
+  if (viewerRef.value) {
+    viewerRef.value.resetZoom()
   }
 }
-
-// 监听缩放级别变化
-watch(zoomLevel, handleZoomChange)
 </script>
 
 <style scoped>
@@ -308,117 +230,12 @@ h1 {
   color: #333;
 }
 
-.controls {
-  background-color: #f8f9fa;
-  padding: 1.5rem;
-  border-radius: 8px;
-  margin-bottom: 2rem;
-  box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
-}
-
-.control-group {
-  display: flex;
-  align-items: center;
-  gap: 1rem;
-  margin-bottom: 1rem;
-  flex-wrap: wrap;
-}
-
-.control-group:last-child {
-  margin-bottom: 0;
-}
-
-label {
-  font-weight: 500;
-  min-width: 120px;
-}
-
-.file-input {
-  flex: 1;
-  min-width: 200px;
-}
-
-.slider-container {
-  display: flex;
-  align-items: center;
-  gap: 0.5rem;
-  flex: 1;
-  min-width: 250px;
-}
-
-.slider {
-  flex: 1;
-}
-
-button {
-  padding: 0.5rem 1rem;
-  border: none;
-  border-radius: 4px;
-  background-color: #007bff;
-  color: white;
-  cursor: pointer;
-  transition: background-color 0.2s;
-}
-
-button:hover:not(:disabled) {
-  background-color: #0056b3;
-}
-
-button:disabled {
-  background-color: #6c757d;
-  cursor: not-allowed;
-}
-
-.camera-btn {
-  background-color: #28a745;
-}
-
-.camera-btn:hover:not(:disabled) {
-  background-color: #218838;
-}
-
-.viewer-container {
-  border: 1px solid #dee2e6;
-  border-radius: 8px;
-  overflow: hidden;
-  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
-}
-
-.loading {
-  text-align: center;
-  padding: 2rem;
-  font-size: 1.2rem;
-  color: #6c757d;
-}
-
-.error {
-  background-color: #f8d7da;
-  color: #721c24;
-  padding: 1rem;
-  border-radius: 4px;
-  margin-top: 1rem;
-  border: 1px solid #f5c6cb;
-}
-
 @media (max-width: 768px) {
-  .control-group {
-    flex-direction: column;
-    align-items: stretch;
-  }
-
-  .slider-container {
-    min-width: auto;
-  }
-
   .mobile-zoom {
     background-color: #e9ecef;
     padding: 1rem;
     border-radius: 8px;
     margin-top: 1rem;
-  }
-
-  .viewer-container {
-    touch-action: pan-x pan-y pinch-zoom;
   }
 }
 </style>
