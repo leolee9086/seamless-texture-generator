@@ -10,4 +10,8 @@ const isMobile = /Android|webOS|iPhone|iPad|iPod|BlackBerry|IEMobile|Opera Mini/
 // 根据设备类型加载对应的组件
 const AppComponent = isMobile ? App : Desktop
 
-createApp(AppComponent).mount('#app')
+import VueKonva from 'vue-konva'
+
+const app = createApp(AppComponent)
+app.use(VueKonva)
+app.mount('#app')

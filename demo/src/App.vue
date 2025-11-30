@@ -26,6 +26,10 @@
       </div>
     </main>
 
+    <!-- Sampling Editor -->
+    <SamplingEditor :visible="isSampling" :original-image="rawOriginalImage" @close="isSampling = false"
+      @confirm="handleSamplingConfirm" />
+
     <!-- Debug Console (Hidden or minimized by default, maybe toggleable) -->
     <div class="fixed top-0 right-0 z-50 opacity-50 hover:opacity-100 pointer-events-none">
       <!--<DebugConsole />-->
@@ -38,6 +42,7 @@ import { ref, onMounted, watch } from 'vue'
 import { makeTileable } from '../../src/lib/HistogramPreservingBlendMakeTileable'
 import Controls from './components/Controls.vue'
 import Viewer from './components/Viewer.vue'
+import SamplingEditor from './components/SamplingEditor.vue'
 //import DebugConsole from './components/DebugConsole.vue'
 import type { ControlEvent } from './types/controlEvents'
 
@@ -49,6 +54,7 @@ const borderSize = ref(20)
 const maxResolution = ref(4096) // 默认最大分辨率为4096
 const splitPosition = ref(0.5)
 const isProcessing = ref(false)
+const isSampling = ref(false)
 const errorMessage = ref('')
 const viewerRef = ref()
 
@@ -106,6 +112,9 @@ const handleControlEvent = (event: ControlEvent) => {
         break
       case 'save-result':
         saveResult()
+        break
+      case 'open-sampling-editor':
+        isSampling.value = true
         break
     }
   } else if (type === 'update-data') {
@@ -237,6 +246,11 @@ watch([rawOriginalImage, maxResolution], async ([newRaw, newMaxRes]) => {
     errorMessage.value = '加载图像失败'
   }
 })
+
+const handleSamplingConfirm = (imageData: string) => {
+  originalImage.value = imageData
+  processedImage.value = null
+}
 
 // 处理图像
 const processImage = async () => {

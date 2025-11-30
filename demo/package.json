@@ -15,8 +15,10 @@
     "@leolee9086/slider-component": "link:../../slider-component",
     "@leolee9086/split-viewer": "link:../../split-viewer",
     "@tensorflow/tfjs-backend-webgpu": "^4.22.0",
+    "konva": "^10.0.12",
     "vconsole": "^3.15.1",
-    "vue": "^3.4.21"
+    "vue": "^3.4.21",
+    "vue-konva": "^3.2.6"
   },
   "devDependencies": {
     "@iconify-json/carbon": "^1.2.14",

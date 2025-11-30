@@ -48,6 +48,11 @@
           <div class="i-carbon-center-circle"></div>
           <span>Reset Zoom</span>
         </button>
+
+        <button v-if="originalImage" @click="openSamplingEditor" class="glass-btn w-full flex-center gap-2">
+          <div class="i-carbon-crop"></div>
+          <span>Select Area</span>
+        </button>
       </div>
 
       <button v-if="processedImage" @click="saveResult"
@@ -214,6 +219,10 @@ const handleSliderUpdate = ({ id, value }: { id: string; value: number }) => {
 
 const resetZoom = () => {
   emit('controlEvent', createButtonClickEvent('reset-zoom'))
+}
+
+const openSamplingEditor = () => {
+  emit('controlEvent', createButtonClickEvent('open-sampling-editor'))
 }
 
 const saveResult = () => {
