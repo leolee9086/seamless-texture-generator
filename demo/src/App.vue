@@ -28,7 +28,7 @@
 
     <!-- Debug Console (Hidden or minimized by default, maybe toggleable) -->
     <div class="fixed top-0 right-0 z-50 opacity-50 hover:opacity-100 pointer-events-none">
-      <DebugConsole />
+      <!--<DebugConsole />-->
     </div>
   </div>
 </template>
@@ -38,7 +38,7 @@ import { ref, onMounted, watch } from 'vue'
 import { makeTileable } from '../../src/lib/HistogramPreservingBlendMakeTileable'
 import Controls from './components/Controls.vue'
 import Viewer from './components/Viewer.vue'
-import DebugConsole from './components/DebugConsole.vue'
+//import DebugConsole from './components/DebugConsole.vue'
 import type { ControlEvent } from './types/controlEvents'
 
 // 响应式数据

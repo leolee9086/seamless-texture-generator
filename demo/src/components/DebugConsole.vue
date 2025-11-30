@@ -1,4 +1,5 @@
 <template>
+
   <div class="fixed bottom-5 right-5 z-[9999]">
     <!-- Debug Toggle Button - Small Icon -->
     <button v-if="showDebugButton" @click="toggleConsole"
