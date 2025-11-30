@@ -50,6 +50,12 @@
         </button>
       </div>
 
+      <button v-if="processedImage" @click="saveResult"
+        class="glass-btn w-full flex-center gap-2 bg-green-500/20 hover:bg-green-500/30 border-green-500/30">
+        <div class="i-carbon-save"></div>
+        <span>Save Result</span>
+      </button>
+
       <button v-if="processedImage" @click="toggleMagnifier" class="glass-btn w-full flex-center gap-2"
         :class="magnifierEnabled ? 'bg-purple-500/20 border-purple-500/30' : ''">
         <div class="i-carbon-zoom-in"></div>
@@ -91,8 +97,8 @@ const sliderItems = computed(() => {
       label: 'Max Res',
       value: props.maxResolution,
       min: 512,
-      max: 8192,
-      step: 512,
+      max: 4096,
+      step: 128,
       valuePosition: 'after' as const,
       showRuler: false
     })
@@ -114,9 +120,9 @@ const sliderItems = computed(() => {
       id: 'zoom-level',
       label: 'Zoom',
       value: props.zoomLevel,
-      min: 0.1,
+      min: 0.01,
       max: 5,
-      step: 0.1,
+      step: 0.01,
       valuePosition: 'after' as const,
       showRuler: false
     })
@@ -207,6 +213,10 @@ const handleSliderUpdate = ({ id, value }: { id: string; value: number }) => {
 
 const resetZoom = () => {
   emit('controlEvent', createButtonClickEvent('reset-zoom'))
+}
+
+const saveResult = () => {
+  emit('controlEvent', createButtonClickEvent('save-result'))
 }
 </script>
 

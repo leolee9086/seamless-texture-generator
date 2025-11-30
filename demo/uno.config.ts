@@ -57,6 +57,6 @@ export default defineConfig({
         ['glass-btn', 'px-4 py-2 rounded-xl bg-glass-200 hover:bg-glass-300 active:bg-glass-400 transition-all duration-300 backdrop-blur-md border border-glass-100 shadow-glass-sm text-white font-medium'],
         ['glass-input', 'bg-darkglass-200 border border-glass-100 rounded-xl px-4 py-2 text-white placeholder-white/50 focus:outline-none focus:ring-2 focus:ring-white/30 backdrop-blur-md transition-all'],
         ['icon-btn', 'p-2 rounded-full hover:bg-glass-200 transition-colors cursor-pointer'],
-        ['mobile-container', 'max-w-md mx-auto h-full overflow-hidden bg-gradient-to-br from-gray-900 to-black text-white font-sans relative'],
+        ['mobile-container', 'max-w-md mx-auto h-dvh overflow-hidden bg-gradient-to-br from-gray-900 to-black text-white font-sans relative'],
     ]
 })

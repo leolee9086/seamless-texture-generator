@@ -97,6 +97,9 @@ const handleControlEvent = (event: ControlEvent) => {
       case 'reset-zoom':
         resetZoom()
         break
+      case 'save-result':
+        saveResult()
+        break
     }
   } else if (type === 'update-data') {
     switch (detail.action) {
@@ -254,6 +257,18 @@ const resetZoom = () => {
   if (viewerRef.value) {
     viewerRef.value.resetZoom()
   }
+}
+
+// 保存结果
+const saveResult = () => {
+  if (!processedImage.value) return
+
+  const link = document.createElement('a')
+  link.href = processedImage.value
+  link.download = `seamless-texture-${Date.now()}.png`
+  document.body.appendChild(link)
+  link.click()
+  document.body.removeChild(link)
 }
 </script>
 

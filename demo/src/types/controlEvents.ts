@@ -18,6 +18,7 @@ export type ButtonAction =
   | 'process-image'
   | 'toggle-magnifier'
   | 'reset-zoom'
+  | 'save-result'
 
 // 数据更新动作类型
 export type UpdateAction =
