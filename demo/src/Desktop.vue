@@ -39,6 +39,7 @@ import Controls from './components/Controls.vue'
 import Viewer from './components/Viewer.vue'
 import SamplingEditor from './components/SamplingEditor.vue'
 import type { ControlEvent } from './types/controlEvents'
+import { saveOriginalImage, saveProcessedImage } from './utils/download'
 
 // 响应式数据
 const originalImage = ref<string | null>(null)
@@ -288,44 +289,13 @@ const resetZoom = () => {
 // 保存结果
 const saveResult = () => {
     if (!processedImage.value) return
-
-    const link = document.createElement('a')
-    link.href = processedImage.value
-    link.download = `seamless-texture-${Date.now()}.png`
-    document.body.appendChild(link)
-    link.click()
-    document.body.removeChild(link)
-}
-
-const dataURLToBlob = (dataURL: string) => {
-    const arr = dataURL.split(',')
-    const mime = arr[0].match(/:(.*?);/)![1]
-    const bstr = atob(arr[1])
-    let n = bstr.length
-    const u8arr = new Uint8Array(n)
-    while (n--) {
-        u8arr[n] = bstr.charCodeAt(n)
-    }
-    return new Blob([u8arr], { type: mime })
+    saveProcessedImage(processedImage.value)
 }
 
 // 保存原始图像
 const saveOriginal = () => {
     if (!originalImage.value) return
-
-    try {
-        const blob = dataURLToBlob(originalImage.value)
-        const url = URL.createObjectURL(blob)
-        const link = document.createElement('a')
-        link.href = url
-        link.download = `original-image-${Date.now()}.png`
-        document.body.appendChild(link)
-        link.click()
-        document.body.removeChild(link)
-        URL.revokeObjectURL(url)
-    } catch (e) {
-        console.error('Download failed', e)
-    }
+    saveOriginalImage(originalImage.value)
 }
 </script>
 
