@@ -18,11 +18,9 @@
 
       <!-- Controls Area (Bottom Sheet style) -->
       <div class="z-20 p-4 glass-panel m-4 mt-0 max-h-[40vh] overflow-y-auto scrollbar-hide">
-        <Controls :is-processing="isProcessing" :camera-active="cameraActive"
-          :supports-native-camera="supportsNativeCamera" :original-image="originalImage"
-          :processed-image="processedImage" :max-resolution="maxResolution" :border-size="borderSize"
-          :split-position="splitPosition" :magnifier-enabled="magnifierEnabled" :zoom-level="zoomLevel"
-          @control-event="handleControlEvent" />
+        <Controls :is-processing="isProcessing" :original-image="originalImage" :processed-image="processedImage"
+          :max-resolution="maxResolution" :border-size="borderSize" :split-position="splitPosition"
+          :magnifier-enabled="magnifierEnabled" :zoom-level="zoomLevel" @control-event="handleControlEvent" />
       </div>
     </main>
 
@@ -58,10 +56,6 @@ const isSampling = ref(false)
 const errorMessage = ref('')
 const viewerRef = ref()
 
-// 摄像头相关状态
-const cameraActive = ref(false)
-const supportsNativeCamera = ref(false)
-
 // 移动端检测
 const isMobile = ref(false)
 
@@ -71,22 +65,10 @@ const zoomLevel = ref(1)
 // 放大镜配置
 const magnifierEnabled = ref(true)
 
-// 检测是否支持原生相机
-const checkNativeCameraSupport = () => {
-  // 检测是否是移动设备
+// 初始化时检测移动设备
+onMounted(() => {
   const mobile = /Android|webOS|iPhone|iPad|iPod|BlackBerry|IEMobile|Opera Mini/i.test(navigator.userAgent)
   isMobile.value = mobile
-
-  // 检测是否支持capture属性
-  const hasCaptureSupport = 'capture' in document.createElement('input')
-
-  // 移动设备通常支持原生相机
-  supportsNativeCamera.value = mobile && hasCaptureSupport
-}
-
-// 初始化时检测相机支持
-onMounted(() => {
-  checkNativeCameraSupport()
 })
 
 // 统一的事件处理器
@@ -97,9 +79,6 @@ const handleControlEvent = (event: ControlEvent) => {
     switch (detail.action) {
       case 'load-sample-image':
         loadSampleImage()
-        break
-      case 'toggle-camera':
-        toggleCamera()
         break
       case 'process-image':
         processImage()
@@ -121,12 +100,6 @@ const handleControlEvent = (event: ControlEvent) => {
     switch (detail.action) {
       case 'image-upload':
         handleImageUpload(detail.data)
-        break
-      case 'photo-captured':
-        handlePhotoCaptured(detail.data)
-        break
-      case 'camera-error':
-        handleCameraError(detail.data)
         break
       case 'max-resolution':
         maxResolution.value = detail.data
@@ -166,23 +139,6 @@ const loadSampleImage = () => {
   rawOriginalImage.value = 'https://picsum.photos/seed/texture/512/512.jpg'
   processedImage.value = null
   errorMessage.value = ''
-}
-
-// 打开/关闭摄像头
-const toggleCamera = () => {
-  cameraActive.value = !cameraActive.value
-}
-
-// 处理摄像头拍照结果
-const handlePhotoCaptured = (imageData: string) => {
-  rawOriginalImage.value = imageData
-  processedImage.value = null
-  errorMessage.value = ''
-}
-
-// 处理摄像头错误
-const handleCameraError = (message: string) => {
-  errorMessage.value = message
 }
 
 // 缩放图像到指定最大分辨率

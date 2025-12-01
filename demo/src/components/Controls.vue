@@ -8,10 +8,11 @@
           <button @click="loadSampleImage" :disabled="isProcessing" class="glass-btn text-xs py-1 px-3">
             Sample
           </button>
-          <button v-if="!supportsNativeCamera" @click="toggleCamera" :disabled="isProcessing"
-            class="glass-btn text-xs py-1 px-3 bg-green-500/20 hover:bg-green-500/30 border-green-500/30">
-            {{ cameraActive ? 'Close Cam' : 'Open Cam' }}
-          </button>
+          <label class="glass-btn text-xs py-1 px-3 cursor-pointer flex items-center gap-1 hover:bg-glass-300">
+            <div class="i-carbon-camera"></div>
+            <span>Camera</span>
+            <input type="file" accept="image/*" capture="environment" @change="handleImageUpload" class="hidden" />
+          </label>
         </div>
       </div>
 
@@ -23,10 +24,6 @@
         <input type="file" accept="image/*" @change="handleImageUpload" class="hidden" />
       </label>
     </div>
-
-    <!-- Camera Component -->
-    <CameraComponent :modelValue="cameraActive" @update:modelValue="toggleCamera" @photo-captured="handlePhotoCaptured"
-      @error="handleCameraError" class="rounded-xl overflow-hidden shadow-glass" />
 
     <!-- Controls Section -->
     <div v-if="originalImage || processedImage" class="flex flex-col gap-4 animate-fade-in">
@@ -72,7 +69,6 @@
 
 <script setup lang="ts">
 import { computed } from 'vue'
-import CameraComponent from './CameraComponent.vue'
 //@ts-ignore
 import { Slider } from '@leolee9086/slider-component'
 import '@leolee9086/slider-component/dist/slider-component.css'
@@ -81,8 +77,6 @@ import type { ControlEvent } from '../types/controlEvents'
 
 const props = defineProps<{
   isProcessing: boolean,
-  cameraActive: boolean,
-  supportsNativeCamera: boolean,
   originalImage: string | null,
   processedImage: string | null,
   maxResolution: number,
@@ -161,18 +155,6 @@ const handleImageUpload = (event: Event) => {
 
 const loadSampleImage = () => {
   emit('controlEvent', createButtonClickEvent('load-sample-image'))
-}
-
-const toggleCamera = () => {
-  emit('controlEvent', createButtonClickEvent('toggle-camera'))
-}
-
-const handlePhotoCaptured = (imageData: string) => {
-  emit('controlEvent', createUpdateDataEvent('photo-captured', imageData))
-}
-
-const handleCameraError = (message: string) => {
-  emit('controlEvent', createUpdateDataEvent('camera-error', message))
 }
 
 const updateMaxResolution = (value: number) => {

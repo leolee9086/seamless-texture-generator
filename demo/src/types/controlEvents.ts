@@ -14,7 +14,6 @@ export interface ControlEvent {
 // 按钮点击动作类型
 export type ButtonAction =
   | 'load-sample-image'
-  | 'toggle-camera'
   | 'process-image'
   | 'toggle-magnifier'
   | 'reset-zoom'
@@ -24,8 +23,6 @@ export type ButtonAction =
 // 数据更新动作类型
 export type UpdateAction =
   | 'image-upload'
-  | 'photo-captured'
-  | 'camera-error'
   | 'max-resolution'
   | 'border-size'
   | 'split-position'
