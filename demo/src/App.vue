@@ -44,6 +44,7 @@ import SamplingEditor from './components/SamplingEditor.vue'
 //import DebugConsole from './components/DebugConsole.vue'
 import type { ControlEvent } from './types/controlEvents'
 import { saveOriginalImage, saveProcessedImage } from './utils/download'
+import { scaleImageToMaxResolution, loadImage } from './utils/imageProcessing'
 
 // 响应式数据
 const originalImage = ref<string | null>(null)
@@ -145,53 +146,9 @@ const loadSampleImage = () => {
   errorMessage.value = ''
 }
 
-// 缩放图像到指定最大分辨率
-const scaleImageToMaxResolution = (img: HTMLImageElement, maxRes: number): HTMLCanvasElement => {
-  const canvas = document.createElement('canvas')
-  const ctx = canvas.getContext('2d')!
-
-  // 计算缩放比例
-  const maxDimension = Math.max(img.width, img.height)
-
-  // 如果图像尺寸小于等于最大分辨率，直接返回原图
-  if (maxDimension <= maxRes) {
-    canvas.width = img.width
-    canvas.height = img.height
-    ctx.drawImage(img, 0, 0)
-    return canvas
-  }
-
-  // 计算缩放比例
-  const scale = maxRes / maxDimension
-  const newWidth = Math.round(img.width * scale)
-  const newHeight = Math.round(img.height * scale)
-
-  // 设置canvas尺寸
-  canvas.width = newWidth
-  canvas.height = newHeight
-
-  // 使用高质量缩放
-  ctx.imageSmoothingEnabled = true
-  ctx.imageSmoothingQuality = 'high'
-
-  // 绘制缩放后的图像
-  ctx.drawImage(img, 0, 0, newWidth, newHeight)
-
-  return canvas
-}
-
-const loadImage = (src: string): Promise<HTMLImageElement> => {
-  return new Promise((resolve, reject) => {
-    const img = new Image()
-    img.crossOrigin = 'anonymous'
-    img.onload = () => resolve(img)
-    img.onerror = reject
-    img.src = src
-  })
-}
 
 // 监听原始图像和最大分辨率的变化，更新显示的图像
-watch([rawOriginalImage, maxResolution], async ([newRaw, newMaxRes]) => {
+watch([rawOriginalImage, maxResolution], async ([newRaw, newMaxRes]: [string | null, number]) => {
   if (!newRaw) {
     originalImage.value = null
     return
