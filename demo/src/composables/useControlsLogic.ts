@@ -51,7 +51,7 @@ export function useControlsLogic(props: ControlsProps, emit: (event: 'controlEve
       id: 'border-size',
       label: 'Border (%)',
       value: props.borderSize,
-      min: 5,
+      min: 0,
       max: 100,
       step: 1,
       valuePosition: 'after' as const,

@@ -76,7 +76,8 @@ export async function processImageToTileable(
     }
 
     // 处理图像（可平铺化）
-    const processedImageData = await makeTileable(imageData, borderSize, null)
+    // 当 borderSize 为 0 时，不进行无缝化处理，直接返回原始图像数据
+    const processedImageData = borderSize === 0 ? imageData : await makeTileable(imageData, borderSize, null)
 
     // 将处理后的图像数据转换为URL
     const processedCanvas = document.createElement('canvas')

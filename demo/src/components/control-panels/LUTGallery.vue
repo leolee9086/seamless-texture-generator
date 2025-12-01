@@ -1,0 +1,79 @@
+<template>
+    <div class="grid grid-cols-3 gap-2 max-h-60 overflow-y-auto p-1 custom-scrollbar">
+        <!-- Add Button -->
+        <div class="aspect-square bg-white/5 hover:bg-white/10 border border-white/10 rounded-lg flex flex-col items-center justify-center cursor-pointer transition-colors group"
+            @click="$emit('trigger-upload')">
+            <div class="i-carbon-add text-2xl text-white/50 group-hover:text-white/80 transition-colors"></div>
+            <span class="text-xs text-white/40 mt-1 group-hover:text-white/70">Add LUT</span>
+        </div>
+
+        <!-- LUT Items -->
+        <div v-for="lut in luts" :key="lut.id"
+            class="relative aspect-square rounded-lg overflow-hidden cursor-pointer border transition-all group" :class="[
+                selectedId === lut.id
+                    ? 'border-primary-500 ring-1 ring-primary-500'
+                    : 'border-white/10 hover:border-white/30'
+            ]" @click="$emit('select', lut)">
+            <!-- Thumbnail -->
+            <img v-if="lut.thumbnail && !imageError[lut.id]" :src="lut.thumbnail" class="w-full h-full object-cover"
+                alt="LUT Thumbnail" @error="handleImageError(lut.id)" />
+            <div v-else class="w-full h-full bg-gray-800 flex items-center justify-center">
+                <span class="text-xs text-white/30 text-center px-1 break-all">{{ lut.name }}</span>
+            </div>
+
+            <!-- Name Overlay (on hover) -->
+            <div
+                class="absolute inset-x-0 bottom-0 bg-black/60 p-1 transform translate-y-full group-hover:translate-y-0 transition-transform">
+                <p class="text-[10px] text-white truncate text-center">{{ lut.name }}</p>
+            </div>
+
+            <!-- Delete Button -->
+            <button
+                class="absolute top-1 right-1 p-1 bg-black/50 hover:bg-red-500/80 rounded-full opacity-0 group-hover:opacity-100 transition-all"
+                @click.stop="$emit('delete', lut.id)">
+                <div class="i-carbon-trash-can text-white text-xs"></div>
+            </button>
+        </div>
+    </div>
+</template>
+
+<script setup lang="ts">
+import { ref } from 'vue'
+import type { LUTItem } from '../../utils/lutDb'
+
+defineProps<{
+    luts: LUTItem[]
+    selectedId: string | null
+}>()
+
+defineEmits<{
+    'trigger-upload': []
+    'select': [lut: LUTItem]
+    'delete': [id: string]
+}>()
+
+const imageError = ref<Record<string, boolean>>({})
+
+const handleImageError = (id: string) => {
+    imageError.value[id] = true
+}
+</script>
+
+<style scoped>
+.custom-scrollbar::-webkit-scrollbar {
+    width: 4px;
+}
+
+.custom-scrollbar::-webkit-scrollbar-track {
+    background: rgba(255, 255, 255, 0.05);
+}
+
+.custom-scrollbar::-webkit-scrollbar-thumb {
+    background: rgba(255, 255, 255, 0.2);
+    border-radius: 2px;
+}
+
+.custom-scrollbar::-webkit-scrollbar-thumb:hover {
+    background: rgba(255, 255, 255, 0.3);
+}
+</style>

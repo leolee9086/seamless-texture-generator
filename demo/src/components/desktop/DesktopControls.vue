@@ -48,9 +48,10 @@
           @open-sampling-editor="openSamplingEditor" />
 
         <!-- LUT Panel -->
-        <LUTPanel v-else-if="activeGroup === 'lut'" :original-image="originalImage" :lut-enabled="lutEnabled"
-          :lut-intensity="lutIntensity" :lut-file-name="lutFileName" :lut-file="lutFile" @toggle-lut="toggleLUT"
-          @lut-file-change="handleLUTFileChange" @clear-lut="clearLUT" @slider-update="handleSliderUpdate" />
+        <LUTPanel v-else-if="activeGroup === 'lut'" :original-image="originalImage" :processed-image="processedImage"
+          :lut-enabled="lutEnabled" :lut-intensity="lutIntensity" :lut-file-name="lutFileName" :lut-file="lutFile"
+          @toggle-lut="toggleLUT" @lut-file-change="handleLUTFileChange" @clear-lut="clearLUT"
+          @slider-update="handleSliderUpdate" />
 
         <!-- Settings Panel -->
         <SettingsPanel v-else-if="activeGroup === 'tileablesettings'" :is-processing="isProcessing"
