@@ -1,15 +1,9 @@
 <template>
     <div
         class="w-screen h-screen bg-gradient-to-br from-gray-900 to-black text-white font-sans relative overflow-hidden flex flex-row">
-        <!-- GitHub Link -->
-        <a href="https://github.com/leolee9086/seamless-texture-generator" target="_blank" rel="noopener noreferrer"
-            class="fixed top-4 left-4 z-30 w-10 h-10 flex items-center justify-center bg-gradient-to-br from-gray-700/80 to-gray-900/80 text-white rounded-full shadow-md transition-all duration-300 hover:shadow-lg hover:scale-110 active:scale-95 backdrop-blur-sm"
-            title="View on GitHub">
-            <div class="i-carbon-logo-github text-xl"></div>
-        </a>
 
         <!-- Controls Area (Left) -->
-        <div class="z-20 p-4 glass-panel m-4 mr-0 w-96 min-w-96 overflow-y-auto scrollbar-hide">
+        <div class="z-20   m-4 mr-0 w-96 min-w-96 overflow-y-auto scrollbar-hide">
             <Controls :is-processing="isProcessing" :original-image="originalImage" :processed-image="processedImage"
                 :max-resolution="maxResolution" :border-size="borderSize" :split-position="splitPosition"
                 :magnifier-enabled="magnifierEnabled" :zoom-level="zoomLevel" @control-event="handleControlEvent" />

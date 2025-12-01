@@ -14,7 +14,21 @@ export default defineConfig({
         presetIcons({
             scale: 1.2,
             warn: true,
+            cdn: false, // 使用本地图标集，避免网络请求
+            collections: {
+                // 明确引用 carbon 图标集
+                carbon: () => import('@iconify-json/carbon/icons.json').then(i => i.default),
+            },
         }),
+    ],
+    safelist: [
+        // 强制包含这些图标类，因为它们是动态绑定的
+        'i-carbon-favorite',
+        'i-carbon-image-search',
+        'i-carbon-crop',
+        'i-carbon-settings-adjust',
+        'i-carbon-view',
+        'i-carbon-save',
     ],
     transformers: [
         transformerDirectives(),
