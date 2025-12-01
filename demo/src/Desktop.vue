@@ -27,20 +27,31 @@
 
         <!-- Sampling Editor -->
         <SamplingEditor :visible="isSampling" :original-image="rawOriginalImage" @close="isSampling = false"
-            @confirm="handleSamplingConfirm" />
+            @confirm="handleSamplingConfirmWrapper" />
 
     </div>
 </template>
 
 <script setup lang="ts">
-import { ref, onMounted, watch } from 'vue'
-import { makeTileable } from '../../src/lib/HistogramPreservingBlendMakeTileable'
+import { ref, onMounted } from 'vue'
+import { processImageToTileable } from './utils/imageProcessor'
+import {
+  handleImageUpload,
+  loadSampleImage,
+  handleSamplingConfirm,
+  toggleMagnifier,
+  resetZoom,
+  saveOriginal,
+  saveResult
+} from './utils/imageHandlers'
+import { isMobileDevice, supportsNativeCamera as checkNativeCameraSupport } from './utils/deviceDetection'
+import { watchImageChanges } from './utils/imageWatcher'
+import { handlePhotoCaptured, handleCameraError, toggleCamera } from './utils/cameraHandlers'
 import Controls from './components/Controls.vue'
 import Viewer from './components/Viewer.vue'
 import SamplingEditor from './components/SamplingEditor.vue'
 import type { ControlEvent } from './types/controlEvents'
 import { saveOriginalImage, saveProcessedImage } from './utils/download'
-import { scaleImageToMaxResolution, loadImage } from './utils/imageProcessing'
 
 // 响应式数据
 const originalImage = ref<string | null>(null)
@@ -67,17 +78,10 @@ const zoomLevel = ref(1)
 // 放大镜配置
 const magnifierEnabled = ref(true)
 
-// 检测是否支持原生相机
-const checkNativeCameraSupport = () => {
-    const mobile = /Android|webOS|iPhone|iPad|iPod|BlackBerry|IEMobile|Opera Mini/i.test(navigator.userAgent)
-    isMobile.value = mobile
-    const hasCaptureSupport = 'capture' in document.createElement('input')
-    supportsNativeCamera.value = mobile && hasCaptureSupport
-}
-
 // 初始化时检测相机支持
 onMounted(() => {
-    checkNativeCameraSupport()
+    isMobile.value = isMobileDevice()
+    supportsNativeCamera.value = checkNativeCameraSupport()
 })
 
 // 统一的事件处理器
@@ -87,25 +91,25 @@ const handleControlEvent = (event: ControlEvent) => {
     if (type === 'button-click') {
         switch (detail.action) {
             case 'load-sample-image':
-                loadSampleImage()
+                loadSampleImageWrapper()
                 break
             case 'toggle-camera':
-                toggleCamera()
+                toggleCameraWrapper()
                 break
             case 'process-image':
                 processImage()
                 break
             case 'toggle-magnifier':
-                toggleMagnifier()
+                toggleMagnifierWrapper()
                 break
             case 'reset-zoom':
-                resetZoom()
+                resetZoomWrapper()
                 break
             case 'save-result':
-                saveResult()
+                saveResultWrapper()
                 break
             case 'save-original':
-                saveOriginal()
+                saveOriginalWrapper()
                 break
             case 'open-sampling-editor':
                 isSampling.value = true
@@ -114,13 +118,13 @@ const handleControlEvent = (event: ControlEvent) => {
     } else if (type === 'update-data') {
         switch (detail.action) {
             case 'image-upload':
-                handleImageUpload(detail.data)
+                handleImageUploadWrapper(detail.data)
                 break
             case 'photo-captured':
-                handlePhotoCaptured(detail.data)
+                handlePhotoCapturedWrapper(detail.data)
                 break
             case 'camera-error':
-                handleCameraError(detail.data)
+                handleCameraErrorWrapper(detail.data)
                 break
             case 'max-resolution':
                 maxResolution.value = detail.data
@@ -139,126 +143,104 @@ const handleControlEvent = (event: ControlEvent) => {
 }
 
 // 处理图像上传
-const handleImageUpload = (event: Event) => {
-    const target = event.target as HTMLInputElement
-    const file = target.files?.[0]
-
-    if (file) {
-        const reader = new FileReader()
-        reader.onload = (e) => {
-            rawOriginalImage.value = e.target?.result as string
-            processedImage.value = null
-            errorMessage.value = ''
-        }
-        reader.readAsDataURL(file)
-    }
+const handleImageUploadWrapper = (event: Event) => {
+    handleImageUpload(event, (imageData: string) => {
+        rawOriginalImage.value = imageData
+        processedImage.value = null
+        errorMessage.value = ''
+    })
 }
 
 // 加载示例图像
-const loadSampleImage = () => {
-    rawOriginalImage.value = 'https://picsum.photos/seed/texture/512/512.jpg'
-    processedImage.value = null
-    errorMessage.value = ''
+const loadSampleImageWrapper = () => {
+    loadSampleImage((imageData: string) => {
+        rawOriginalImage.value = imageData
+        processedImage.value = null
+        errorMessage.value = ''
+    })
 }
 
 // 打开/关闭摄像头
-const toggleCamera = () => {
-    cameraActive.value = !cameraActive.value
+const toggleCameraWrapper = () => {
+    toggleCamera(cameraActive.value, (active: boolean) => {
+        cameraActive.value = active
+    })
 }
 
 // 处理摄像头拍照结果
-const handlePhotoCaptured = (imageData: string) => {
-    rawOriginalImage.value = imageData
-    processedImage.value = null
-    errorMessage.value = ''
+const handlePhotoCapturedWrapper = (imageData: string) => {
+    handlePhotoCaptured(
+        imageData,
+        (updatedImageData: string) => {
+            rawOriginalImage.value = updatedImageData
+            processedImage.value = null
+        },
+        (message: string) => { errorMessage.value = message }
+    )
 }
 
 // 处理摄像头错误
-const handleCameraError = (message: string) => {
-    errorMessage.value = message
+const handleCameraErrorWrapper = (message: string) => {
+    handleCameraError(message, (errorMsg: string) => {
+        errorMessage.value = errorMsg
+    })
 }
 
 
 // 监听原始图像和最大分辨率的变化，更新显示的图像
-watch([rawOriginalImage, maxResolution], async ([newRaw, newMaxRes]: [string | null, number]) => {
-    if (!newRaw) {
-        originalImage.value = null
-        return
-    }
+watchImageChanges(
+    rawOriginalImage,
+    maxResolution,
+    originalImage,
+    (message) => { errorMessage.value = message }
+)
 
-    try {
-        const img = await loadImage(newRaw)
-        const scaledCanvas = scaleImageToMaxResolution(img, newMaxRes)
-        originalImage.value = scaledCanvas.toDataURL()
-    } catch (error) {
-        console.error('加载或缩放图像时出错:', error)
-        errorMessage.value = '加载图像失败'
-    }
-})
-
-const handleSamplingConfirm = (imageData: string) => {
-    originalImage.value = imageData
-    processedImage.value = null
+const handleSamplingConfirmWrapper = (imageData: string) => {
+    handleSamplingConfirm(imageData, (updatedImageData: string) => {
+        originalImage.value = updatedImageData
+        processedImage.value = null
+    })
 }
 
 // 处理图像
 const processImage = async () => {
     if (!originalImage.value) return
 
-    isProcessing.value = true
-    errorMessage.value = ''
-
     try {
-        const img = new Image()
-        img.crossOrigin = 'anonymous'
-
-        await new Promise((resolve, reject) => {
-            img.onload = resolve
-            img.onerror = reject
-            img.src = originalImage.value!
-        })
-
-        const scaledCanvas = scaleImageToMaxResolution(img, maxResolution.value)
-        const imageData = scaledCanvas.getContext('2d')!.getImageData(0, 0, scaledCanvas.width, scaledCanvas.height)
-        const processedImageData = await makeTileable(imageData, borderSize.value, null)
-
-        const processedCanvas = document.createElement('canvas')
-        processedCanvas.width = processedImageData.width
-        processedCanvas.height = processedImageData.height
-        const processedCtx = processedCanvas.getContext('2d')!
-        processedCtx.putImageData(processedImageData, 0, 0)
-
-        processedImage.value = processedCanvas.toDataURL()
+        processedImage.value = await processImageToTileable(
+            originalImage.value,
+            maxResolution.value,
+            borderSize.value,
+            () => { isProcessing.value = true },
+            () => { isProcessing.value = false },
+            (message) => { errorMessage.value = message }
+        )
     } catch (error) {
         console.error('处理图像时出错:', error)
-        errorMessage.value = `处理图像时出错: ${error instanceof Error ? error.message : '未知错误'}`
-    } finally {
-        isProcessing.value = false
     }
 }
 
 // 切换放大镜
-const toggleMagnifier = () => {
-    magnifierEnabled.value = !magnifierEnabled.value
+const toggleMagnifierWrapper = () => {
+    toggleMagnifier(magnifierEnabled.value, (enabled: boolean) => {
+        magnifierEnabled.value = enabled
+    })
 }
 
-const resetZoom = () => {
-    zoomLevel.value = 1
-    if (viewerRef.value) {
-        viewerRef.value.resetZoom()
-    }
+const resetZoomWrapper = () => {
+    resetZoom(() => {
+        zoomLevel.value = 1
+    }, viewerRef)
 }
 
 // 保存结果
-const saveResult = () => {
-    if (!processedImage.value) return
-    saveProcessedImage(processedImage.value)
+const saveResultWrapper = () => {
+    saveResult(processedImage.value, saveProcessedImage)
 }
 
 // 保存原始图像
-const saveOriginal = () => {
-    if (!originalImage.value) return
-    saveOriginalImage(originalImage.value)
+const saveOriginalWrapper = () => {
+    saveOriginal(originalImage.value, saveOriginalImage)
 }
 </script>
 
