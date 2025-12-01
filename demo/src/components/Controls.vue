@@ -52,11 +52,19 @@
         </button>
       </div>
 
-      <button v-if="processedImage" @click="saveResult"
-        class="glass-btn w-full flex-center gap-2 bg-green-500/20 hover:bg-green-500/30 border-green-500/30">
-        <div class="i-carbon-save"></div>
-        <span>Save Result</span>
-      </button>
+      <div v-if="processedImage || originalImage" class="grid grid-cols-2 gap-3">
+        <button v-if="originalImage" @click="saveOriginal"
+          class="glass-btn w-full flex-center gap-2 bg-blue-500/20 hover:bg-blue-500/30 border-blue-500/30">
+          <div class="i-carbon-image"></div>
+          <span>Save Original</span>
+        </button>
+
+        <button v-if="processedImage" @click="saveResult"
+          class="glass-btn w-full flex-center gap-2 bg-green-500/20 hover:bg-green-500/30 border-green-500/30">
+          <div class="i-carbon-save"></div>
+          <span>Save Result</span>
+        </button>
+      </div>
 
       <button v-if="processedImage" @click="toggleMagnifier" class="glass-btn w-full flex-center gap-2"
         :class="magnifierEnabled ? 'bg-purple-500/20 border-purple-500/30' : ''">
@@ -205,6 +213,10 @@ const resetZoom = () => {
 
 const openSamplingEditor = () => {
   emit('controlEvent', createButtonClickEvent('open-sampling-editor'))
+}
+
+const saveOriginal = () => {
+  emit('controlEvent', createButtonClickEvent('save-original'))
 }
 
 const saveResult = () => {

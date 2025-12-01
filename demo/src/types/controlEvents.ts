@@ -18,6 +18,7 @@ export type ButtonAction =
   | 'toggle-magnifier'
   | 'reset-zoom'
   | 'save-result'
+  | 'save-original'
   | 'open-sampling-editor'
 
 // 数据更新动作类型
