@@ -47,6 +47,11 @@
         <CropPanel v-else-if="activeGroup === 'crop'" :original-image="originalImage"
           @open-sampling-editor="openSamplingEditor" />
 
+        <!-- LUT Panel -->
+        <LUTPanel v-else-if="activeGroup === 'lut'" :original-image="originalImage" :lut-enabled="lutEnabled"
+          :lut-intensity="lutIntensity" :lut-file-name="lutFileName" :lut-file="lutFile" @toggle-lut="toggleLUT"
+          @lut-file-change="handleLUTFileChange" @clear-lut="clearLUT" @slider-update="handleSliderUpdate" />
+
         <!-- Settings Panel -->
         <SettingsPanel v-else-if="activeGroup === 'tileablesettings'" :is-processing="isProcessing"
           :original-image="originalImage" :settings-slider-items="settingsSliderItems" @process-image="processImage"
@@ -72,6 +77,7 @@ import { useControlsLogic } from '../../composables/useControlsLogic'
 import ContactPanel from '../control-panels/ContactPanel.vue'
 import InputsPanel from '../control-panels/InputsPanel.vue'
 import CropPanel from '../control-panels/CropPanel.vue'
+import LUTPanel from '../control-panels/LUTPanel.vue'
 import SettingsPanel from '../control-panels/SettingsPanel.vue'
 import ViewPanel from '../control-panels/ViewPanel.vue'
 import SavePanel from '../control-panels/SavePanel.vue'
@@ -84,7 +90,11 @@ const props = defineProps<{
   borderSize: number,
   splitPosition: number,
   magnifierEnabled: boolean,
-  zoomLevel: number
+  zoomLevel: number,
+  lutEnabled: boolean,
+  lutIntensity: number,
+  lutFileName: string | null,
+  lutFile: File | null
 }>()
 
 const emit = defineEmits<{
@@ -106,6 +116,9 @@ const {
   openSamplingEditor,
   saveOriginal,
   saveResult,
+  toggleLUT,
+  handleLUTFileChange,
+  clearLUT,
 } = useControlsLogic(props, emit)
 
 const currentGroup = computed(() => groups.find(g => g.id === activeGroup.value))

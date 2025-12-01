@@ -1,4 +1,4 @@
-import { ref, onMounted, type Ref } from 'vue'
+import { ref, onMounted, watch, type Ref } from 'vue'
 import { processImageToTileable } from '../utils/imageProcessor'
 import {
   handleImageUpload as uploadHandler,
@@ -42,10 +42,6 @@ export interface UseTextureGeneratorReturn {
   isMobile: Ref<boolean>
   cameraActive: Ref<boolean>
   supportsNativeCamera: Ref<boolean>
-  lutEnabled: Ref<boolean>
-  lutIntensity: Ref<number>
-  lutFileName: Ref<string | null>
-  lutFile: Ref<File | null>
 
   // 方法
   handleImageUploadWrapper: (event: Event) => void
@@ -89,10 +85,6 @@ export function useTextureGenerator(options: UseTextureGeneratorOptions = {}): U
   const isMobile = ref(false)
   const cameraActive = ref(false)
   const supportsNativeCamera = ref(false)
-  const lutEnabled = ref(false)
-  const lutIntensity = ref(1.0)
-  const lutFileName = ref<string | null>(null)
-  const lutFile = ref<File | null>(null)
 
   // 初始化设备检测
   onMounted(() => {
@@ -176,24 +168,11 @@ export function useTextureGenerator(options: UseTextureGeneratorOptions = {}): U
         borderSize.value,
         () => { isProcessing.value = true },
         () => { isProcessing.value = false },
-        (message) => { errorMessage.value = message },
-        lutFile.value,
-        lutIntensity.value
+        (message) => { errorMessage.value = message }
       )
     } catch (error) {
       console.error('处理图像时出错:', error)
     }
-  }
-
-  // 防抖的图像处理函数
-  let debounceTimer: NodeJS.Timeout | null = null
-  const debouncedProcessImage = () => {
-    if (debounceTimer) {
-      clearTimeout(debounceTimer)
-    }
-    debounceTimer = setTimeout(() => {
-      processImage()
-    }, 300)
   }
 
   // 切换放大镜
@@ -241,27 +220,6 @@ export function useTextureGenerator(options: UseTextureGeneratorOptions = {}): U
     onBorderSize: (value) => { borderSize.value = value },
     onSplitPosition: (value) => { splitPosition.value = value },
     onZoomLevel: (value) => { zoomLevel.value = value },
-    onToggleLUT: () => { lutEnabled.value = !lutEnabled.value },
-    onClearLUT: () => {
-      lutFileName.value = null
-      lutFile.value = null
-    },
-    onLUTIntensity: (value) => {
-      lutIntensity.value = value
-      // 当 LUT 强度改变时，如果有原始图像和 LUT 文件，重新处理它
-      if (originalImage.value && lutFile.value) {
-        debouncedProcessImage()
-      }
-    },
-    onLUTFileChange: async (file: File) => {
-      try {
-        lutFile.value = file
-        lutFileName.value = file.name
-      } catch (error) {
-        console.error('Failed to load LUT file:', error)
-        errorMessage.value = 'Failed to load LUT file'
-      }
-    },
   })
 
   return {
@@ -280,10 +238,6 @@ export function useTextureGenerator(options: UseTextureGeneratorOptions = {}): U
     isMobile,
     cameraActive,
     supportsNativeCamera,
-    lutEnabled,
-    lutIntensity,
-    lutFileName,
-    lutFile,
     handleImageUploadWrapper,
     loadSampleImageWrapper,
     toggleCameraWrapper,

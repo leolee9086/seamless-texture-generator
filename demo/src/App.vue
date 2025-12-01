@@ -7,10 +7,11 @@
       <!-- Mobile: Bottom sheet, Desktop: Left sidebar -->
       <div
         class="z-20 m-4 mt-0 md:m-4 md:mr-0 md:w-96 max-h-[40vh] md:max-h-[calc(100vh-2rem)] flex flex-col order-2 md:order-1 transition-all duration-300 pointer-events-none">
-        <Controls :is-processing="isProcessing" :original-image="originalImage" :processed-image="processedImage"
-          :max-resolution="maxResolution" :border-size="borderSize" :split-position="splitPosition"
-          :magnifier-enabled="magnifierEnabled" :zoom-level="zoomLevel" @control-event="handleControlEvent"
-          class="pointer-events-auto h-full" />
+        <MobileControls :is-processing="isProcessing" :original-image="originalImage" :processed-image="processedImage"
+                :max-resolution="maxResolution" :border-size="borderSize" :split-position="splitPosition"
+                :magnifier-enabled="magnifierEnabled" :zoom-level="zoomLevel" :lut-enabled="lutEnabled"
+                :lut-intensity="lutIntensity" :lut-file-name="lutFileName" :lut-file="lutFile" @control-event="handleControlEvent"
+                class="pointer-events-auto h-full" />
       </div>
 
       <!-- Viewer Area -->
@@ -34,7 +35,7 @@
 </template>
 
 <script setup lang="ts">
-import Controls from './components/Controls.vue'
+import MobileControls from './components/mobile/MobileControls.vue'
 import Viewer from './components/Viewer.vue'
 import SamplingEditor from './components/SamplingEditor.vue'
 import { useTextureGenerator } from './composables/useTextureGenerator'
@@ -53,6 +54,10 @@ const {
   viewerRef,
   zoomLevel,
   magnifierEnabled,
+  lutEnabled,
+  lutIntensity,
+  lutFileName,
+  lutFile,
   handleSamplingConfirmWrapper,
   handleControlEvent,
 } = useTextureGenerator({

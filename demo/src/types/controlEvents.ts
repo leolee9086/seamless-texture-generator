@@ -20,6 +20,8 @@ export type ButtonAction =
   | 'save-result'
   | 'save-original'
   | 'open-sampling-editor'
+  | 'toggle-lut'
+  | 'clear-lut'
 
 // 数据更新动作类型
 export type UpdateAction =
@@ -28,6 +30,8 @@ export type UpdateAction =
   | 'border-size'
   | 'split-position'
   | 'zoom-level'
+  | 'lut-intensity'
+  | 'lut-file-change'
 
 // 事件创建辅助函数
 export const createButtonClickEvent = (action: ButtonAction): ControlEvent => ({

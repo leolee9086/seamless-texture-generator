@@ -11,6 +11,9 @@ export interface ControlsProps {
   splitPosition: number
   magnifierEnabled: boolean
   zoomLevel: number
+  lutEnabled: boolean
+  lutIntensity: number
+  lutFileName: string | null
 }
 
 export function useControlsLogic(props: ControlsProps, emit: (event: 'controlEvent', payload: ControlEvent) => void) {
@@ -20,6 +23,7 @@ export function useControlsLogic(props: ControlsProps, emit: (event: 'controlEve
     { id: 'contact', icon: 'i-carbon-favorite', label: 'Contact & Sponsor', component: 'ContactPanel' },
     { id: 'inputs', icon: 'i-carbon-image-search', label: 'Inputs', component: 'InputsPanel' },
     { id: 'crop', icon: 'i-carbon-crop', label: 'Crop', component: 'CropPanel' },
+    { id: 'lut', icon: 'i-carbon-color-palette', label: 'LUT', component: 'LUTPanel' },
     { id: 'tileablesettings', icon: 'i-carbon-settings-adjust', label: 'Settings', component: 'SettingsPanel' },
     { id: 'view', icon: 'i-carbon-view', label: 'View', component: 'ViewPanel' },
     { id: 'save', icon: 'i-carbon-save', label: 'Save', component: 'SavePanel' },
@@ -50,6 +54,21 @@ export function useControlsLogic(props: ControlsProps, emit: (event: 'controlEve
       min: 5,
       max: 100,
       step: 1,
+      valuePosition: 'after' as const,
+      showRuler: false
+    }]
+  })
+
+  // Sliders for LUT Group
+  const lutSliderItems = computed(() => {
+    if (!props.originalImage || !props.lutEnabled) return []
+    return [{
+      id: 'lut-intensity',
+      label: 'Intensity',
+      value: props.lutIntensity,
+      min: 0,
+      max: 1,
+      step: 0.01,
       valuePosition: 'after' as const,
       showRuler: false
     }]
@@ -131,7 +150,22 @@ export function useControlsLogic(props: ControlsProps, emit: (event: 'controlEve
       case 'zoom-level':
         updateZoomLevel(value)
         break
+      case 'lut-intensity':
+        emit('controlEvent', createUpdateDataEvent('lut-intensity', value))
+        break
     }
+  }
+
+  const toggleLUT = () => {
+    emit('controlEvent', createButtonClickEvent('toggle-lut'))
+  }
+
+  const handleLUTFileChange = (file: File) => {
+    emit('controlEvent', createUpdateDataEvent('lut-file-change', file))
+  }
+
+  const clearLUT = () => {
+    emit('controlEvent', createButtonClickEvent('clear-lut'))
   }
 
   const resetZoom = () => {
@@ -155,6 +189,7 @@ export function useControlsLogic(props: ControlsProps, emit: (event: 'controlEve
     groups,
     inputSliderItems,
     settingsSliderItems,
+    lutSliderItems,
     viewSliderItems,
     handleImageUpload,
     loadSampleImage,
@@ -169,5 +204,8 @@ export function useControlsLogic(props: ControlsProps, emit: (event: 'controlEve
     openSamplingEditor,
     saveOriginal,
     saveResult,
+    toggleLUT,
+    handleLUTFileChange,
+    clearLUT,
   }
 }

@@ -4,9 +4,11 @@
 
         <!-- Controls Area (Left) -->
         <div class="z-20   m-4 mr-0 w-96 min-w-96 overflow-y-auto scrollbar-hide">
-            <Controls :is-processing="isProcessing" :original-image="originalImage" :processed-image="processedImage"
+            <DesktopControls :is-processing="isProcessing" :original-image="originalImage" :processed-image="processedImage"
                 :max-resolution="maxResolution" :border-size="borderSize" :split-position="splitPosition"
-                :magnifier-enabled="magnifierEnabled" :zoom-level="zoomLevel" @control-event="handleControlEvent" />
+                :magnifier-enabled="magnifierEnabled" :zoom-level="zoomLevel"
+                :lut-enabled="lutEnabled" :lut-intensity="lutIntensity" :lut-file-name="lutFileName" :lut-file="lutFile"
+                @control-event="handleControlEvent" />
         </div>
 
         <!-- Viewer Area (Right) -->
@@ -25,31 +27,35 @@
 </template>
 
 <script setup lang="ts">
-import Controls from './components/Controls.vue'
+import DesktopControls from './components/desktop/DesktopControls.vue'
 import Viewer from './components/Viewer.vue'
 import SamplingEditor from './components/SamplingEditor.vue'
 import { useTextureGenerator } from './composables/useTextureGenerator'
 
 // 使用共享逻辑，启用摄像头功能
 const {
-    originalImage,
-    rawOriginalImage,
-    processedImage,
-    borderSize,
-    maxResolution,
-    splitPosition,
-    isProcessing,
-    isSampling,
-    errorMessage,
-    viewerRef,
-    zoomLevel,
-    magnifierEnabled,
-    handleSamplingConfirmWrapper,
-    handleControlEvent,
+  originalImage,
+  rawOriginalImage,
+  processedImage,
+  borderSize,
+  maxResolution,
+  splitPosition,
+  isProcessing,
+  isSampling,
+  errorMessage,
+  viewerRef,
+  zoomLevel,
+  magnifierEnabled,
+  lutEnabled,
+  lutIntensity,
+  lutFileName,
+  lutFile,
+  handleSamplingConfirmWrapper,
+  handleControlEvent,
 } = useTextureGenerator({
-    enableCamera: true,
-    initialMaxResolution: 4096,
-    initialBorderSize: 20,
+  enableCamera: true,
+  initialMaxResolution: 4096,
+  initialBorderSize: 20,
 })
 </script>
 

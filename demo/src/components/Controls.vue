@@ -17,7 +17,11 @@ const props = defineProps<{
   borderSize: number,
   splitPosition: number,
   magnifierEnabled: boolean,
-  zoomLevel: number
+  zoomLevel: number,
+  lutEnabled: boolean,
+  lutIntensity: number,
+  lutFileName: string | null,
+  lutFile: File | null
 }>()
 
 const emit = defineEmits<{

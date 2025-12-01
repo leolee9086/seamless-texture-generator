@@ -13,6 +13,8 @@ export interface ControlEventHandlerOptions {
   onSaveOriginal?: () => void
   onOpenSamplingEditor?: () => void
   onToggleCamera?: () => void
+  onToggleLUT?: () => void
+  onClearLUT?: () => void
 
   // 数据更新动作处理器
   onImageUpload?: (event: Event) => void
@@ -22,6 +24,8 @@ export interface ControlEventHandlerOptions {
   onBorderSize?: (value: number) => void
   onSplitPosition?: (value: number) => void
   onZoomLevel?: (value: number) => void
+  onLUTIntensity?: (value: number) => void
+  onLUTFileChange?: (file: File) => void
 }
 
 /**
@@ -59,6 +63,12 @@ export function createControlEventHandler(options: ControlEventHandlerOptions) {
         case 'toggle-camera':
           options.onToggleCamera?.()
           break
+        case 'toggle-lut':
+          options.onToggleLUT?.()
+          break
+        case 'clear-lut':
+          options.onClearLUT?.()
+          break
       }
     } else if (type === 'update-data') {
       switch (detail.action) {
@@ -82,6 +92,12 @@ export function createControlEventHandler(options: ControlEventHandlerOptions) {
           break
         case 'zoom-level':
           options.onZoomLevel?.(detail.data)
+          break
+        case 'lut-intensity':
+          options.onLUTIntensity?.(detail.data)
+          break
+        case 'lut-file-change':
+          options.onLUTFileChange?.(detail.data)
           break
       }
     }
