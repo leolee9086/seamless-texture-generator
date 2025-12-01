@@ -33,215 +33,34 @@
 </template>
 
 <script setup lang="ts">
-import { ref, onMounted } from 'vue'
-import { processImageToTileable } from './utils/imageProcessor'
-import {
-  handleImageUpload,
-  loadSampleImage,
-  handleSamplingConfirm,
-  toggleMagnifier,
-  resetZoom,
-  saveOriginal,
-  saveResult
-} from './utils/imageHandlers'
-import { isMobileDevice, supportsNativeCamera as checkNativeCameraSupport } from './utils/deviceDetection'
-import { watchImageChanges } from './utils/imageWatcher'
-import { handlePhotoCaptured, handleCameraError, toggleCamera } from './utils/cameraHandlers'
 import Controls from './components/Controls.vue'
 import Viewer from './components/Viewer.vue'
 import SamplingEditor from './components/SamplingEditor.vue'
-import type { ControlEvent } from './types/controlEvents'
-import { saveOriginalImage, saveProcessedImage } from './utils/download'
+import { useTextureGenerator } from './composables/useTextureGenerator'
 
-// 响应式数据
-const originalImage = ref<string | null>(null)
-const rawOriginalImage = ref<string | null>(null)
-const processedImage = ref<string | null>(null)
-const borderSize = ref(20)
-const maxResolution = ref(4096)
-const splitPosition = ref(0.5)
-const isProcessing = ref(false)
-const isSampling = ref(false)
-const errorMessage = ref('')
-const viewerRef = ref()
-
-// 摄像头相关状态
-const cameraActive = ref(false)
-const supportsNativeCamera = ref(false)
-
-// 移动端检测
-const isMobile = ref(false)
-
-// 缩放相关状态
-const zoomLevel = ref(1)
-
-// 放大镜配置
-const magnifierEnabled = ref(true)
-
-// 初始化时检测相机支持
-onMounted(() => {
-    isMobile.value = isMobileDevice()
-    supportsNativeCamera.value = checkNativeCameraSupport()
+// 使用共享逻辑，启用摄像头功能
+const {
+  originalImage,
+  rawOriginalImage,
+  processedImage,
+  borderSize,
+  maxResolution,
+  splitPosition,
+  isProcessing,
+  isSampling,
+  errorMessage,
+  viewerRef,
+  zoomLevel,
+  magnifierEnabled,
+  cameraActive,
+  supportsNativeCamera,
+  handleSamplingConfirmWrapper,
+  handleControlEvent,
+} = useTextureGenerator({
+  enableCamera: true,
+  initialMaxResolution: 4096,
+  initialBorderSize: 20,
 })
-
-// 统一的事件处理器
-const handleControlEvent = (event: ControlEvent) => {
-    const { type, detail } = event
-
-    if (type === 'button-click') {
-        switch (detail.action) {
-            case 'load-sample-image':
-                loadSampleImageWrapper()
-                break
-            case 'toggle-camera':
-                toggleCameraWrapper()
-                break
-            case 'process-image':
-                processImage()
-                break
-            case 'toggle-magnifier':
-                toggleMagnifierWrapper()
-                break
-            case 'reset-zoom':
-                resetZoomWrapper()
-                break
-            case 'save-result':
-                saveResultWrapper()
-                break
-            case 'save-original':
-                saveOriginalWrapper()
-                break
-            case 'open-sampling-editor':
-                isSampling.value = true
-                break
-        }
-    } else if (type === 'update-data') {
-        switch (detail.action) {
-            case 'image-upload':
-                handleImageUploadWrapper(detail.data)
-                break
-            case 'photo-captured':
-                handlePhotoCapturedWrapper(detail.data)
-                break
-            case 'camera-error':
-                handleCameraErrorWrapper(detail.data)
-                break
-            case 'max-resolution':
-                maxResolution.value = detail.data
-                break
-            case 'border-size':
-                borderSize.value = detail.data
-                break
-            case 'split-position':
-                splitPosition.value = detail.data
-                break
-            case 'zoom-level':
-                zoomLevel.value = detail.data
-                break
-        }
-    }
-}
-
-// 处理图像上传
-const handleImageUploadWrapper = (event: Event) => {
-    handleImageUpload(event, (imageData: string) => {
-        rawOriginalImage.value = imageData
-        processedImage.value = null
-        errorMessage.value = ''
-    })
-}
-
-// 加载示例图像
-const loadSampleImageWrapper = () => {
-    loadSampleImage((imageData: string) => {
-        rawOriginalImage.value = imageData
-        processedImage.value = null
-        errorMessage.value = ''
-    })
-}
-
-// 打开/关闭摄像头
-const toggleCameraWrapper = () => {
-    toggleCamera(cameraActive.value, (active: boolean) => {
-        cameraActive.value = active
-    })
-}
-
-// 处理摄像头拍照结果
-const handlePhotoCapturedWrapper = (imageData: string) => {
-    handlePhotoCaptured(
-        imageData,
-        (updatedImageData: string) => {
-            rawOriginalImage.value = updatedImageData
-            processedImage.value = null
-        },
-        (message: string) => { errorMessage.value = message }
-    )
-}
-
-// 处理摄像头错误
-const handleCameraErrorWrapper = (message: string) => {
-    handleCameraError(message, (errorMsg: string) => {
-        errorMessage.value = errorMsg
-    })
-}
-
-
-// 监听原始图像和最大分辨率的变化，更新显示的图像
-watchImageChanges(
-    rawOriginalImage,
-    maxResolution,
-    originalImage,
-    (message) => { errorMessage.value = message }
-)
-
-const handleSamplingConfirmWrapper = (imageData: string) => {
-    handleSamplingConfirm(imageData, (updatedImageData: string) => {
-        originalImage.value = updatedImageData
-        processedImage.value = null
-    })
-}
-
-// 处理图像
-const processImage = async () => {
-    if (!originalImage.value) return
-
-    try {
-        processedImage.value = await processImageToTileable(
-            originalImage.value,
-            maxResolution.value,
-            borderSize.value,
-            () => { isProcessing.value = true },
-            () => { isProcessing.value = false },
-            (message) => { errorMessage.value = message }
-        )
-    } catch (error) {
-        console.error('处理图像时出错:', error)
-    }
-}
-
-// 切换放大镜
-const toggleMagnifierWrapper = () => {
-    toggleMagnifier(magnifierEnabled.value, (enabled: boolean) => {
-        magnifierEnabled.value = enabled
-    })
-}
-
-const resetZoomWrapper = () => {
-    resetZoom(() => {
-        zoomLevel.value = 1
-    }, viewerRef)
-}
-
-// 保存结果
-const saveResultWrapper = () => {
-    saveResult(processedImage.value, saveProcessedImage)
-}
-
-// 保存原始图像
-const saveOriginalWrapper = () => {
-    saveOriginal(originalImage.value, saveOriginalImage)
-}
 </script>
 
 <style>
