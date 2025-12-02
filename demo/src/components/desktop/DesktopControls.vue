@@ -51,7 +51,7 @@
         <LUTPanel v-else-if="activeGroup === 'lut'" :original-image="originalImage" :processed-image="processedImage"
           :lut-enabled="lutEnabled" :lut-intensity="lutIntensity" :lut-file-name="lutFileName" :lut-file="lutFile"
           @toggle-lut="toggleLUT" @lut-file-change="handleLUTFileChange" @clear-lut="clearLUT"
-          @slider-update="handleSliderUpdate" @mask-update="handleMaskUpdate" />
+          @slider-update="handleSliderUpdate" @mask-update="handleMaskUpdate" @control-event="handleControlEvent" />
 
         <!-- Settings Panel -->
         <SettingsPanel v-else-if="activeGroup === 'tileablesettings'" :is-processing="isProcessing"
@@ -120,10 +120,12 @@ const {
   toggleLUT,
   handleLUTFileChange,
   clearLUT,
-  handleMaskUpdate
+  handleMaskUpdate,
+  handleControlEvent
 } = useControlsLogic(props, emit)
 
 const currentGroup = computed(() => groups.find(g => g.id === activeGroup.value))
+
 </script>
 
 <style scoped>

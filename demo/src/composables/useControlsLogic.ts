@@ -184,6 +184,10 @@ export function useControlsLogic(props: ControlsProps, emit: (event: 'controlEve
     emit('controlEvent', createButtonClickEvent('save-result'))
   }
 
+  const handleControlEvent = (event: ControlEvent) => {
+    emit('controlEvent', event)
+  }
+
   return {
     activeGroup,
     groups,
@@ -209,6 +213,7 @@ export function useControlsLogic(props: ControlsProps, emit: (event: 'controlEve
     clearLUT,
     handleMaskUpdate: (maskGenerator: (() => Promise<Uint8Array | null>) | null) => {
       emit('controlEvent', createUpdateDataEvent('mask-update', maskGenerator))
-    }
+    },
+    handleControlEvent
   }
 }

@@ -32,6 +32,8 @@ export type UpdateAction =
   | 'zoom-level'
   | 'lut-intensity'
   | 'lut-file-change'
+  | 'mask-update'
+  | 'set-preview-overlay'
 
 // 事件创建辅助函数
 export const createButtonClickEvent = (action: ButtonAction): ControlEvent => ({

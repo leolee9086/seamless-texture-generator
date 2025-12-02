@@ -52,10 +52,19 @@
                 <div class="mt-4 border-t border-white/5 pt-4">
                     <ColorBlockSelector :processing="false" :quantized-color-blocks="quantizedColorBlocks"
                         :common-hsl-blocks="commonHslBlocks" :layers="layers" :active-layer-id="activeLayerId"
-                        :mask-options="maskOptions" @add-color-layer="addColorLayer" @add-hsl-layer="addHslLayer"
-                        @remove-layer="removeLayer" @select-layer="selectLayer" @update-layer="updateLayer"
+                        @add-color-layer="addColorLayer" @add-hsl-layer="addHslLayer"
+                        @remove-layer="removeLayer" @select-layer="selectLayer" @update-layer="updateLayer" />
+                </div>
+
+                <!-- Mask Preview Panel -->
+                <div class="mt-4 border-t border-white/5 pt-4">
+                    <MaskPreviewPanel :processing="false" :original-image="originalImage"
+                        :layers="layers" :mask-options="maskOptions"
+                        :update-mask-preview="updateMaskPreview"
+                        :generate-mask-preview-image-data-url="generateMaskPreviewImageDataUrl"
+                        :generate-color-block-mask="generateColorBlockMask"
                         @update:mask-options="updateMaskOptions"
-                        @request-mask-preview-update="handleMaskPreviewUpdate" />
+                        @set-preview-overlay="handleSetPreviewOverlay" />
                 </div>
             </div>
 
@@ -78,6 +87,7 @@ import { ref, computed, onMounted, watch } from 'vue'
 import { Slider } from '@leolee9086/slider-component'
 import LUTGallery from './LUTGallery.vue'
 import ColorBlockSelector from './ColorBlockSelector.vue'
+import MaskPreviewPanel from '../previews/MaskPreviewPanel.vue'
 import { lutDb, type LUTItem } from '../../utils/lutDb'
 import { processImageToTileable } from '../../utils/imageProcessor'
 import { useColorBlockSelector } from '../../composables/useColorBlockSelector'
@@ -96,6 +106,7 @@ const emit = defineEmits<{
     'clear-lut': []
     'slider-update': [data: { id: string; value: number }]
     'mask-update': [maskGenerator: (() => Promise<Uint8Array | null>) | null]
+    'control-event': [event: any]
 }>()
 
 // State
@@ -118,7 +129,8 @@ const {
     selectLayer,
     updateLayer,
     generateColorBlockMask,
-    updateMaskPreview
+    updateMaskPreview,
+    generateMaskPreviewImageDataUrl
 } = useColorBlockSelector()
 
 // Computed
@@ -335,10 +347,15 @@ const updateMaskOptions = (options: any) => {
     Object.assign(maskOptions.value, options)
 }
 
-const handleMaskPreviewUpdate = (canvas?: HTMLCanvasElement) => {
-    if (canvas && props.originalImage) {
-        updateMaskPreview(props.originalImage, canvas)
-    }
+
+const handleSetPreviewOverlay = (data: any, component: any) => {
+    emit('control-event', {
+        type: 'update-data',
+        detail: {
+            action: 'set-preview-overlay',
+            data: { data, component }
+        }
+    })
 }
 
 // Lifecycle

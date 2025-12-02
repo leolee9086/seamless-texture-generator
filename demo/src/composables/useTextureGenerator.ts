@@ -1,4 +1,4 @@
-import { ref, onMounted, type Ref } from 'vue'
+import { ref, onMounted, type Ref, type Component, markRaw } from 'vue'
 import { processImageToTileable } from '../utils/imageProcessor'
 import {
   handleImageUpload as uploadHandler,
@@ -15,6 +15,12 @@ import { handlePhotoCaptured, handleCameraError, toggleCamera } from '../utils/c
 import { saveOriginalImage, saveProcessedImage } from '../utils/download'
 import { createControlEventHandler } from '../utils/controlEventHandler'
 import type { ControlEvent } from '../types/controlEvents'
+
+// 定义overlay数据接口
+interface PreviewOverlayData {
+  data: any  // 传递给组件的数据
+  component: Component  // Vue组件
+}
 
 export interface UseTextureGeneratorOptions {
   /** 是否启用摄像头功能（仅桌面端） */
@@ -47,6 +53,7 @@ export interface UseTextureGeneratorReturn {
   lutFileName: Ref<string | null>
   lutFile: Ref<File | null>
   maskGenerator: Ref<(() => Promise<Uint8Array | null>) | null>
+  previewOverlay: Ref<PreviewOverlayData | null>
 
   // 方法
   handleImageUploadWrapper: (event: Event) => void
@@ -62,6 +69,8 @@ export interface UseTextureGeneratorReturn {
   saveOriginalWrapper: () => void
   openSamplingEditor: () => void
   handleControlEvent: (event: ControlEvent) => void
+  setPreviewOverlay: (data: any, component: Component) => void
+  clearPreviewOverlay: () => void
 }
 
 /**
@@ -95,6 +104,7 @@ export function useTextureGenerator(options: UseTextureGeneratorOptions = {}): U
   const lutFileName = ref<string | null>(null)
   const lutFile = ref<File | null>(null)
   const maskGenerator = ref<(() => Promise<Uint8Array | null>) | null>(null)
+  const previewOverlay = ref<PreviewOverlayData | null>(null)
 
   // 初始化设备检测
   onMounted(() => {
@@ -235,6 +245,20 @@ export function useTextureGenerator(options: UseTextureGeneratorOptions = {}): U
     isSampling.value = true
   }
 
+  // 设置预览覆盖层
+  const setPreviewOverlay = (data: any, component: Component) => {
+    if (!data || !component) {
+      previewOverlay.value = null
+    } else {
+      previewOverlay.value = { data, component }
+    }
+  }
+
+  // 清除预览覆盖层
+  const clearPreviewOverlay = () => {
+    previewOverlay.value = null
+  }
+
   // 统一的事件处理器
   const handleControlEvent = createControlEventHandler({
     onLoadSampleImage: loadSampleImageWrapper,
@@ -280,6 +304,9 @@ export function useTextureGenerator(options: UseTextureGeneratorOptions = {}): U
         debouncedProcessImage()
       }
     },
+    onSetPreviewOverlay: (data: any, component: Component) => {
+      setPreviewOverlay(data, component)
+    },
   })
 
   return {
@@ -303,6 +330,7 @@ export function useTextureGenerator(options: UseTextureGeneratorOptions = {}): U
     lutFileName,
     lutFile,
     maskGenerator,
+    previewOverlay,
     handleImageUploadWrapper,
     loadSampleImageWrapper,
     toggleCameraWrapper,
@@ -316,5 +344,7 @@ export function useTextureGenerator(options: UseTextureGeneratorOptions = {}): U
     saveOriginalWrapper,
     openSamplingEditor,
     handleControlEvent,
+    setPreviewOverlay,
+    clearPreviewOverlay,
   }
 }

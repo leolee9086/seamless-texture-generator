@@ -134,36 +134,11 @@
             </div>
         </div>
 
-        <!-- Global Mask Options -->
-        <div class="mask-options flex flex-col gap-2 mt-3 p-2 bg-black/20 rounded border border-white/5">
-            <label class="checkbox-label flex items-center cursor-pointer text-xs text-white/80">
-                <input type="checkbox" :checked="maskOptions.smooth" @change="updateMaskOptionsSmooth"
-                    :disabled="processing"
-                    class="mr-2 rounded bg-white/10 border-white/20 text-blue-500 focus:ring-blue-500 focus:ring-offset-0" />
-                平滑遮罩边缘
-            </label>
-            <label class="checkbox-label flex items-center cursor-pointer text-xs text-white/80">
-                <input type="checkbox" :checked="maskOptions.invert" @change="updateMaskOptionsInvert"
-                    :disabled="processing"
-                    class="mr-2 rounded bg-white/10 border-white/20 text-blue-500 focus:ring-blue-500 focus:ring-offset-0" />
-                反转最终遮罩
-            </label>
-        </div>
-
-        <!-- Mask Preview -->
-        <div v-if="layers.length > 0" class="mask-preview mt-3 border-t border-white/5 pt-3">
-            <h4 class="text-xs text-white/70 mb-2">蒙版预览</h4>
-            <div
-                class="canvas-container flex justify-center items-center bg-black/20 rounded border border-white/10 p-2">
-                <canvas ref="maskPreviewCanvasRef" class="max-w-full rounded border-2 border-red-500/30"></canvas>
-            </div>
-            <div class="text-[10px] text-white/50 text-center mt-1">半透明红色区域 = LUT应用区域</div>
-        </div>
     </div>
 </template>
 
 <script setup lang="ts">
-import { computed, ref, watch } from 'vue'
+import { computed } from 'vue'
 import { getHslBlockColor } from '../../utils/lut/getHslBlockColor'
 import type { AdjustmentLayer } from '../../composables/useColorBlockSelector'
 
@@ -185,18 +160,12 @@ interface HslBlock {
     feather: number
 }
 
-interface MaskOptions {
-    smooth: boolean
-    invert: boolean
-}
-
 interface Props {
     processing: boolean
     quantizedColorBlocks: ColorBlock[]
     commonHslBlocks: HslBlock[]
     layers: AdjustmentLayer[]
     activeLayerId: string | null
-    maskOptions: MaskOptions
 }
 
 interface Emits {
@@ -205,8 +174,6 @@ interface Emits {
     (e: 'remove-layer', id: string): void
     (e: 'select-layer', id: string): void
     (e: 'update-layer', id: string, updates: Partial<AdjustmentLayer>): void
-    (e: 'update:maskOptions', options: MaskOptions): void
-    (e: 'request-mask-preview-update', canvas?: HTMLCanvasElement): void
 }
 
 const props = defineProps<Props>()
@@ -249,27 +216,6 @@ const updateQuantizedParam = (param: string, event: Event) => {
 
     emit('update-layer', activeLayer.value.id, { [param]: value })
 }
-
-const updateMaskOptionsSmooth = (event: Event) => {
-    const target = event.target as HTMLInputElement
-    emit('update:maskOptions', { ...props.maskOptions, smooth: target.checked })
-}
-
-const updateMaskOptionsInvert = (event: Event) => {
-    const target = event.target as HTMLInputElement
-    emit('update:maskOptions', { ...props.maskOptions, invert: target.checked })
-}
-
-// Mask preview canvas ref
-const maskPreviewCanvasRef = ref<HTMLCanvasElement>()
-
-// Watch for layers or mask options changes and notify parent
-watch([() => props.layers, () => props.maskOptions], () => {
-    // Emit event to trigger mask preview update in parent
-    if (props.layers.length > 0) {
-        emit('request-mask-preview-update', maskPreviewCanvasRef.value)
-    }
-}, { deep: true })
 </script>
 
 <style scoped>

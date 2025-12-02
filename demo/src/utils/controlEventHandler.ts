@@ -1,4 +1,5 @@
 import type { ControlEvent } from '../types/controlEvents'
+import type { Component } from 'vue'
 
 /**
  * 创建统一事件处理器的配置选项
@@ -27,6 +28,8 @@ export interface ControlEventHandlerOptions {
   onLUTIntensity?: (value: number) => void
   onLUTFileChange?: (file: File) => void
   onMaskUpdate?: (maskGenerator: (() => Promise<Uint8Array | null>) | null) => void
+  // 预览覆盖层处理器
+  onSetPreviewOverlay?: (data: any, component: Component) => void
 }
 
 /**
@@ -102,6 +105,11 @@ export function createControlEventHandler(options: ControlEventHandlerOptions) {
           break
         case 'mask-update':
           options.onMaskUpdate?.(detail.data)
+          break
+        case 'set-preview-overlay':
+          if (detail.data && typeof detail.data === 'object' && 'data' in detail.data && 'component' in detail.data) {
+            options.onSetPreviewOverlay?.(detail.data.data, detail.data.component)
+          }
           break
       }
     }

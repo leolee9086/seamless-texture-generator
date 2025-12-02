@@ -165,10 +165,15 @@ export const createMaskPreviewData = (
             // 计算对应的原图像素位置
             const srcX = Math.floor(x * scaleX)
             const srcY = Math.floor(y * scaleY)
-            const srcIndex = srcY * img.width + srcX
-
-            // 获取蒙版值并正确缩放
-            const rawMaskValue = finalMask[srcIndex]
+            
+            // 边界检查
+            if (srcX >= img.width || srcY >= img.height) {
+                continue
+            }
+            
+            // finalMask 是 RGBA 格式，需要取 R 通道值
+            const srcIndex = (srcY * img.width + srcX) * 4
+            const rawMaskValue = finalMask[srcIndex] // 取 R 通道值
             const maskValue = computeNormalizedMaskValue(rawMaskValue, maskRange)
 
             // 计算预览画布的像素索引

@@ -328,6 +328,51 @@ export const useColorBlockSelector = () => {
         }
     }
 
+    /**
+     * 生成蒙版预览图像数据URL
+     */
+    const generateMaskPreviewImageDataUrl = async (originalImage: string): Promise<string | null> => {
+        if (!originalImage || layers.value.length === 0) {
+            return null
+        }
+
+        try {
+            if (!maskManager.value) {
+                return null
+            }
+
+            const fullSizeMask = await generateColorBlockMask(originalImage)
+            if (!fullSizeMask) return null
+
+            const img = await 从URL创建图片并等待加载完成(originalImage)
+            const previewMaxSize = 400 // 预览图像最大尺寸
+            const canvas = document.createElement('canvas')
+            const ctx = canvas.getContext('2d')
+            if (!ctx) return null
+
+            // 计算缩放尺寸
+            const scale = Math.min(1, previewMaxSize / Math.max(img.width, img.height))
+            const canvasWidth = Math.round(img.width * scale)
+            const canvasHeight = Math.round(img.height * scale)
+            canvas.width = canvasWidth
+            canvas.height = canvasHeight
+
+            // 绘制原始图像（缩小）
+            ctx.drawImage(img, 0, 0, canvasWidth, canvasHeight)
+
+            // 创建遮罩预览数据
+            const maskImageData = createMaskPreviewData(fullSizeMask, img, canvasWidth, canvasHeight)
+
+            // 绘制遮罩
+            ctx.putImageData(maskImageData, 0, 0)
+
+            return canvas.toDataURL('image/png')
+        } catch (error) {
+            console.error('生成蒙版预览图像失败:', error)
+            return null
+        }
+    }
+
     return {
         // 状态
         quantizedColorBlocks,
@@ -349,6 +394,7 @@ export const useColorBlockSelector = () => {
         toggleColorBlock,
         toggleHslBlock,
         generateColorBlockMask,
-        updateMaskPreview
+        updateMaskPreview,
+        generateMaskPreviewImageDataUrl
     }
 }

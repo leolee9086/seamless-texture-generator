@@ -16,6 +16,7 @@
             <Viewer ref="viewerRef" :original-image="originalImage" :processed-image="processedImage"
                 v-model:split-position="splitPosition" :magnifier-enabled="magnifierEnabled"
                 :is-processing="isProcessing" :error-message="errorMessage" :zoom-level="zoomLevel"
+                :preview-overlay="previewOverlay" @clear-overlay="clearPreviewOverlay"
                 class="w-full h-full object-contain" />
         </div>
 
@@ -50,6 +51,8 @@ const {
   lutIntensity,
   lutFileName,
   lutFile,
+  previewOverlay,
+  clearPreviewOverlay,
   handleSamplingConfirmWrapper,
   handleControlEvent,
 } = useTextureGenerator({

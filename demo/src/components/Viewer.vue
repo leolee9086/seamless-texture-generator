@@ -1,6 +1,18 @@
 <template>
   <div ref="containerRef" class="relative w-full h-full flex-center bg-darkglass-100">
-    <div v-if="originalImage" class="w-full h-full relative">
+    <!-- 预览覆盖层 -->
+    <div v-if="previewOverlay" class="preview-overlay w-full h-full relative">
+      <component :is="previewOverlay.component" v-bind="previewOverlay.data" />
+      
+      <!-- 退出按钮 -->
+      <button @click="clearOverlay" class="exit-overlay-btn absolute top-4 right-4 z-30 glass-btn p-3 rounded-full bg-black/50 hover:bg-black/70 text-white/80 hover:text-white transition-colors flex items-center gap-2">
+        <div class="i-carbon-close text-lg"></div>
+        <span class="text-sm font-medium">退出预览</span>
+      </button>
+    </div>
+
+    <!-- 原有的图像查看器 -->
+    <div v-else-if="originalImage" class="w-full h-full relative">
       <SplitViewer ref="splitViewerRef" :leftImage="originalImage" :rightImage="processedImage || originalImage"
         :width="containerWidth" :height="containerHeight" :splitPosition="splitPosition" :magnifier="magnifierConfig"
         @split-change="handleSplitChange" @image-load="handleImageLoad" class="w-full h-full" />
@@ -17,7 +29,7 @@
       <span>{{ errorMessage }}</span>
     </div>
 
-    <div v-if="!originalImage && !isProcessing" class="flex-col-center text-white/30 gap-4">
+    <div v-if="!originalImage && !isProcessing && !previewOverlay" class="flex-col-center text-white/30 gap-4">
       <div class="i-carbon-image text-6xl"></div>
       <div class="text-lg">No Image Selected</div>
     </div>
@@ -28,6 +40,13 @@
 import { ref, computed, watch, nextTick, onMounted, onUnmounted } from 'vue'
 import { SplitViewer } from '@leolee9086/split-viewer'
 
+import type { Component } from 'vue'
+
+interface PreviewOverlayData {
+  data: any
+  component: Component
+}
+
 const props = defineProps<{
   originalImage: string | null,
   processedImage: string | null,
@@ -35,10 +54,11 @@ const props = defineProps<{
   magnifierEnabled: boolean,
   isProcessing: boolean,
   errorMessage: string,
-  zoomLevel: number
+  zoomLevel: number,
+  previewOverlay?: PreviewOverlayData | null
 }>()
 
-const emit = defineEmits(['update:splitPosition', 'image-load'])
+const emit = defineEmits(['update:splitPosition', 'image-load', 'clear-overlay'])
 
 const splitViewerRef = ref()
 const containerRef = ref<HTMLElement | null>(null)
@@ -84,6 +104,10 @@ const resetZoom = async () => {
   if (splitViewerRef.value) {
     splitViewerRef.value.resetZoom()
   }
+}
+
+const clearOverlay = () => {
+  emit('clear-overlay')
 }
 
 watch(() => props.zoomLevel, handleZoomChange)
