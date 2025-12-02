@@ -34,12 +34,12 @@
                     <span class="text-xs text-white/60">{{ selectedLutName }}</span>
                     <div class="flex gap-2">
                         <button v-if="processedImage" @click="updateCurrentThumbnail"
-                            class="p-1.5 rounded bg-white/5 hover:bg-white/10 text-white/70 transition-colors"
+                            class="glass-btn p-1.5 rounded bg-white/5 hover:bg-white/10 text-white/70 transition-colors"
                             title="Update thumbnail from current result">
                             <div class="i-carbon-image-copy text-sm"></div>
                         </button>
                         <button @click="clearSelection"
-                            class="p-1.5 rounded bg-white/5 hover:bg-white/10 text-white/70 transition-colors"
+                            class="glass-btn p-1.5 rounded bg-white/5 hover:bg-white/10 text-white/70 transition-colors"
                             title="Clear selection">
                             <div class="i-carbon-close text-sm"></div>
                         </button>

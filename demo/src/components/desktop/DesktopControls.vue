@@ -2,10 +2,10 @@
   <div class="flex flex-row h-full gap-4">
     <!-- Dock (Navigation) -->
     <div
-      class="flex flex-col items-center py-4 gap-3  backdrop-blur-xl  rounded-2xl shrink-0  shadow-2xl glass-panel border-r-black/90">
+      class="bg-black/60 flex flex-col items-center py-4 gap-3  backdrop-blur-xl  rounded-2xl shrink-0  shadow-2xl glass-panel border-r-black/90">
       <button v-for="group in groups" :key="group.id" @click="activeGroup = group.id"
-        class="relative group w-12 h-12 flex items-center justify-center rounded-xl transition-all duration-300 !bg-transparent !border-none !shadow-none !outline-none"
-        :class="activeGroup === group.id ? 'text-black shadow-[0_0_15px_rgba(255,255,255,0.3)]' : 'text-white/50 hover:text-white hover:bg-white/10'">
+        class="glass-btn bg-black/30 relative group w-12 h-12 flex items-center justify-center rounded-xxl transition-all duration-300 "
+        :class="activeGroup === group.id ? 'text-blue shadow-[0_0_15px_rgba(255,255,255,0.3)]' : 'text-white/50 hover:text-white hover:bg-lightBlue/10'">
 
         <div
           :class="[group.icon, 'text-2xl transition-transform duration-300', activeGroup === group.id ? 'scale-110' : 'group-hover:scale-110']">
