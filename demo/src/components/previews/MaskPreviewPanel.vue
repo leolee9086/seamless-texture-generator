@@ -24,10 +24,11 @@
                 <canvas ref="maskPreviewCanvasRef" class="max-w-full rounded border-2 border-red-500/30"></canvas>
             </div>
             <div class="text-[10px] text-white/50 text-center mt-1">半透明红色区域 = LUT应用区域</div>
-            
+
             <!-- Preview Overlay Button -->
             <div class="mt-3 flex justify-center">
-                <button @click="toggleMaskPreview" class="preview-btn flex items-center gap-2 px-3 py-2 bg-blue-600 hover:bg-blue-700 text-white text-sm font-medium rounded transition-colors">
+                <button @click="toggleMaskPreview"
+                    class="preview-btn flex items-center gap-2 px-3 py-2 bg-blue-600 hover:bg-blue-700 text-white text-sm font-medium rounded transition-colors">
                     <div :class="maskPreviewMode ? 'i-carbon-view-off' : 'i-carbon-view'" class="w-4 h-4"></div>
                     {{ maskPreviewMode ? '退出预览' : '在画布预览' }}
                 </button>
@@ -37,7 +38,7 @@
 </template>
 
 <script setup lang="ts">
-import { ref, watch, Component } from 'vue'
+import { ref, watch, Component, reactive } from 'vue'
 import MaskPreview from './MaskPreview.vue'
 import type { AdjustmentLayer } from '../../composables/useColorBlockSelector'
 
@@ -70,19 +71,51 @@ const maskPreviewCanvasRef = ref<HTMLCanvasElement>()
 // Mask preview mode
 const maskPreviewMode = ref(false)
 
+// Reactive state for preview overlay
+const previewState = reactive({
+    maskData: null as Uint8Array | null,
+    originalImage: null as string | null,
+    activeLayerName: undefined as string | undefined,
+    visibleLayerCount: 0,
+    layers: [] as AdjustmentLayer[]
+})
+
+const updatePreviewState = async () => {
+    if (!props.originalImage) return
+
+    const maskData = await props.generateColorBlockMask(props.originalImage)
+    if (!maskData) return
+
+    const activeLayer = props.layers.find(l => l.visible)
+
+    previewState.maskData = maskData
+    previewState.originalImage = props.originalImage
+    previewState.activeLayerName = activeLayer?.name
+    previewState.visibleLayerCount = props.layers.filter(l => l.visible).length
+    previewState.layers = props.layers
+}
+
 // Mask data cache is no longer used; generate fresh each time
 
 // Watch for layers or mask options changes and update preview
-watch([() => props.layers, () => props.maskOptions], () => {
+watch([() => props.layers, () => props.maskOptions], async () => {
     if (props.layers.length > 0 && props.originalImage) {
         props.updateMaskPreview(props.originalImage, maskPreviewCanvasRef.value)
+
+        if (maskPreviewMode.value) {
+            await updatePreviewState()
+        }
     }
 }, { deep: true })
 
 // Watch for original image changes
-watch(() => props.originalImage, (newVal) => {
+watch(() => props.originalImage, async (newVal) => {
     if (newVal && props.layers.length > 0) {
         props.updateMaskPreview(newVal, maskPreviewCanvasRef.value)
+
+        if (maskPreviewMode.value) {
+            await updatePreviewState()
+        }
     }
 })
 
@@ -103,22 +136,13 @@ const toggleMaskPreview = async () => {
         emit('set-preview-overlay', null, null)
         maskPreviewMode.value = false
     } else {
-        // Enter preview - always generate fresh mask data
+        // Enter preview
         if (!props.originalImage) return
-        
-        const maskData = await props.generateColorBlockMask(props.originalImage)
-        if (!maskData) return
-        
-        const activeLayer = props.layers.find(l => l.visible)
-        
-        emit('set-preview-overlay', {
-            maskData,
-            originalImage: props.originalImage,
-            activeLayerName: activeLayer?.name,
-            visibleLayerCount: props.layers.filter(l => l.visible).length,
-            layers: props.layers
-        }, MaskPreview)
-        
+
+        await updatePreviewState()
+
+        emit('set-preview-overlay', previewState, MaskPreview)
+
         maskPreviewMode.value = true
     }
 }
