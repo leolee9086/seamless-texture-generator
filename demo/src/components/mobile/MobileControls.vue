@@ -28,7 +28,7 @@
           :processed-image="processedImage" :lut-enabled="lutEnabled" :lut-intensity="lutIntensity"
           :lut-file-name="lutFileName" :lut-file="lutFile" @toggle-lut="toggleLUT"
           @lut-file-change="handleLUTFileChange" @clear-lut="clearLUT" @slider-update="handleSliderUpdate"
-          @mask-update="handleMaskUpdate" />
+          @mask-update="handleMaskUpdate" @control-event="emit('controlEvent', $event)" />
 
         <!-- Settings Panel -->
         <SettingsPanel v-else-if="activeGroup === 'tileablesettings'" is-mobile :isProcessing="isProcessing"
