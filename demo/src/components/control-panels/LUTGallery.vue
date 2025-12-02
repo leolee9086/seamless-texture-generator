@@ -27,7 +27,7 @@
                 <p class="text-[10px] text-white truncate flex-1 text-center">{{ lut.name }}</p>
 
                 <!-- Update Thumbnail Button -->
-                <button class="p-1 hover:bg-white/20 rounded text-white/70 hover:text-white transition-colors"
+                <button class="glass-btn p-1 hover:bg-white/20 rounded text-white/70 hover:text-white transition-colors"
                     title="Update Thumbnail" @click.stop="$emit('update-thumbnail', lut.id)">
                     <div class="i-carbon-image-copy text-[10px]"></div>
                 </button>
@@ -35,7 +35,7 @@
 
             <!-- Delete Button -->
             <button
-                class="absolute top-1 right-1 p-1 bg-black/50 hover:bg-red-500/80 rounded-full opacity-0 group-hover:opacity-100 transition-all"
+                class="glass-btn absolute top-1 right-1 p-1 bg-black/50 hover:bg-red-500/80 rounded-full opacity-0 group-hover:opacity-100 transition-all"
                 @click.stop="$emit('delete', lut.id)">
                 <div class="i-carbon-trash-can text-white text-xs"></div>
             </button>

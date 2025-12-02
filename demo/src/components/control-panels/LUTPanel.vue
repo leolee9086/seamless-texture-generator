@@ -7,13 +7,13 @@
 
         <div v-else :class="contentContainerClass">
             <!-- LUT Gallery -->
-            <div class="px-4 pb-3">
+            <div class="px-4 pb-3 pt-3">
                 <div class="flex items-center justify-between mb-2">
                     <label class="block text-sm font-medium text-white/80">
                         LUT Library
                     </label>
                     <button @click="updateAllThumbnails" :disabled="isUpdatingThumbnails || !originalImage"
-                        class="text-[10px] px-2 py-1 rounded bg-white/5 hover:bg-white/10 text-white/60 hover:text-white/90 transition-colors disabled:opacity-50 disabled:cursor-not-allowed flex items-center gap-1">
+                        class="glass-btn text-[10px] px-2 py-1 rounded bg-white/5 hover:bg-white/10 text-white/60 hover:text-white/90 transition-colors disabled:opacity-50 disabled:cursor-not-allowed flex items-center gap-1">
                         <div :class="isUpdatingThumbnails ? 'i-carbon-circle-dash animate-spin' : 'i-carbon-renew'">
                         </div>
                         <span>Update All</span>
