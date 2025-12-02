@@ -54,7 +54,8 @@
                         :common-hsl-blocks="commonHslBlocks" :layers="layers" :active-layer-id="activeLayerId"
                         :mask-options="maskOptions" @add-color-layer="addColorLayer" @add-hsl-layer="addHslLayer"
                         @remove-layer="removeLayer" @select-layer="selectLayer" @update-layer="updateLayer"
-                        @update:mask-options="updateMaskOptions" />
+                        @update:mask-options="updateMaskOptions"
+                        @request-mask-preview-update="handleMaskPreviewUpdate" />
                 </div>
             </div>
 
@@ -116,7 +117,8 @@ const {
     removeLayer,
     selectLayer,
     updateLayer,
-    generateColorBlockMask
+    generateColorBlockMask,
+    updateMaskPreview
 } = useColorBlockSelector()
 
 // Computed
@@ -331,6 +333,12 @@ const createThumbnail = (originalUrl: string, processedUrl: string): Promise<str
 
 const updateMaskOptions = (options: any) => {
     Object.assign(maskOptions.value, options)
+}
+
+const handleMaskPreviewUpdate = (canvas?: HTMLCanvasElement) => {
+    if (canvas && props.originalImage) {
+        updateMaskPreview(props.originalImage, canvas)
+    }
 }
 
 // Lifecycle
