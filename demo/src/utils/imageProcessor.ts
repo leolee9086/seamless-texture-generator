@@ -1,6 +1,6 @@
 import { makeTileable } from '../../../src/lib/HistogramPreservingBlendMakeTileable'
 import { scaleImageToMaxResolution } from './imageProcessing'
-import { processImageWithLUT } from '@leolee9086/use-lut'
+import { processImageWithLUT, processLutData } from '@leolee9086/use-lut'
 
 /**
  * 处理图像，使其可平铺
@@ -49,22 +49,35 @@ export async function processImageToTileable(
     // 如果有LUT文件，先应用LUT
     if (lutFile) {
       try {
-        // 读取LUT文件数据
-        const lutBuffer = await lutFile.arrayBuffer()
-        const lutData = new Uint8Array(lutBuffer)
+        // 解析 LUT 文件
+        const lutResult = await processLutData(lutFile, lutFile.name)
+
+        // 准备 maskData 对象
+        const maskOptions: any = {
+          intensity: lutIntensity || 1.0
+        }
+
+        if (maskData) {
+          maskOptions.maskData = {
+            data: maskData,
+            width: imageData.width,
+            height: imageData.height
+          }
+          maskOptions.maskIntensity = 1.0
+          maskOptions.enableMask = true
+        }
 
         // 使用LUT库处理图像
-        const lutResult = await processImageWithLUT(
-          imageData,
-          lutData,
-          lutIntensity || 1.0,
-          maskData
+        const processResult = await processImageWithLUT(
+          { data: new Uint8Array(imageData.data.buffer), width: imageData.width, height: imageData.height },
+          lutResult.data,
+          maskOptions
         )
 
-        if (lutResult.success && lutResult.result) {
+        if (processResult.success && processResult.result) {
           // 更新图像数据为LUT处理后的结果
           imageData = new ImageData(
-            new Uint8ClampedArray(lutResult.result),
+            new Uint8ClampedArray(processResult.result),
             imageData.width,
             imageData.height
           )
