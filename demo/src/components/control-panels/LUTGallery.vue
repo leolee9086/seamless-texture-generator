@@ -23,8 +23,14 @@
 
             <!-- Name Overlay (on hover) -->
             <div
-                class="absolute inset-x-0 bottom-0 bg-black/60 p-1 transform translate-y-full group-hover:translate-y-0 transition-transform">
-                <p class="text-[10px] text-white truncate text-center">{{ lut.name }}</p>
+                class="absolute inset-x-0 bottom-0 bg-black/60 p-1 transform translate-y-full group-hover:translate-y-0 transition-transform flex items-center justify-between gap-1">
+                <p class="text-[10px] text-white truncate flex-1 text-center">{{ lut.name }}</p>
+
+                <!-- Update Thumbnail Button -->
+                <button class="p-1 hover:bg-white/20 rounded text-white/70 hover:text-white transition-colors"
+                    title="Update Thumbnail" @click.stop="$emit('update-thumbnail', lut.id)">
+                    <div class="i-carbon-image-copy text-[10px]"></div>
+                </button>
             </div>
 
             <!-- Delete Button -->
@@ -50,6 +56,7 @@ defineEmits<{
     'trigger-upload': []
     'select': [lut: LUTItem]
     'delete': [id: string]
+    'update-thumbnail': [id: string]
 }>()
 
 const imageError = ref<Record<string, boolean>>({})

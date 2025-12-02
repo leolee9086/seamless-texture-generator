@@ -8,11 +8,20 @@
         <div v-else :class="contentContainerClass">
             <!-- LUT Gallery -->
             <div class="px-4 pb-3">
-                <label class="block text-sm font-medium text-white/80 mb-2">
-                    LUT Library
-                </label>
+                <div class="flex items-center justify-between mb-2">
+                    <label class="block text-sm font-medium text-white/80">
+                        LUT Library
+                    </label>
+                    <button @click="updateAllThumbnails" :disabled="isUpdatingThumbnails || !originalImage"
+                        class="text-[10px] px-2 py-1 rounded bg-white/5 hover:bg-white/10 text-white/60 hover:text-white/90 transition-colors disabled:opacity-50 disabled:cursor-not-allowed flex items-center gap-1">
+                        <div :class="isUpdatingThumbnails ? 'i-carbon-circle-dash animate-spin' : 'i-carbon-renew'">
+                        </div>
+                        <span>Update All</span>
+                    </button>
+                </div>
+
                 <LUTGallery :luts="luts" :selected-id="selectedLutId" @trigger-upload="triggerUpload"
-                    @select="handleSelectLUT" @delete="handleDeleteLUT" />
+                    @select="handleSelectLUT" @delete="handleDeleteLUT" @update-thumbnail="handleUpdateThumbnail" />
 
                 <!-- Hidden Input -->
                 <input ref="lutInputRef" type="file" accept=".cube" multiple @change="handleLUTFileChange"
@@ -24,7 +33,7 @@
                 <div class="flex items-center justify-between mb-3">
                     <span class="text-xs text-white/60">{{ selectedLutName }}</span>
                     <div class="flex gap-2">
-                        <button v-if="processedImage" @click="updateThumbnail"
+                        <button v-if="processedImage" @click="updateCurrentThumbnail"
                             class="p-1.5 rounded bg-white/5 hover:bg-white/10 text-white/70 transition-colors"
                             title="Update thumbnail from current result">
                             <div class="i-carbon-image-copy text-sm"></div>
@@ -59,6 +68,7 @@ import { ref, computed, onMounted, watch } from 'vue'
 import { Slider } from '@leolee9086/slider-component'
 import LUTGallery from './LUTGallery.vue'
 import { lutDb, type LUTItem } from '../../utils/lutDb'
+import { processImageToTileable } from '../../utils/imageProcessor'
 
 const props = defineProps<{
     isMobile?: boolean
@@ -79,6 +89,7 @@ const emit = defineEmits<{
 const luts = ref<LUTItem[]>([])
 const selectedLutId = ref<string | null>(null)
 const lutInputRef = ref<HTMLInputElement>()
+const isUpdatingThumbnails = ref(false)
 
 // Computed
 const lutEnabled = computed(() => !!props.lutFileName)
@@ -140,6 +151,12 @@ const handleLUTFileChange = async (event: Event) => {
 
     await loadLUTs()
     input.value = '' // Reset input
+
+    // Auto update thumbnails for new LUTs if we have an image
+    if (props.originalImage) {
+        // We could do this, but maybe let the user decide or do it in background?
+        // Let's just reload for now.
+    }
 }
 
 const handleSelectLUT = (lut: LUTItem) => {
@@ -169,28 +186,88 @@ const handleSliderUpdate = (data: { id: string; value: number }) => {
     emit('slider-update', data)
 }
 
-const updateThumbnail = async () => {
-    if (!selectedLutId.value || !props.processedImage) {
-        console.warn('Cannot update thumbnail: No LUT selected or no processed image')
+const handleUpdateThumbnail = async (id: string) => {
+    if (!props.originalImage) {
+        console.warn('Cannot update thumbnail: No original image available')
         return
     }
 
+    const lut = luts.value.find(l => l.id === id)
+    if (!lut) return
+
     try {
-        console.log('Updating thumbnail for LUT:', selectedLutId.value)
-        const thumbnail = await createThumbnail(props.processedImage)
-        await lutDb.updateLUTThumbnail(selectedLutId.value, thumbnail)
+        console.log('Updating thumbnail for LUT:', lut.name)
+
+        // Create a File object from the stored Blob
+        const lutFile = new File([lut.file], lut.name)
+
+        // Process image with this LUT
+        // Use a smaller resolution for speed, and 0 border size (no seamless processing) for pure color preview
+        const processedUrl = await processImageToTileable(
+            props.originalImage,
+            512, // Max resolution
+            0,   // Border size (0 = no seamless processing)
+            undefined,
+            undefined,
+            undefined,
+            lutFile,
+            1.0 // Intensity
+        )
+
+        const thumbnail = await createThumbnail(props.originalImage, processedUrl)
+        await lutDb.updateLUTThumbnail(id, thumbnail)
         await loadLUTs()
-        console.log('Thumbnail updated successfully')
+        console.log('Thumbnail updated successfully for:', lut.name)
     } catch (error) {
         console.error('Failed to update thumbnail:', error)
     }
 }
 
-const createThumbnail = (dataUrl: string): Promise<string> => {
+const updateAllThumbnails = async () => {
+    if (!props.originalImage || isUpdatingThumbnails.value) return
+
+    isUpdatingThumbnails.value = true
+    try {
+        for (const lut of luts.value) {
+            await handleUpdateThumbnail(lut.id)
+        }
+    } finally {
+        isUpdatingThumbnails.value = false
+    }
+}
+
+const updateCurrentThumbnail = async () => {
+    if (!selectedLutId.value) return
+    // For the current one, we can use the main view's processed image if available,
+    // OR just run the standard update logic to be consistent.
+    // Let's use the standard logic to ensure consistency (split view, etc).
+    await handleUpdateThumbnail(selectedLutId.value)
+}
+
+const createThumbnail = (originalUrl: string, processedUrl: string): Promise<string> => {
     return new Promise((resolve, reject) => {
-        const img = new Image()
-        img.crossOrigin = 'Anonymous'
-        img.onload = () => {
+        const imgOriginal = new Image()
+        const imgProcessed = new Image()
+        imgOriginal.crossOrigin = 'Anonymous'
+        imgProcessed.crossOrigin = 'Anonymous'
+
+        let loadedCount = 0
+        const checkLoaded = () => {
+            loadedCount++
+            if (loadedCount === 2) {
+                draw()
+            }
+        }
+
+        imgOriginal.onload = checkLoaded
+        imgProcessed.onload = checkLoaded
+        imgOriginal.onerror = (e) => reject(new Error('Failed to load original image: ' + e))
+        imgProcessed.onerror = (e) => reject(new Error('Failed to load processed image: ' + e))
+
+        imgOriginal.src = originalUrl
+        imgProcessed.src = processedUrl
+
+        function draw() {
             const canvas = document.createElement('canvas')
             canvas.width = 32
             canvas.height = 32
@@ -203,11 +280,24 @@ const createThumbnail = (dataUrl: string): Promise<string> => {
             ctx.imageSmoothingEnabled = true
             ctx.imageSmoothingQuality = 'high'
 
-            ctx.drawImage(img, 0, 0, 32, 32)
+            // Draw left half: Original image (left 50%)
+            // Source: 0, 0, width/2, height
+            // Dest: 0, 0, 16, 32
+            ctx.drawImage(imgOriginal,
+                0, 0, imgOriginal.width / 2, imgOriginal.height,
+                0, 0, 16, 32
+            )
+
+            // Draw right half: Processed image (right 50%)
+            // Source: width/2, 0, width/2, height
+            // Dest: 16, 0, 16, 32
+            ctx.drawImage(imgProcessed,
+                imgProcessed.width / 2, 0, imgProcessed.width / 2, imgProcessed.height,
+                16, 0, 16, 32
+            )
+
             resolve(canvas.toDataURL('image/png'))
         }
-        img.onerror = (e) => reject(new Error('Failed to load image for thumbnail: ' + e))
-        img.src = dataUrl
     })
 }
 
@@ -223,7 +313,7 @@ watch(() => props.processedImage, async (newVal) => {
         // If the current LUT doesn't have a thumbnail, generate one automatically
         if (currentLut && !currentLut.thumbnail) {
             console.log('Auto-generating thumbnail for LUT:', currentLut.name)
-            await updateThumbnail()
+            await updateCurrentThumbnail()
         }
     }
 })
