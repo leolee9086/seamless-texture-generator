@@ -58,6 +58,7 @@ export async function processImageToTileable(
         }
 
         if (maskData) {
+          console.log('🎭 应用蒙版:', imageData)
           maskOptions.maskData = {
             data: maskData,
             width: imageData.width,
@@ -65,6 +66,8 @@ export async function processImageToTileable(
           }
           maskOptions.maskIntensity = 1.0
           maskOptions.enableMask = true
+        } else {
+          console.log('⚠️ 无蒙版数据')
         }
 
         // 使用LUT库处理图像

@@ -1,4 +1,4 @@
-import { ref, watch, nextTick } from 'vue'
+import { ref, watch, nextTick, computed } from 'vue'
 import { AdjustmentRangeMaskManager } from '../utils/lut/adjustmentRangeMask'
 import { RGBColor } from '../utils/lut/colorQuantization'
 import { HSLRange } from '../utils/lut/hslMask'
@@ -7,8 +7,24 @@ import { upscaleMask } from '../utils/lut/scalar'
 import { 生成全白RGBA图像数据 } from '../utils/lut/mask/filledMask'
 import { 将ImageData绘制到Canvas } from '../utils/lut/canvas/draw'
 import { 按照最大尺寸缩放现有画布 } from '../utils/lut/canvas/scale'
-import { extractBlockId, collectSelectedColors, createMaskManagerOptions } from '../utils/lut/colorBlockSelector'
-import { prepareImageData, createPreviewImageData, createMaskPreviewData } from '../utils/lut/imageProcessor'
+import { prepareImageData, createMaskPreviewData } from '../utils/lut/imageProcessor'
+
+/**
+ * 调整图层接口
+ */
+export interface AdjustmentLayer {
+    id: string
+    name: string
+    type: 'quantized' | 'hsl'
+    visible: boolean
+    intensity: number
+    blendMode: 'add' | 'multiply' | 'max' | 'min'
+    // Quantized color specific
+    color?: RGBColor
+    tolerance?: number
+    // HSL specific
+    hslRange?: HSLRange
+}
 
 /**
  * 色块选择相关的composable
@@ -25,15 +41,9 @@ export const useColorBlockSelector = () => {
     const maskManager = ref<AdjustmentRangeMaskManager | null>(null)
     const maskPreviewCanvas = ref<HTMLCanvasElement | null>(null)
 
-    /**
-     * 配置遮罩管理器
-     */
-    const configureMaskManager = (selectedColors: RGBColor[], selectedHslRanges: HSLRange[]) => {
-        if (!maskManager.value) return
-
-        const options = createMaskManagerOptions(selectedColors, selectedHslRanges, maskOptions.value)
-        maskManager.value.updateOptions(options)
-    }
+    // 图层系统
+    const layers = ref<AdjustmentLayer[]>([])
+    const activeLayerId = ref<string | null>(null)
 
     /**
      * 生成色块
@@ -79,27 +89,84 @@ export const useColorBlockSelector = () => {
     }
 
     /**
-     * 切换量化色块选择
+     * 添加量化颜色图层
      */
-    const toggleColorBlock = (blockId: string, color: RGBColor) => {
-        const index = selectedColorBlocks.value.indexOf(blockId)
+    const addColorLayer = (color: RGBColor) => {
+        const id = `quantized-${Date.now()}-${Math.random().toString(36).substr(2, 9)}`
+        layers.value.push({
+            id,
+            name: `Color RGB(${color.r},${color.g},${color.b})`,
+            type: 'quantized',
+            visible: true,
+            intensity: 1.0,
+            blendMode: 'max',
+            color: { ...color },
+            tolerance: 30
+        })
+        activeLayerId.value = id
+    }
+
+    /**
+     * 添加HSL图层
+     */
+    const addHslLayer = (hslBlock: HSLRange) => {
+        const id = `hsl-${Date.now()}-${Math.random().toString(36).substr(2, 9)}`
+        layers.value.push({
+            id,
+            name: hslBlock.name || 'Custom HSL',
+            type: 'hsl',
+            visible: true,
+            intensity: 1.0,
+            blendMode: 'max',
+            hslRange: { ...hslBlock }
+        })
+        activeLayerId.value = id
+    }
+
+    /**
+     * 移除图层
+     */
+    const removeLayer = (id: string) => {
+        const index = layers.value.findIndex(l => l.id === id)
         if (index > -1) {
-            selectedColorBlocks.value.splice(index, 1)
-        } else {
-            selectedColorBlocks.value.push(blockId)
+            layers.value.splice(index, 1)
+            if (activeLayerId.value === id) {
+                activeLayerId.value = null
+            }
         }
     }
 
     /**
-     * 切换HSL色块选择
+     * 选择图层
      */
-    const toggleHslBlock = (blockId: string, hslBlock: HSLRange) => {
-        const index = selectedColorBlocks.value.indexOf(blockId)
-        if (index > -1) {
-            selectedColorBlocks.value.splice(index, 1)
-        } else {
-            selectedColorBlocks.value.push(blockId)
+    const selectLayer = (id: string) => {
+        activeLayerId.value = id
+    }
+
+    /**
+     * 更新图层
+     */
+    const updateLayer = (id: string, updates: Partial<AdjustmentLayer>) => {
+        const layer = layers.value.find(l => l.id === id)
+        if (layer) {
+            Object.assign(layer, updates)
         }
+    }
+
+    /**
+     * 切换量化色块选择 (已废弃,保留用于兼容)
+     */
+    const toggleColorBlock = (_blockId: string, color: RGBColor) => {
+        // 现在转换为添加图层
+        addColorLayer(color)
+    }
+
+    /**
+     * 切换HSL色块选择 (已废弃,保留用于兼容)
+     */
+    const toggleHslBlock = (_blockId: string, hslBlock: HSLRange) => {
+        // 现在转换为添加图层
+        addHslLayer(hslBlock)
     }
 
     /**
@@ -113,8 +180,9 @@ export const useColorBlockSelector = () => {
         // 获取图像尺寸
         const img = await 从URL创建图片并等待加载完成(originalImage)
 
-        // 如果没有选择任何色块，生成全白遮罩（对整个图像应用LUT）
-        if (selectedColorBlocks.value.length === 0) {
+        // 如果没有可见图层，生成全白遮罩（对整个图像应用LUT）
+        const visibleLayers = layers.value.filter(l => l.visible)
+        if (visibleLayers.length === 0) {
             return 生成全白RGBA图像数据(img.width, img.height)
         }
 
@@ -122,30 +190,100 @@ export const useColorBlockSelector = () => {
             // 准备图像数据
             const { imageData, scale } = await prepareImageData(img)
 
-            // 收集选中的颜色
-            const { selectedColors, selectedHslRanges } = collectSelectedColors(
-                selectedColorBlocks.value,
-                quantizedColorBlocks.value,
-                commonHslBlocks.value
-            )
+            // 为每个图层生成遮罩
+            const layerMasks: Uint8Array[] = []
 
-            // 配置遮罩管理器
-            configureMaskManager(selectedColors, selectedHslRanges)
+            for (const layer of visibleLayers) {
+                let layerMask: Uint8Array | null = null
 
-            // 生成遮罩（使用降采样数据计算，但返回原图尺寸）
-            const result = await maskManager.value.generateAdjustmentRangeMask(imageData)
+                if (layer.type === 'hsl' && layer.hslRange) {
+                    // HSL Mask
+                    maskManager.value.updateOptions({
+                        useQuantization: false,
+                        useHslMask: true,
+                        hslRange: layer.hslRange,
+                        maskOptions: maskOptions.value
+                    })
+                    const result = await maskManager.value.generateAdjustmentRangeMask(imageData)
+                    layerMask = result.mask
+                } else if (layer.type === 'quantized' && layer.color) {
+                    // Quantized Color Mask
+                    maskManager.value.updateOptions({
+                        useQuantization: true,
+                        useHslMask: false,
+                        selectedColors: [layer.color],
+                        colorTolerance: layer.tolerance || 30,
+                        maskOptions: maskOptions.value
+                    })
+                    const result = await maskManager.value.generateAdjustmentRangeMask(imageData)
+                    layerMask = result.mask
+                }
 
-            // 如果使用了降采样，需要将遮罩放大到原图尺寸
-            let finalMask: Uint8Array
-            if (scale < 1) {
-                // 将降采样遮罩放大到原图尺寸
-                finalMask = upscaleMask(result.mask, result.width, result.height, img.width, img.height)
-            } else {
-                finalMask = result.mask
+                if (layerMask) {
+                    // 应用图层强度
+                    if (layer.intensity < 1.0) {
+                        for (let i = 0; i < layerMask.length; i++) {
+                            layerMask[i] = Math.round(layerMask[i] * layer.intensity)
+                        }
+                    }
+                    layerMasks.push(layerMask)
+                }
             }
 
-            // 直接返回单通道遮罩数据
-            return finalMask
+            // 组合所有图层的遮罩
+            let finalMask: Uint8Array
+            if (layerMasks.length === 0) {
+                finalMask = new Uint8Array(imageData.width * imageData.height)
+            } else if (layerMasks.length === 1) {
+                finalMask = layerMasks[0]
+            } else {
+                // 使用第一个图层作为基础
+                finalMask = new Uint8Array(layerMasks[0])
+
+                // 依次混合后续图层
+                for (let i = 1; i < layerMasks.length; i++) {
+                    const currentLayer = visibleLayers[i]
+                    const currentMask = layerMasks[i]
+                    const blendMode = currentLayer.blendMode || 'max'
+
+                    for (let p = 0; p < finalMask.length; p++) {
+                        const baseVal = finalMask[p]
+                        const blendVal = currentMask[p]
+
+                        if (blendMode === 'add') {
+                            finalMask[p] = Math.min(255, baseVal + blendVal)
+                        } else if (blendMode === 'multiply') {
+                            finalMask[p] = Math.round((baseVal * blendVal) / 255)
+                        } else if (blendMode === 'max') {
+                            finalMask[p] = Math.max(baseVal, blendVal)
+                        } else if (blendMode === 'min') {
+                            finalMask[p] = Math.min(baseVal, blendVal)
+                        }
+                    }
+                }
+            }
+
+
+            // 如果使用了降采样，需要将遮罩放大到原图尺寸
+            if (scale < 1) {
+                finalMask = upscaleMask(finalMask, imageData.width, imageData.height, img.width, img.height)
+            }
+
+            // 将单通道遮罩转换为RGBA格式（use-lut需要4通道数据）
+            // 注意：shader使用 (1.0 - maskValue) 作为强度，所以这里需要反转
+            // 我们的蒙版：255=选中，0=未选中
+            // shader期望：0=应用LUT，255=不应用LUT
+            // 所以需要反转：255-value
+            const rgbaMask = new Uint8Array(finalMask.length * 4)
+            for (let i = 0; i < finalMask.length; i++) {
+                const value = 255 - finalMask[i]  // 反转蒙版
+                rgbaMask[i * 4] = value     // R
+                rgbaMask[i * 4 + 1] = value // G
+                rgbaMask[i * 4 + 2] = value // B
+                rgbaMask[i * 4 + 3] = 255   // A (不透明)
+            }
+
+            return rgbaMask
         } catch (error) {
             console.error('生成色块遮罩失败:', error)
             return null
@@ -157,7 +295,7 @@ export const useColorBlockSelector = () => {
      */
     const updateMaskPreview = async (originalImage: string, canvas?: HTMLCanvasElement) => {
         const targetCanvas = canvas || maskPreviewCanvas.value
-        if (!targetCanvas || !originalImage || selectedColorBlocks.value.length === 0) {
+        if (!targetCanvas || !originalImage || layers.value.length === 0) {
             return
         }
 
@@ -166,30 +304,11 @@ export const useColorBlockSelector = () => {
                 return
             }
 
-            // 创建预览图像数据
-            const { img, imageData, scale } = await createPreviewImageData(originalImage)
+            // 直接重用generateColorBlockMask的逻辑来生成预览
+            const fullSizeMask = await generateColorBlockMask(originalImage)
+            if (!fullSizeMask) return
 
-            // 收集选中的颜色
-            const { selectedColors, selectedHslRanges } = collectSelectedColors(
-                selectedColorBlocks.value,
-                quantizedColorBlocks.value,
-                commonHslBlocks.value
-            )
-
-            // 配置遮罩管理器
-            configureMaskManager(selectedColors, selectedHslRanges)
-
-            // 生成遮罩
-            const result = await maskManager.value.generateAdjustmentRangeMask(imageData)
-
-            // 如果使用了降采样，需要将遮罩放大到原图尺寸
-            let finalMask: Uint8Array
-            if (scale < 1) {
-                finalMask = upscaleMask(result.mask, result.width, result.height, img.width, img.height)
-            } else {
-                finalMask = result.mask
-            }
-
+            const img = await 从URL创建图片并等待加载完成(originalImage)
             const ctx = targetCanvas.getContext('2d')
             if (!ctx) return
 
@@ -200,7 +319,7 @@ export const useColorBlockSelector = () => {
             ctx.drawImage(img, 0, 0, canvasWidth, canvasHeight)
 
             // 创建遮罩预览数据
-            const maskImageData = createMaskPreviewData(finalMask, img, canvasWidth, canvasHeight)
+            const maskImageData = createMaskPreviewData(fullSizeMask, img, canvasWidth, canvasHeight)
 
             // 创建临时画布来绘制遮罩
             将ImageData绘制到Canvas(maskImageData, targetCanvas, 'source-over')
@@ -217,9 +336,16 @@ export const useColorBlockSelector = () => {
         maskOptions,
         maskManager,
         maskPreviewCanvas,
+        layers,
+        activeLayerId,
 
         // 方法
         generateColorBlocks,
+        addColorLayer,
+        addHslLayer,
+        removeLayer,
+        selectLayer,
+        updateLayer,
         toggleColorBlock,
         toggleHslBlock,
         generateColorBlockMask,

@@ -51,9 +51,10 @@
                 <!-- Color Block Selector for Masking -->
                 <div class="mt-4 border-t border-white/5 pt-4">
                     <ColorBlockSelector :processing="false" :quantized-color-blocks="quantizedColorBlocks"
-                        :common-hsl-blocks="commonHslBlocks" :selected-color-blocks="selectedColorBlocks"
-                        :mask-options="maskOptions" @toggle-color-block="toggleColorBlock"
-                        @toggle-hsl-block="toggleHslBlock" @update:mask-options="updateMaskOptions" />
+                        :common-hsl-blocks="commonHslBlocks" :layers="layers" :active-layer-id="activeLayerId"
+                        :mask-options="maskOptions" @add-color-layer="addColorLayer" @add-hsl-layer="addHslLayer"
+                        @remove-layer="removeLayer" @select-layer="selectLayer" @update-layer="updateLayer"
+                        @update:mask-options="updateMaskOptions" />
                 </div>
             </div>
 
@@ -106,11 +107,15 @@ const isUpdatingThumbnails = ref(false)
 const {
     quantizedColorBlocks,
     commonHslBlocks,
-    selectedColorBlocks,
+    layers,
+    activeLayerId,
     maskOptions,
     generateColorBlocks,
-    toggleColorBlock,
-    toggleHslBlock,
+    addColorLayer,
+    addHslLayer,
+    removeLayer,
+    selectLayer,
+    updateLayer,
     generateColorBlockMask
 } = useColorBlockSelector()
 
@@ -340,8 +345,9 @@ onMounted(() => {
 watch(() => props.originalImage, (newVal) => {
     if (newVal) {
         generateColorBlocks(newVal)
-        // Reset selection when image changes
-        selectedColorBlocks.value = []
+        // Reset layers when image changes
+        layers.value = []
+        activeLayerId.value = null
     }
 })
 
@@ -364,9 +370,10 @@ watch(() => props.lutFileName, (newVal) => {
     }
 })
 
-// Watch for mask changes
-watch([selectedColorBlocks, maskOptions], () => {
-    if (selectedColorBlocks.value.length > 0) {
+// Watch for mask changes (layers or maskOptions)
+watch([layers, maskOptions], () => {
+    const visibleLayers = layers.value.filter(l => l.visible)
+    if (visibleLayers.length > 0) {
         emit('mask-update', () => generateColorBlockMask(props.originalImage!))
     } else {
         emit('mask-update', null)
