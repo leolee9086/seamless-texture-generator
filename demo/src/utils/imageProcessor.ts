@@ -1,6 +1,6 @@
 import { makeTileable } from '../../../src/lib/HistogramPreservingBlendMakeTileable'
 import { scaleImageToMaxResolution } from './imageProcessing'
-import { processImageWithLUTFile } from '@leolee9086/use-lut'
+import { processImageWithLUT } from '@leolee9086/use-lut'
 
 /**
  * 处理图像，使其可平铺
@@ -20,7 +20,8 @@ export async function processImageToTileable(
   onProcessingEnd?: () => void,
   onError?: (message: string) => void,
   lutFile?: File | null,
-  lutIntensity?: number
+  lutIntensity?: number,
+  maskData?: Uint8Array
 ): Promise<string> {
   if (!originalImage) {
     throw new Error('原始图像不能为空')
@@ -44,20 +45,22 @@ export async function processImageToTileable(
 
     // 获取缩放后的图像数据
     let imageData = scaledCanvas.getContext('2d')!.getImageData(0, 0, scaledCanvas.width, scaledCanvas.height)
-    console.log(lutFile)
+
     // 如果有LUT文件，先应用LUT
     if (lutFile) {
       try {
-        // 使用LUT库处理图像 - 直接传递原始图像URL和LUT文件
-        const lutFileUrl = URL.createObjectURL(lutFile)
-        
+        // 读取LUT文件数据
+        const lutBuffer = await lutFile.arrayBuffer()
+        const lutData = new Uint8Array(lutBuffer)
+
         // 使用LUT库处理图像
-        const lutResult = await processImageWithLUTFile(
-          originalImage, // 使用原始图像URL，而不是处理后的ImageData
-          lutFileUrl,
-          lutIntensity || 1.0
+        const lutResult = await processImageWithLUT(
+          imageData,
+          lutData,
+          lutIntensity || 1.0,
+          maskData
         )
-        console.log(lutResult)
+
         if (lutResult.success && lutResult.result) {
           // 更新图像数据为LUT处理后的结果
           imageData = new ImageData(
@@ -66,9 +69,6 @@ export async function processImageToTileable(
             imageData.height
           )
         }
-        
-        // 清理临时URL
-        URL.revokeObjectURL(lutFileUrl)
       } catch (error) {
         console.warn('LUT处理失败，继续使用原始图像:', error)
         // LUT处理失败时继续使用原始图像数据

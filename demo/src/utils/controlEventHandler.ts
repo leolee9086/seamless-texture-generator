@@ -26,6 +26,7 @@ export interface ControlEventHandlerOptions {
   onZoomLevel?: (value: number) => void
   onLUTIntensity?: (value: number) => void
   onLUTFileChange?: (file: File) => void
+  onMaskUpdate?: (maskGenerator: (() => Promise<Uint8Array | null>) | null) => void
 }
 
 /**
@@ -98,6 +99,9 @@ export function createControlEventHandler(options: ControlEventHandlerOptions) {
           break
         case 'lut-file-change':
           options.onLUTFileChange?.(detail.data)
+          break
+        case 'mask-update':
+          options.onMaskUpdate?.(detail.data)
           break
       }
     }

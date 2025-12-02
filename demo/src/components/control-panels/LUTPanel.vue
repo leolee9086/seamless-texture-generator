@@ -47,6 +47,14 @@
                 </div>
 
                 <Slider :items="lutSliderItems" @updateValue="handleSliderUpdate" />
+
+                <!-- Color Block Selector for Masking -->
+                <div class="mt-4 border-t border-white/5 pt-4">
+                    <ColorBlockSelector :processing="false" :quantized-color-blocks="quantizedColorBlocks"
+                        :common-hsl-blocks="commonHslBlocks" :selected-color-blocks="selectedColorBlocks"
+                        :mask-options="maskOptions" @toggle-color-block="toggleColorBlock"
+                        @toggle-hsl-block="toggleHslBlock" @update:mask-options="updateMaskOptions" />
+                </div>
             </div>
 
             <!-- LUT Status Hint -->
@@ -67,8 +75,10 @@
 import { ref, computed, onMounted, watch } from 'vue'
 import { Slider } from '@leolee9086/slider-component'
 import LUTGallery from './LUTGallery.vue'
+import ColorBlockSelector from './ColorBlockSelector.vue'
 import { lutDb, type LUTItem } from '../../utils/lutDb'
 import { processImageToTileable } from '../../utils/imageProcessor'
+import { useColorBlockSelector } from '../../composables/useColorBlockSelector'
 
 const props = defineProps<{
     isMobile?: boolean
@@ -83,6 +93,7 @@ const emit = defineEmits<{
     'lut-file-change': [file: File]
     'clear-lut': []
     'slider-update': [data: { id: string; value: number }]
+    'mask-update': [maskGenerator: (() => Promise<Uint8Array | null>) | null]
 }>()
 
 // State
@@ -90,6 +101,18 @@ const luts = ref<LUTItem[]>([])
 const selectedLutId = ref<string | null>(null)
 const lutInputRef = ref<HTMLInputElement>()
 const isUpdatingThumbnails = ref(false)
+
+// Color Block Selector Logic
+const {
+    quantizedColorBlocks,
+    commonHslBlocks,
+    selectedColorBlocks,
+    maskOptions,
+    generateColorBlocks,
+    toggleColorBlock,
+    toggleHslBlock,
+    generateColorBlockMask
+} = useColorBlockSelector()
 
 // Computed
 const lutEnabled = computed(() => !!props.lutFileName)
@@ -301,9 +324,25 @@ const createThumbnail = (originalUrl: string, processedUrl: string): Promise<str
     })
 }
 
+const updateMaskOptions = (options: any) => {
+    Object.assign(maskOptions.value, options)
+}
+
 // Lifecycle
 onMounted(() => {
     loadLUTs()
+    if (props.originalImage) {
+        generateColorBlocks(props.originalImage)
+    }
+})
+
+// Watchers
+watch(() => props.originalImage, (newVal) => {
+    if (newVal) {
+        generateColorBlocks(newVal)
+        // Reset selection when image changes
+        selectedColorBlocks.value = []
+    }
 })
 
 // Watch for processed image to auto-update thumbnail if missing
@@ -324,4 +363,14 @@ watch(() => props.lutFileName, (newVal) => {
         selectedLutId.value = null
     }
 })
+
+// Watch for mask changes
+watch([selectedColorBlocks, maskOptions], () => {
+    if (selectedColorBlocks.value.length > 0) {
+        emit('mask-update', () => generateColorBlockMask(props.originalImage!))
+    } else {
+        emit('mask-update', null)
+    }
+}, { deep: true })
+
 </script>

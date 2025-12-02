@@ -46,6 +46,7 @@ export interface UseTextureGeneratorReturn {
   lutIntensity: Ref<number>
   lutFileName: Ref<string | null>
   lutFile: Ref<File | null>
+  maskGenerator: Ref<(() => Promise<Uint8Array | null>) | null>
 
   // 方法
   handleImageUploadWrapper: (event: Event) => void
@@ -93,6 +94,7 @@ export function useTextureGenerator(options: UseTextureGeneratorOptions = {}): U
   const lutIntensity = ref(1.0)
   const lutFileName = ref<string | null>(null)
   const lutFile = ref<File | null>(null)
+  const maskGenerator = ref<(() => Promise<Uint8Array | null>) | null>(null)
 
   // 初始化设备检测
   onMounted(() => {
@@ -170,6 +172,14 @@ export function useTextureGenerator(options: UseTextureGeneratorOptions = {}): U
     if (!originalImage.value) return
 
     try {
+      let maskData: Uint8Array | undefined
+      if (maskGenerator.value) {
+        const mask = await maskGenerator.value()
+        if (mask) {
+          maskData = mask
+        }
+      }
+
       processedImage.value = await processImageToTileable(
         originalImage.value,
         maxResolution.value,
@@ -178,7 +188,8 @@ export function useTextureGenerator(options: UseTextureGeneratorOptions = {}): U
         () => { isProcessing.value = false },
         (message) => { errorMessage.value = message },
         lutFile.value,
-        lutIntensity.value
+        lutIntensity.value,
+        maskData
       )
     } catch (error) {
       console.error('处理图像时出错:', error)
@@ -262,6 +273,13 @@ export function useTextureGenerator(options: UseTextureGeneratorOptions = {}): U
         errorMessage.value = 'Failed to load LUT file'
       }
     },
+    onMaskUpdate: (generator) => {
+      maskGenerator.value = generator
+      // 如果有 maskGenerator，重新处理图像
+      if (originalImage.value && lutFile.value) {
+        debouncedProcessImage()
+      }
+    },
   })
 
   return {
@@ -284,6 +302,7 @@ export function useTextureGenerator(options: UseTextureGeneratorOptions = {}): U
     lutIntensity,
     lutFileName,
     lutFile,
+    maskGenerator,
     handleImageUploadWrapper,
     loadSampleImageWrapper,
     toggleCameraWrapper,

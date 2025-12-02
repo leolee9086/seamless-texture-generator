@@ -27,7 +27,8 @@
         <LUTPanel v-else-if="activeGroup === 'lut'" is-mobile :original-image="originalImage"
           :processed-image="processedImage" :lut-enabled="lutEnabled" :lut-intensity="lutIntensity"
           :lut-file-name="lutFileName" :lut-file="lutFile" @toggle-lut="toggleLUT"
-          @lut-file-change="handleLUTFileChange" @clear-lut="clearLUT" @slider-update="handleSliderUpdate" />
+          @lut-file-change="handleLUTFileChange" @clear-lut="clearLUT" @slider-update="handleSliderUpdate"
+          @mask-update="handleMaskUpdate" />
 
         <!-- Settings Panel -->
         <SettingsPanel v-else-if="activeGroup === 'tileablesettings'" is-mobile :isProcessing="isProcessing"
@@ -116,6 +117,7 @@ const {
   toggleLUT,
   handleLUTFileChange,
   clearLUT,
+  handleMaskUpdate
 } = useControlsLogic(props, emit)
 
 const currentGroup = computed(() => groups.find(g => g.id === activeGroup.value))

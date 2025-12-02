@@ -207,5 +207,8 @@ export function useControlsLogic(props: ControlsProps, emit: (event: 'controlEve
     toggleLUT,
     handleLUTFileChange,
     clearLUT,
+    handleMaskUpdate: (maskGenerator: (() => Promise<Uint8Array | null>) | null) => {
+      emit('controlEvent', createUpdateDataEvent('mask-update', maskGenerator))
+    }
   }
 }
