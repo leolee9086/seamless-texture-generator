@@ -63,14 +63,44 @@
         <div v-if="isProcessing" class="absolute inset-0 flex items-center justify-center bg-black/50 z-20">
             <div class="text-white text-xl font-bold animate-pulse">Processing...</div>
         </div>
+
+        <!-- Editor Controls -->
+        <div
+            class="absolute bottom-8 left-1/2 -translate-x-1/2 bg-gray-900/90 backdrop-blur-md p-4 rounded-2xl border border-gray-700 shadow-2xl flex flex-col gap-4 w-[90%] max-w-lg z-40">
+            <!-- Ratio Control -->
+            <div class="flex items-center justify-between gap-4">
+                <span class="text-gray-400 text-xs uppercase font-bold tracking-wider">Ratio</span>
+                <div class="flex gap-2 bg-gray-800 p-1 rounded-lg overflow-x-auto">
+                    <button v-for="r in ratios" :key="r.label" @click="setRatio(r.value)"
+                        :class="['px-3 py-1.5 rounded-md text-xs font-medium transition-all whitespace-nowrap', currentRatio === r.value ? 'bg-blue-600 text-white shadow-lg' : 'text-gray-400 hover:text-white hover:bg-gray-700']">
+                        {{ r.label }}
+                    </button>
+                </div>
+            </div>
+
+            <!-- Rotation Control -->
+            <div class="flex items-center gap-4">
+                <span class="text-gray-400 text-xs uppercase font-bold tracking-wider w-10">Rot</span>
+                <input type="range" min="-180" max="180" step="1" v-model.number="rotation" @input="handleRotationInput"
+                    class="flex-1 h-1 bg-gray-700 rounded-lg appearance-none cursor-pointer [&::-webkit-slider-thumb]:appearance-none [&::-webkit-slider-thumb]:w-4 [&::-webkit-slider-thumb]:h-4 [&::-webkit-slider-thumb]:bg-blue-500 [&::-webkit-slider-thumb]:rounded-full hover:[&::-webkit-slider-thumb]:bg-blue-400 transition-all" />
+                <div class="flex items-center gap-2 min-w-[60px]">
+                    <span class="text-white text-xs font-mono">{{ rotation }}°</span>
+                    <button @click="resetRotation" class="text-gray-500 hover:text-white transition-colors"
+                        title="Reset Rotation">
+                        <svg xmlns="http://www.w3.org/2000/svg" width="12" height="12" viewBox="0 0 24 24" fill="none"
+                            stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                            <path d="M3 12a9 9 0 1 0 9-9 9.75 9.75 0 0 0-6.74-2.74L3 12" />
+                        </svg>
+                    </button>
+                </div>
+            </div>
+        </div>
     </div>
 </template>
 
 <script setup lang="ts">
 import { ref, watch, onMounted, onUnmounted, nextTick, computed } from 'vue'
 import { warpPerspective, type Point } from '../utils/homography'
-import Konva from 'konva'
-
 const props = defineProps<{
     visible: boolean
     originalImage: string | null
@@ -100,7 +130,21 @@ const groupConfig = ref({
     scaleY: 1
 })
 
+
+
 const points = ref<Point[]>([]) // TopLeft, TopRight, BottomRight, BottomLeft
+
+// Editor State
+const ratios = [
+    { label: 'Free', value: 0 },
+    { label: '1:1', value: 1 },
+    { label: '4:3', value: 4 / 3 },
+    { label: '16:9', value: 16 / 9 },
+    { label: '9:16', value: 9 / 16 },
+]
+const currentRatio = ref(0)
+const rotation = ref(0)
+let lastRotation = 0
 
 // Initialize
 watch(() => props.visible, (newVal) => {
@@ -177,6 +221,105 @@ const resetPoints = () => {
         { x: w - marginX, y: h - marginY },
         { x: marginX, y: h - marginY }
     ]
+
+    // Reset controls
+    currentRatio.value = 0
+    rotation.value = 0
+    lastRotation = 0
+}
+
+// Aspect Ratio & Rotation Logic
+const setRatio = (r: number) => {
+    currentRatio.value = r
+    if (r !== 0) {
+        snapToRatio(r)
+    }
+}
+
+const getPointsCenter = (pts: Point[]) => {
+    let x = 0, y = 0
+    pts.forEach(p => { x += p.x; y += p.y })
+    return { x: x / pts.length, y: y / pts.length }
+}
+
+const rotatePoint = (p: Point, center: Point, rad: number) => {
+    const dx = p.x - center.x
+    const dy = p.y - center.y
+    return {
+        x: center.x + dx * Math.cos(rad) - dy * Math.sin(rad),
+        y: center.y + dx * Math.sin(rad) + dy * Math.cos(rad)
+    }
+}
+
+const rotatePointAroundOrigin = (p: Point, rad: number) => {
+    return {
+        x: p.x * Math.cos(rad) - p.y * Math.sin(rad),
+        y: p.x * Math.sin(rad) + p.y * Math.cos(rad)
+    }
+}
+
+const snapToRatio = (r: number) => {
+    if (points.value.length < 4) return
+
+    const center = getPointsCenter(points.value)
+    const rad = -rotation.value * Math.PI / 180
+
+    // Rotate back to axis-aligned to measure size
+    const unrotatedPoints = points.value.map(p => rotatePoint(p, center, rad))
+
+    let minX = Infinity, maxX = -Infinity, minY = Infinity, maxY = -Infinity
+    unrotatedPoints.forEach(p => {
+        minX = Math.min(minX, p.x)
+        maxX = Math.max(maxX, p.x)
+        minY = Math.min(minY, p.y)
+        maxY = Math.max(maxY, p.y)
+    })
+
+    const w = maxX - minX
+    const h = maxY - minY
+    const currentR = w / h
+
+    let newW = w
+    let newH = h
+
+    if (r > currentR) {
+        // Target is wider, constrain height to match width
+        newH = w / r
+    } else {
+        // Target is taller, constrain width to match height
+        newW = h * r
+    }
+
+    const cx = (minX + maxX) / 2
+    const cy = (minY + maxY) / 2
+
+    const newPoints = [
+        { x: cx - newW / 2, y: cy - newH / 2 }, // TL
+        { x: cx + newW / 2, y: cy - newH / 2 }, // TR
+        { x: cx + newW / 2, y: cy + newH / 2 }, // BR
+        { x: cx - newW / 2, y: cy + newH / 2 }, // BL
+    ]
+
+    // Rotate back to current rotation
+    points.value = newPoints.map(p => rotatePoint(p, center, -rad))
+}
+
+const handleRotationInput = () => {
+    const delta = rotation.value - lastRotation
+    lastRotation = rotation.value
+
+    const center = getPointsCenter(points.value)
+    const rad = delta * Math.PI / 180
+    points.value = points.value.map(p => rotatePoint(p, center, rad))
+}
+
+const resetRotation = () => {
+    const delta = 0 - rotation.value
+    rotation.value = 0
+    lastRotation = 0
+    const center = getPointsCenter(points.value)
+    const rad = delta * Math.PI / 180
+    points.value = points.value.map(p => rotatePoint(p, center, rad))
 }
 
 // Configs
@@ -233,11 +376,79 @@ const handleWheel = (e: any) => {
 
 const handlePointDragMove = (e: any, index: number) => {
     const node = e.target
-    // node.x() and node.y() are relative to the group, which is exactly what we want (image coordinates)
-    points.value[index] = {
-        x: node.x(),
-        y: node.y()
+    const newPos = { x: node.x(), y: node.y() }
+
+    if (currentRatio.value === 0) {
+        // Free mode (Perspective)
+        points.value[index] = newPos
+        return
     }
+
+    // Constrained Mode (Rectangular + Ratio)
+    const oppositeIndex = (index + 2) % 4
+    const oppositePoint = points.value[oppositeIndex]
+
+    // Rotate to axis-aligned space (around origin for simplicity)
+    const rad = -rotation.value * Math.PI / 180
+    const rotNewPos = rotatePointAroundOrigin(newPos, rad)
+    const rotOpposite = rotatePointAroundOrigin(oppositePoint, rad)
+
+    // Calculate new dimensions
+    let w = Math.abs(rotNewPos.x - rotOpposite.x)
+    let h = Math.abs(rotNewPos.y - rotOpposite.y)
+
+    // Enforce ratio
+    const targetR = currentRatio.value
+    // Use the larger dimension delta to drive the size? 
+    // Or just strictly enforce ratio based on the dragged axis?
+    // Let's assume we want to fit the box defined by the drag.
+    // We take the max dimension to avoid collapsing?
+    // Or just:
+    if (w / h > targetR) {
+        h = w / targetR
+    } else {
+        w = h * targetR
+    }
+
+    // Determine direction
+    const signX = rotNewPos.x > rotOpposite.x ? 1 : -1
+    const signY = rotNewPos.y > rotOpposite.y ? 1 : -1
+
+    // New aligned corner position
+    const alignedNewPos = {
+        x: rotOpposite.x + w * signX,
+        y: rotOpposite.y + h * signY
+    }
+
+    // Reconstruct rectangle in aligned space
+    // We need to update all 4 points.
+    // Based on index parity:
+    // Even indices (0, 2): next=(opp.x, cur.y), prev=(cur.x, opp.y)
+    // Odd indices (1, 3): next=(cur.x, opp.y), prev=(opp.x, cur.y)
+
+    const newPoints = [...points.value]
+
+    // Rotate back to world space
+    const worldNewPos = rotatePointAroundOrigin(alignedNewPos, -rad)
+
+    newPoints[index] = worldNewPos
+    newPoints[oppositeIndex] = oppositePoint // Opposite stays fixed
+
+    // Calculate other two points
+    let pNextAligned, pPrevAligned
+
+    if (index % 2 === 0) {
+        pNextAligned = { x: rotOpposite.x, y: alignedNewPos.y }
+        pPrevAligned = { x: alignedNewPos.x, y: rotOpposite.y }
+    } else {
+        pNextAligned = { x: alignedNewPos.x, y: rotOpposite.y }
+        pPrevAligned = { x: rotOpposite.x, y: alignedNewPos.y }
+    }
+
+    newPoints[(index + 1) % 4] = rotatePointAroundOrigin(pNextAligned, -rad)
+    newPoints[(index + 3) % 4] = rotatePointAroundOrigin(pPrevAligned, -rad)
+
+    points.value = newPoints
 }
 
 const handleMouseEnter = (e: any) => {
