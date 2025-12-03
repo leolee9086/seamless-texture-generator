@@ -464,26 +464,57 @@ const handlePointDragMove = (e: any, index: number) => {
     let h = Math.abs(rotNewPos.y - rotOpposite.y)
 
     // Enforce ratio
-    const targetR = currentRatio.value
-    // Use the larger dimension delta to drive the size? 
-    // Or just strictly enforce ratio based on the dragged axis?
-    // Let's assume we want to fit the box defined by the drag.
-    // We take the max dimension to avoid collapsing?
-    // Or just:
+    // Enforce ratio
+    let targetR = currentRatio.value
+    if (targetR === -1) {
+        if (imageObj.value) {
+            targetR = imageObj.value.width / imageObj.value.height
+        } else {
+            targetR = 1 // Fallback
+        }
+    }
+
+    // Determine expected direction based on index to prevent flipping
+    // 0: TL (-1, -1), 1: TR (1, -1), 2: BR (1, 1), 3: BL (-1, 1) relative to center
+    // Relative to opposite point:
+    // 0 (TL) vs 2 (BR): dx < 0, dy < 0
+    // 1 (TR) vs 3 (BL): dx > 0, dy < 0
+    // 2 (BR) vs 0 (TL): dx > 0, dy > 0
+    // 3 (BL) vs 1 (TR): dx < 0, dy > 0
+
+    let expectedSignX = 1
+    let expectedSignY = 1
+
+    if (index === 0) { expectedSignX = -1; expectedSignY = -1 }
+    else if (index === 1) { expectedSignX = 1; expectedSignY = -1 }
+    else if (index === 2) { expectedSignX = 1; expectedSignY = 1 }
+    else if (index === 3) { expectedSignX = -1; expectedSignY = 1 }
+
+    // If user drags past the opposite point, clamp it (or just enforce the sign)
+    // To prevent flipping, we just ignore the user's drag direction if it flips, 
+    // and instead project the drag onto the valid quadrant.
+
+    // However, w and h are abs values.
+    // If we just use expectedSignX/Y, we ensure the point stays on the correct side.
+    // But we need to make sure w/h are not effectively zero if dragged past.
+    // Actually, if dragged past, w/h will be large but we apply it in the correct direction?
+    // No, if dragged past, rotNewPos.x > rotOpposite.x (for TL).
+    // w = abs(diff). If we apply expectedSignX (-1), we move it to the left.
+    // So if I drag TL to the right of BR by 100px. w=100.
+    // New TL = BR.x - 100.
+    // This means the handle will jump to the left side. This is the "bounce" behavior.
+    // It is better than flipping the image.
+
     if (w / h > targetR) {
         h = w / targetR
     } else {
         w = h * targetR
     }
 
-    // Determine direction
-    const signX = rotNewPos.x > rotOpposite.x ? 1 : -1
-    const signY = rotNewPos.y > rotOpposite.y ? 1 : -1
-
     // New aligned corner position
     const alignedNewPos = {
-        x: rotOpposite.x + w * signX,
-        y: rotOpposite.y + h * signY
+        x: rotOpposite.x + w * expectedSignX,
+        y: rotOpposite.y + h * expectedSignY
     }
 
     // Reconstruct rectangle in aligned space
