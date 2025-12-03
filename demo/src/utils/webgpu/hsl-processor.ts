@@ -3,7 +3,14 @@
  * 提供GPU加速的HSL颜色调整功能
  */
 
-import { createHSLComputeShader, createHSLParams, type HSLAdjustmentParams } from './hsl-shaders';
+import {
+    createHSLComputeShader,
+    createGlobalHSLComputeShader,
+    createHSLParams,
+    createGlobalHSLParams,
+    type HSLAdjustmentParams,
+    type GlobalHSLAdjustmentParams
+} from './hsl-shaders';
 
 /**
  * WebGPU HSL处理器类
@@ -170,6 +177,96 @@ export class WebGPUHSLProcessor {
     }
 
     /**
+     * 处理全局HSL调整（无遮罩）
+     * @param inputTexture 输入纹理
+     * @param outputTexture 输出纹理
+     * @param params 全局HSL调整参数
+     * @param commandEncoder 命令编码器（可选）
+     * @returns 命令编码器
+     */
+    processGlobalHSL(
+        inputTexture: GPUTexture,
+        outputTexture: GPUTexture,
+        params: GlobalHSLAdjustmentParams,
+        commandEncoder?: GPUCommandEncoder
+    ): { encoder: GPUCommandEncoder; cleanup: () => void } {
+        // 创建或使用提供的命令编码器
+        const encoder = commandEncoder ?? this.device.createCommandEncoder({
+            label: 'Global HSL Process Encoder'
+        });
+
+        // 创建全局HSL着色器模块
+        const globalShaderModule = createGlobalHSLComputeShader(this.device, false);
+
+        // 创建全局HSL参数缓冲区
+        const uniformData = createGlobalHSLParams(params);
+        const uniformBuffer = this.device.createBuffer({
+            size: uniformData.byteLength,
+            usage: GPUBufferUsage.UNIFORM | GPUBufferUsage.COPY_DST,
+            label: 'Global HSL Uniform Buffer'
+        });
+
+        // 更新uniform数据
+        this.device.queue.writeBuffer(uniformBuffer, 0, uniformData.buffer);
+
+        // 创建计算管线
+        const pipeline = this.device.createComputePipeline({
+            layout: 'auto',
+            label: 'Global HSL Compute Pipeline',
+            compute: {
+                module: globalShaderModule,
+                entryPoint: 'main',
+            },
+        });
+
+        // 创建绑定组
+        const bindGroup = this.device.createBindGroup({
+            layout: pipeline.getBindGroupLayout(0),
+            entries: [
+                {
+                    binding: 0,
+                    resource: inputTexture.createView({ label: 'Input Texture View' }),
+                },
+                {
+                    binding: 1,
+                    resource: outputTexture.createView({ label: 'Output Texture View' }),
+                },
+                {
+                    binding: 2,
+                    resource: {
+                        buffer: uniformBuffer,
+                    },
+                },
+            ],
+            label: 'Global HSL Bind Group'
+        });
+
+        // 记录计算通道
+        const computePass = encoder.beginComputePass({
+            label: 'Global HSL Compute Pass'
+        });
+        computePass.setPipeline(pipeline);
+        computePass.setBindGroup(0, bindGroup);
+
+        // 计算工作组数量
+        const workgroupCount = this.calculateWorkgroupCount(
+            inputTexture.width,
+            inputTexture.height
+        );
+
+        computePass.dispatchWorkgroups(workgroupCount.x, workgroupCount.y);
+        computePass.end();
+
+        // 返回编码器和清理函数
+        return {
+            encoder,
+            cleanup: () => {
+                uniformBuffer.destroy();
+            }
+        };
+    }
+
+    /**
      * 计算所需的工作组数量
      * @param width 纹理宽度
      * @param height 纹理高度
@@ -235,6 +332,39 @@ export async function processHSLImage(
     try {
         const encoder = processor.processImage(inputTexture, outputTexture, params);
         device.queue.submit([encoder.finish()]);
+    } finally {
+        processor.destroy();
+    }
+}
+
+/**
+ * 便捷函数：一次性处理全局HSL调整
+ * @param device WebGPU设备
+ * @param inputTexture 输入纹理
+ * @param outputTexture 输出纹理
+ * @param params 全局HSL调整参数
+ * @param highPerformance 是否使用高性能模式
+ * @returns Promise，表示处理完成
+ */
+export async function processGlobalHSLImage(
+    device: GPUDevice,
+    inputTexture: GPUTexture,
+    outputTexture: GPUTexture,
+    params: GlobalHSLAdjustmentParams,
+    highPerformance: boolean = false
+): Promise<void> {
+    const processor = createWebGPUHSLProcessor(device, highPerformance);
+
+    try {
+        const result = processor.processGlobalHSL(inputTexture, outputTexture, params);
+        const commandBuffer = result.encoder.finish();
+        device.queue.submit([commandBuffer]);
+        
+        // 等待GPU命令完成后再销毁处理器资源
+        await device.queue.onSubmittedWorkDone();
+        
+        // 清理临时资源
+        result.cleanup();
     } finally {
         processor.destroy();
     }

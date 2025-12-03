@@ -31,7 +31,7 @@ export interface ControlEventHandlerOptions {
   // 预览覆盖层处理器
   onSetPreviewOverlay?: (data: any, component: Component) => void
   // HSL调整处理器 - 在这里添加
-  onGlobalHSLChange?: (hsl: { hue: number; saturation: number; lightness: number }) => void
+  onGlobalHSLChange?: (layer: import('./hslAdjustStep').HSLAdjustmentLayer) => void
   onAddHSLLayer?: (layer: any) => void
   onUpdateHSLLayer?: (id: string, updates: any) => void
   onRemoveHSLLayer?: (id: string) => void

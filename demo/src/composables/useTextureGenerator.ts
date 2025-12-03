@@ -343,8 +343,12 @@ export function useTextureGenerator(options: UseTextureGeneratorOptions = {}): U
       setPreviewOverlay(data, component)
     },
     // HSL处理器 - 新增
-    onGlobalHSLChange: (hsl: { hue: number; saturation: number; lightness: number }) => {
-      globalHSL.value = hsl
+    onGlobalHSLChange: (layer: HSLAdjustmentLayer) => {
+      globalHSL.value = {
+        hue: layer.hue,
+        saturation: layer.saturation,
+        lightness: layer.lightness
+      }
       if (originalImage.value) {
         debouncedProcessImage()
       }

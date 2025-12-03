@@ -95,7 +95,7 @@
 </template>
 
 <script setup lang="ts">
-import { ref, computed } from 'vue'
+import { ref, computed, watch } from 'vue'
 import { Slider } from '@leolee9086/slider-component'
 import type { HSLAdjustmentLayer } from '../../utils/hslAdjustStep'
 import { createUpdateDataEvent } from '../../types/controlEvents'
@@ -104,23 +104,42 @@ import type { ControlEvent } from '../../types/controlEvents'
 const props = defineProps<{
     isMobile?: boolean
     originalImage: string | null
+    globalHSL?: { hue: number; saturation: number; lightness: number }
+    hslLayers?: import('../../utils/hslAdjustStep').HSLAdjustmentLayer[]
 }>()
 
 const emit = defineEmits<{
     'controlEvent': [event: ControlEvent]
 }>()
 
-// State
+// State - 使用props中的状态，如果没有则使用默认值
 const globalHSL = ref({
-    hue: 0,
-    saturation: 0,
-    lightness: 0
+    hue: props.globalHSL?.hue || 0,
+    saturation: props.globalHSL?.saturation || 0,
+    lightness: props.globalHSL?.lightness || 0
 })
 
-const hslLayers = ref<HSLAdjustmentLayer[]>([])
+const hslLayers = ref<HSLAdjustmentLayer[]>(props.hslLayers || [])
 const activeLayerId = ref<string | null>(null)
 const showColorPicker = ref(false)
 const selectedColor = ref('#FF0000')
+
+// 监听props变化，同步本地状态
+watch(() => props.globalHSL, (newGlobalHSL) => {
+    if (newGlobalHSL) {
+        globalHSL.value = {
+            hue: newGlobalHSL.hue,
+            saturation: newGlobalHSL.saturation,
+            lightness: newGlobalHSL.lightness
+        }
+    }
+}, { deep: true })
+
+watch(() => props.hslLayers, (newHslLayers) => {
+    if (newHslLayers) {
+        hslLayers.value = [...newHslLayers]
+    }
+}, { deep: true })
 
 // 常用颜色
 const commonColors = [
@@ -184,12 +203,31 @@ const handleGlobalSliderUpdate = (data: { id: string; value: number }) => {
     else if (data.id === 'global-saturation') globalHSL.value.saturation = data.value
     else if (data.id === 'global-lightness') globalHSL.value.lightness = data.value
 
-    emit('controlEvent', createUpdateDataEvent('global-hsl-change', { ...globalHSL.value }))
+    // 创建全局HSL调整层
+    const globalLayer: HSLAdjustmentLayer = {
+        id: 'global-hsl-layer',
+        type: 'global',
+        hue: globalHSL.value.hue,
+        saturation: globalHSL.value.saturation,
+        lightness: globalHSL.value.lightness
+    }
+
+    emit('controlEvent', createUpdateDataEvent('global-hsl-change', globalLayer))
 }
 
 const resetGlobalHSL = () => {
     globalHSL.value = { hue: 0, saturation: 0, lightness: 0 }
-    emit('controlEvent', createUpdateDataEvent('global-hsl-change', { ...globalHSL.value }))
+    
+    // 创建重置后的全局HSL调整层
+    const globalLayer: HSLAdjustmentLayer = {
+        id: 'global-hsl-layer',
+        type: 'global',
+        hue: 0,
+        saturation: 0,
+        lightness: 0
+    }
+    
+    emit('controlEvent', createUpdateDataEvent('global-hsl-change', globalLayer))
 }
 
 const addColorLayer = (color: string) => {

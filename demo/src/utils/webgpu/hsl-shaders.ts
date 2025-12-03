@@ -238,6 +238,142 @@ export const hslComputeShader = hslComputeShaderTemplate(16, 16);
 export const hslComputeShaderHighPerformance = hslComputeShaderTemplate(32, 32);
 
 /**
+ * 全局HSL调整着色器模板（无遮罩）
+ * 直接对所有像素应用HSL调整，不进行颜色选择
+ */
+export const globalHSLComputeShaderTemplate = (workgroupSizeX: number, workgroupSizeY: number) => `
+struct GlobalHSLParams {
+    // 全局HSL调整参数
+    hueOffset: f32,        // 色相偏移 (-0.5 to 0.5, 对应-180°到180°)
+    saturationOffset: f32, // 饱和度偏移 (-1 to 1)
+    lightnessOffset: f32,  // 明度偏移 (-1 to 1)
+}
+
+@group(0) @binding(0) var inputTexture: texture_2d<f32>;                    // 输入图像纹理
+@group(0) @binding(1) var outputTexture: texture_storage_2d<rgba8unorm, write>; // 输出图像纹理
+@group(0) @binding(2) var<uniform> params: GlobalHSLParams;                   // Uniform参数
+
+// RGB到HSL转换函数
+fn rgbToHsl(rgb: vec3<f32>) -> vec3<f32> {
+    let r = rgb.r;
+    let g = rgb.g;
+    let b = rgb.b;
+    
+    let maxVal = max(max(r, g), b);
+    let minVal = min(min(r, g), b);
+    let l = (maxVal + minVal) * 0.5;
+    
+    var h = 0.0;
+    var s = 0.0;
+    
+    if (maxVal != minVal) {
+        let d = maxVal - minVal;
+        s = select(d / (2.0 - maxVal - minVal), d / (maxVal + minVal), l > 0.5);
+        
+        if (maxVal == r) {
+            h = (g - b) / d + select(6.0, 0.0, g >= b);
+        } else if (maxVal == g) {
+            h = (b - r) / d + 2.0;
+        } else {
+            h = (r - g) / d + 4.0;
+        }
+        h = h / 6.0;
+    }
+    
+    return vec3<f32>(h, s, l);
+}
+
+// HSL到RGB转换函数
+fn hslToRgb(hsl: vec3<f32>) -> vec3<f32> {
+    let h = hsl.x;
+    let s = hsl.y;
+    let l = hsl.z;
+    
+    var r = 0.0;
+    var g = 0.0;
+    var b = 0.0;
+    
+    if (s == 0.0) {
+        // 灰色
+        r = l;
+        g = l;
+        b = l;
+    } else {
+        let q = select(l * (1.0 + s), l + s - l * s, l < 0.5);
+        let p = 2.0 * l - q;
+        
+        r = hue2rgb(p, q, h + 1.0 / 3.0);
+        g = hue2rgb(p, q, h);
+        b = hue2rgb(p, q, h - 1.0 / 3.0);
+    }
+    
+    return vec3<f32>(r, g, b);
+}
+
+// HSL色相辅助函数
+fn hue2rgb(p: f32, q: f32, t: f32) -> f32 {
+    var tAdjusted = t;
+    if (tAdjusted < 0.0) { tAdjusted = tAdjusted + 1.0; }
+    if (tAdjusted > 1.0) { tAdjusted = tAdjusted - 1.0; }
+    
+    if (tAdjusted < 1.0 / 6.0) {
+        return p + (q - p) * 6.0 * tAdjusted;
+    } else if (tAdjusted < 1.0 / 2.0) {
+        return q;
+    } else if (tAdjusted < 2.0 / 3.0) {
+        return p + (q - p) * (2.0 / 3.0 - tAdjusted) * 6.0;
+    } else {
+        return p;
+    }
+}
+
+// 主计算函数
+@compute @workgroup_size(${workgroupSizeX}, ${workgroupSizeY})
+fn main(@builtin(global_invocation_id) global_id: vec3<u32>) {
+    let dims = textureDimensions(inputTexture);
+    let coords = vec2<u32>(global_id.xy);
+
+    // 边界检查
+    if (coords.x >= dims.x || coords.y >= dims.y) {
+        return;
+    }
+
+    // 加载原始像素颜色
+    let originalColor = textureLoad(inputTexture, vec2<i32>(coords), 0);
+    
+    // 转换为HSL
+    let hsl = rgbToHsl(originalColor.rgb);
+    
+    // 应用全局HSL调整
+    var newH = hsl.x + params.hueOffset;
+    newH = fract(newH); // 确保色相在0-1范围内
+
+    let newS = clamp(hsl.y + params.saturationOffset, 0.0, 1.0);
+    let newL = clamp(hsl.z + params.lightnessOffset, 0.0, 1.0);
+
+    let adjustedRgb = hslToRgb(vec3<f32>(newH, newS, newL));
+    
+    // 输出调整后的颜色
+    let finalColor = vec4<f32>(adjustedRgb, originalColor.a);
+
+    // 写入输出纹理
+    textureStore(outputTexture, coords, finalColor);
+}
+`;
+
+/**
+ * 标准全局HSL处理着色器（使用16x16工作组）
+ * 适用于大多数WebGPU实现
+ */
+export const globalHSLComputeShader = globalHSLComputeShaderTemplate(16, 16);
+
+/**
+ * 高性能全局HSL处理着色器（使用32x32工作组）
+ * 适用于支持更大工作组的现代GPU
+ */
+export const globalHSLComputeShaderHighPerformance = globalHSLComputeShaderTemplate(32, 32);
+
+/**
  * 创建HSL计算着色器模块
  * @param device WebGPU设备
  * @param highPerformance 是否使用高性能模式
@@ -248,6 +384,20 @@ export function createHSLComputeShader(device: GPUDevice, highPerformance: boole
     return device.createShaderModule({
         code: shaderCode,
         label: highPerformance ? 'HSL Compute Shader (High Performance)' : 'HSL Compute Shader (Optimized)'
+    });
+}
+
+/**
+ * 创建全局HSL计算着色器模块（无遮罩）
+ * @param device WebGPU设备
+ * @param highPerformance 是否使用高性能模式
+ * @returns 着色器模块
+ */
+export function createGlobalHSLComputeShader(device: GPUDevice, highPerformance: boolean = false): GPUShaderModule {
+    const shaderCode = highPerformance ? globalHSLComputeShaderHighPerformance : globalHSLComputeShader;
+    return device.createShaderModule({
+        code: shaderCode,
+        label: highPerformance ? 'Global HSL Compute Shader (High Performance)' : 'Global HSL Compute Shader (Optimized)'
     });
 }
 
@@ -330,6 +480,31 @@ export function createHSLParams(params: HSLAdjustmentParams): Float32Array {
     data[13] = overlayColor[1]           // overlayColor.g (Offset 52)
     data[14] = overlayColor[2]           // overlayColor.b (Offset 56)
     data[15] = overlayAlpha              // overlayAlpha (Offset 60)
+
+    return data
+}
+
+/**
+ * 全局HSL调整参数接口
+ */
+export interface GlobalHSLAdjustmentParams {
+    hueOffset: number;      // 色相偏移（度）
+    saturationOffset: number; // 饱和度偏移（百分比）
+    lightnessOffset: number;  // 明度偏移（百分比）
+}
+
+/**
+ * 创建全局HSL参数缓冲区数据
+ */
+export function createGlobalHSLParams(params: GlobalHSLAdjustmentParams): Float32Array {
+    // 创建4个元素的数组以满足16字节对齐要求
+    const data = new Float32Array(4)
+
+    // 填充实际的3个参数值
+    data[0] = params.hueOffset / 360     // hueOffset (Offset 0)
+    data[1] = params.saturationOffset / 100 // saturationOffset (Offset 4)
+    data[2] = params.lightnessOffset / 100  // lightnessOffset (Offset 8)
+    data[3] = 0.0 // Padding (Offset 12)
 
     return data
 }
