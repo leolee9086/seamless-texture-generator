@@ -174,7 +174,10 @@ export const createMaskPreviewData = (
             // finalMask 是 RGBA 格式，需要取 R 通道值
             const srcIndex = (srcY * img.width + srcX) * 4
             const rawMaskValue = finalMask[srcIndex] // 取 R 通道值
-            const maskValue = computeNormalizedMaskValue(rawMaskValue, maskRange)
+            
+            // 预览时使用反转的蒙版值
+            const invertedMaskValue = 255 - rawMaskValue
+            const maskValue = computeNormalizedMaskValue(invertedMaskValue, maskRange)
 
             // 计算预览画布的像素索引
             const dstIndex = (y * canvasWidth + x) * 4

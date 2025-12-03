@@ -36,7 +36,7 @@ export const useColorBlockSelector = () => {
     const selectedColorBlocks = ref<string[]>([])
     const maskOptions = ref({
         smooth: true,
-        invert: false
+        invert: true
     })
     const maskManager = ref<AdjustmentRangeMaskManager | null>(null)
     const maskPreviewCanvas = ref<HTMLCanvasElement | null>(null)

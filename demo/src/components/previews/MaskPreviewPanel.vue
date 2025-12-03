@@ -9,7 +9,7 @@
                 平滑遮罩边缘
             </label>
             <label class="checkbox-label flex items-center cursor-pointer text-xs text-white/80">
-                <input type="checkbox" :checked="maskOptions.invert" @change="updateMaskOptionsInvert"
+                <input type="checkbox" :checked="!maskOptions.invert" @change="updateMaskOptionsInvert"
                     :disabled="processing"
                     class="mr-2 rounded bg-white/10 border-white/20 text-blue-500 focus:ring-blue-500 focus:ring-offset-0" />
                 反转最终遮罩
@@ -127,7 +127,7 @@ const updateMaskOptionsSmooth = (event: Event) => {
 
 const updateMaskOptionsInvert = (event: Event) => {
     const target = event.target as HTMLInputElement
-    emit('update:maskOptions', { ...props.maskOptions, invert: target.checked })
+    emit('update:maskOptions', { ...props.maskOptions, invert: !target.checked })
 }
 
 // Toggle mask preview overlay

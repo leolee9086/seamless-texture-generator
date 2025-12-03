@@ -60,7 +60,7 @@ export async function processImageToTileable(
         if (maskData) {
           console.log('🎭 应用蒙版:', imageData)
           maskOptions.maskData = {
-            data: maskData,
+            data:  maskData,
             width: imageData.width,
             height: imageData.height
           }

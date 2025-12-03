@@ -263,11 +263,7 @@ const handleLUTFileChange = async (event: Event) => {
     await loadLUTs()
     input.value = '' // Reset input
 
-    // Auto update thumbnails for new LUTs if we have an image
-    if (props.originalImage) {
-        // We could do this, but maybe let the user decide or do it in background?
-        // Let's just reload for now.
-    }
+
 }
 
 const handleSelectLUT = (lut: LUTItem) => {
