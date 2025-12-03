@@ -1,14 +1,22 @@
 <template>
     <div class="input-group">
-        <label class="text-white/80 text-sm font-medium mb-2 block">选择颜色范围:</label>
-        <div class="color-blocks-container flex flex-col gap-4">
+        <label v-if="!isMobile" class="text-white/80 text-sm font-medium mb-2 block">选择颜色范围:</label>
+        <div :class="[
+            'color-blocks-container flex gap-4',
+            isMobile ? 'flex-row overflow-x-auto custom-scrollbar pb-2' : 'flex-col'
+        ]">
             <!-- Quantized Color Blocks -->
-            <div v-if="showAdd && quantizedColorBlocks.length > 0" class="color-block-section">
-                <h4 class="text-xs text-white/60 font-bold mb-2">图像量化色块 (点击添加)</h4>
-                <div class="color-blocks flex flex-wrap gap-1">
-                    <div v-for="(color, index) in quantizedColorBlocks" :key="`quantized-${index}`"
-                        class="color-block w-8 h-8 rounded cursor-pointer relative transition-all duration-200 flex items-center justify-center text-[9px] font-bold text-white shadow-sm border-2 border-white/10 hover:scale-110 hover:shadow-md hover:z-10"
-                        :style="{ backgroundColor: `rgb(${color.r}, ${color.g}, ${color.b})` }"
+            <div v-if="showAdd && quantizedColorBlocks.length > 0" :class="[
+                'color-block-section',
+                isMobile ? 'flex-shrink-0' : ''
+            ]">
+                <h4 class="text-xs text-white/60 font-bold mb-2 whitespace-nowrap">图像量化色块</h4>
+                <div class="color-blocks flex gap-2" :class="isMobile ? 'flex-nowrap' : 'flex-wrap'">
+                    <div v-for="(color, index) in quantizedColorBlocks" :key="`quantized-${index}`" :class="[
+                        'color-block rounded cursor-pointer relative transition-all duration-200 flex items-center justify-center font-bold text-white shadow-sm border-2 border-white/10 hover:scale-110 hover:shadow-md hover:z-10',
+                        isMobile ? 'w-16 h-16 text-xs' : 'w-10 h-10 text-[9px]',
+                        'flex-shrink-0'
+                    ]" :style="{ backgroundColor: `rgb(${color.r}, ${color.g}, ${color.b})` }"
                         @click="emit('add-color-layer', color)"
                         :title="`RGB(${color.r}, ${color.g}, ${color.b}) - 出现${color.count}次`">
                         <span class="drop-shadow-md">{{ color.count }}</span>
@@ -17,12 +25,17 @@
             </div>
 
             <!-- Common HSL Blocks -->
-            <div v-if="showAdd" class="color-block-section">
-                <h4 class="text-xs text-white/60 font-bold mb-2">常用HSL色块 (点击添加)</h4>
-                <div class="color-blocks flex flex-wrap gap-1">
-                    <div v-for="(hslBlock, index) in commonHslBlocks" :key="`hsl-${index}`"
-                        class="color-block hsl-block w-8 h-8 rounded cursor-pointer relative transition-all duration-200 flex items-center justify-center text-[9px] font-bold text-white shadow-sm border border-white/10 hover:scale-110 hover:shadow-md hover:z-10 text-center leading-tight"
-                        :style="{ backgroundColor: getHslBlockColor(hslBlock) }"
+            <div v-if="showAdd" :class="[
+                'color-block-section',
+                isMobile ? 'flex-shrink-0' : ''
+            ]">
+                <h4 class="text-xs text-white/60 font-bold mb-2 whitespace-nowrap">常用HSL色块</h4>
+                <div class="color-blocks flex gap-2" :class="isMobile ? 'flex-nowrap' : 'flex-wrap'">
+                    <div v-for="(hslBlock, index) in commonHslBlocks" :key="`hsl-${index}`" :class="[
+                        'color-block hsl-block rounded cursor-pointer relative transition-all duration-200 flex items-center justify-center font-bold text-white shadow-sm border border-white/10 hover:scale-110 hover:shadow-md hover:z-10 text-center leading-tight',
+                        isMobile ? 'w-16 h-16 text-xs' : 'w-10 h-10 text-[9px]',
+                        'flex-shrink-0'
+                    ]" :style="{ backgroundColor: getHslBlockColor(hslBlock) }"
                         @click="emit('add-hsl-layer', hslBlock)" :title="hslBlock.name">
                         <span class="drop-shadow-md">{{ hslBlock.name }}</span>
                     </div>
@@ -57,13 +70,9 @@
             <h4 class="text-xs text-white/80 mb-2 pb-2 border-b border-white/5">图层设置: {{ activeLayer.name }}</h4>
 
             <!-- Common Settings -->
-            <div class="control-row flex items-center justify-between mb-2 text-xs">
-                <label>强度: {{ Math.round(activeLayer.intensity * 100) }}%</label>
-                <input type="range" min="0" max="1" step="0.01" :value="activeLayer.intensity"
-                    @input="updateLayerIntensity" class="w-3/5" />
-            </div>
+            <Slider :items="commonSliderItems" @updateValue="handleSliderUpdate" />
 
-            <div class="control-row flex items-center justify-between mb-2 text-xs">
+            <div class="control-row flex items-center justify-between mb-2 text-xs mt-2">
                 <label>混合模式:</label>
                 <select :value="activeLayer.blendMode" @change="updateLayerBlendMode"
                     class="w-3/5 px-1 py-0.5 bg-white/5 border border-white/10 text-white rounded text-xs">
@@ -76,62 +85,12 @@
 
             <!-- HSL Settings -->
             <div v-if="activeLayer.type === 'hsl' && activeLayer.hslRange" class="hsl-controls mt-2">
-                <div class="control-group mb-3 pb-2 border-b border-dashed border-white/5">
-                    <label class="text-xs font-semibold text-blue-400 block mb-1">色相 (Hue)</label>
-                    <div class="control-row flex items-center justify-between mb-1 text-xs">
-                        <span>中心: {{ Math.round(activeLayer.hslRange.hue) }}°</span>
-                        <input type="range" min="0" max="360" :value="activeLayer.hslRange.hue"
-                            @input="updateHslParam('hue', $event)" class="w-3/5" />
-                    </div>
-                    <div class="control-row flex items-center justify-between mb-1 text-xs">
-                        <span>容差: {{ Math.round(activeLayer.hslRange.hueTolerance) }}</span>
-                        <input type="range" min="0" max="180" :value="activeLayer.hslRange.hueTolerance"
-                            @input="updateHslParam('hueTolerance', $event)" class="w-3/5" />
-                    </div>
-                </div>
-
-                <div class="control-group mb-3 pb-2 border-b border-dashed border-white/5">
-                    <label class="text-xs font-semibold text-blue-400 block mb-1">饱和度 (Saturation)</label>
-                    <div class="control-row flex items-center justify-between mb-1 text-xs">
-                        <span>中心: {{ Math.round(activeLayer.hslRange.saturation) }}%</span>
-                        <input type="range" min="0" max="100" :value="activeLayer.hslRange.saturation"
-                            @input="updateHslParam('saturation', $event)" class="w-3/5" />
-                    </div>
-                    <div class="control-row flex items-center justify-between mb-1 text-xs">
-                        <span>容差: {{ Math.round(activeLayer.hslRange.saturationTolerance) }}</span>
-                        <input type="range" min="0" max="100" :value="activeLayer.hslRange.saturationTolerance"
-                            @input="updateHslParam('saturationTolerance', $event)" class="w-3/5" />
-                    </div>
-                </div>
-
-                <div class="control-group mb-3 pb-2 border-b border-dashed border-white/5">
-                    <label class="text-xs font-semibold text-blue-400 block mb-1">明度 (Lightness)</label>
-                    <div class="control-row flex items-center justify-between mb-1 text-xs">
-                        <span>中心: {{ Math.round(activeLayer.hslRange.lightness) }}%</span>
-                        <input type="range" min="0" max="100" :value="activeLayer.hslRange.lightness"
-                            @input="updateHslParam('lightness', $event)" class="w-3/5" />
-                    </div>
-                    <div class="control-row flex items-center justify-between mb-1 text-xs">
-                        <span>容差: {{ Math.round(activeLayer.hslRange.lightnessTolerance) }}</span>
-                        <input type="range" min="0" max="100" :value="activeLayer.hslRange.lightnessTolerance"
-                            @input="updateHslParam('lightnessTolerance', $event)" class="w-3/5" />
-                    </div>
-                </div>
-
-                <div class="control-row flex items-center justify-between mb-1 text-xs">
-                    <label>羽化: {{ activeLayer.hslRange.feather.toFixed(2) }}</label>
-                    <input type="range" min="0" max="1" step="0.05" :value="activeLayer.hslRange.feather"
-                        @input="updateHslParam('feather', $event)" class="w-3/5" />
-                </div>
+                <Slider :items="hslSliderItems" @updateValue="handleSliderUpdate" />
             </div>
 
             <!-- Quantized Color Settings -->
             <div v-if="activeLayer.type === 'quantized'" class="quantized-controls">
-                <div class="control-row flex items-center justify-between mb-1 text-xs">
-                    <label>颜色容差: {{ activeLayer.tolerance }}</label>
-                    <input type="range" min="0" max="100" :value="activeLayer.tolerance"
-                        @input="updateQuantizedParam('tolerance', $event)" class="w-3/5" />
-                </div>
+                <Slider :items="quantizedSliderItems" @updateValue="handleSliderUpdate" />
             </div>
         </div>
 
@@ -140,6 +99,7 @@
 
 <script setup lang="ts">
 import { computed } from 'vue'
+import { Slider } from '@leolee9086/slider-component'
 import { getHslBlockColor } from '../../utils/lut/getHslBlockColor'
 import type { AdjustmentLayer } from '../../composables/useColorBlockSelector'
 
@@ -168,6 +128,7 @@ interface Props {
     layers: AdjustmentLayer[]
     activeLayerId: string | null
     mode?: 'full' | 'add-only' | 'settings-only' | 'list-only'
+    isMobile?: boolean
 }
 
 interface Emits {
@@ -191,15 +152,114 @@ const activeLayer = computed(() => {
     return props.layers.find(l => l.id === props.activeLayerId)
 })
 
+// Slider items for common settings
+const commonSliderItems = computed(() => {
+    if (!activeLayer.value) return []
+    return [
+        {
+            id: 'layer-intensity',
+            label: '强度',
+            value: activeLayer.value.intensity,
+            min: 0,
+            max: 1,
+            step: 0.01,
+            format: (val: number) => `${Math.round(val * 100)}%`
+        }
+    ]
+})
+
+// Slider items for HSL settings
+const hslSliderItems = computed(() => {
+    if (!activeLayer.value || !activeLayer.value.hslRange) return []
+    const hsl = activeLayer.value.hslRange
+    return [
+        {
+            id: 'hsl-hue',
+            label: '色相中心',
+            value: hsl.hue,
+            min: 0,
+            max: 360,
+            step: 1,
+            format: (val: number) => `${Math.round(val)}°`,
+            group: '色相 (Hue)'
+        },
+        {
+            id: 'hsl-hueTolerance',
+            label: '色相容差',
+            value: hsl.hueTolerance,
+            min: 0,
+            max: 180,
+            step: 1,
+            group: '色相 (Hue)'
+        },
+        {
+            id: 'hsl-saturation',
+            label: '饱和度中心',
+            value: hsl.saturation,
+            min: 0,
+            max: 100,
+            step: 1,
+            format: (val: number) => `${Math.round(val)}%`,
+            group: '饱和度 (Saturation)'
+        },
+        {
+            id: 'hsl-saturationTolerance',
+            label: '饱和度容差',
+            value: hsl.saturationTolerance,
+            min: 0,
+            max: 100,
+            step: 1,
+            group: '饱和度 (Saturation)'
+        },
+        {
+            id: 'hsl-lightness',
+            label: '明度中心',
+            value: hsl.lightness,
+            min: 0,
+            max: 100,
+            step: 1,
+            format: (val: number) => `${Math.round(val)}%`,
+            group: '明度 (Lightness)'
+        },
+        {
+            id: 'hsl-lightnessTolerance',
+            label: '明度容差',
+            value: hsl.lightnessTolerance,
+            min: 0,
+            max: 100,
+            step: 1,
+            group: '明度 (Lightness)'
+        },
+        {
+            id: 'hsl-feather',
+            label: '羽化',
+            value: hsl.feather,
+            min: 0,
+            max: 1,
+            step: 0.05,
+            format: (val: number) => val.toFixed(2)
+        }
+    ]
+})
+
+// Slider items for quantized color settings
+const quantizedSliderItems = computed(() => {
+    if (!activeLayer.value || activeLayer.value.type !== 'quantized') return []
+    return [
+        {
+            id: 'quantized-tolerance',
+            label: '颜色容差',
+            value: activeLayer.value.tolerance || 0,
+            min: 0,
+            max: 100,
+            step: 1
+        }
+    ]
+})
+
 const updateLayerVisible = (layer: AdjustmentLayer, event: Event) => {
     const target = event.target as HTMLInputElement
     emit('update-layer', layer.id, { visible: target.checked })
-}
-
-const updateLayerIntensity = (event: Event) => {
-    if (!activeLayer.value) return
-    const target = event.target as HTMLInputElement
-    emit('update-layer', activeLayer.value.id, { intensity: parseFloat(target.value) })
 }
 
 const updateLayerBlendMode = (event: Event) => {
@@ -208,24 +268,53 @@ const updateLayerBlendMode = (event: Event) => {
     emit('update-layer', activeLayer.value.id, { blendMode: target.value as any })
 }
 
-const updateHslParam = (param: string, event: Event) => {
-    if (!activeLayer.value || !activeLayer.value.hslRange) return
-    const target = event.target as HTMLInputElement
-    const value = parseFloat(target.value)
-
-    const newHslRange = { ...activeLayer.value.hslRange, [param]: value }
-    emit('update-layer', activeLayer.value.id, { hslRange: newHslRange })
-}
-
-const updateQuantizedParam = (param: string, event: Event) => {
+const handleSliderUpdate = (data: { id: string; value: number | string }) => {
     if (!activeLayer.value) return
-    const target = event.target as HTMLInputElement
-    const value = parseFloat(target.value)
 
-    emit('update-layer', activeLayer.value.id, { [param]: value })
+    // Handle common settings
+    if (data.id === 'layer-intensity') {
+        emit('update-layer', activeLayer.value.id, { intensity: data.value as number })
+    }
+    // Handle HSL parameters
+    else if (data.id.startsWith('hsl-') && activeLayer.value.hslRange) {
+        const param = data.id.replace('hsl-', '')
+        const newHslRange = { ...activeLayer.value.hslRange, [param]: data.value }
+        emit('update-layer', activeLayer.value.id, { hslRange: newHslRange })
+    }
+    // Handle quantized parameters
+    else if (data.id.startsWith('quantized-')) {
+        const param = data.id.replace('quantized-', '')
+        emit('update-layer', activeLayer.value.id, { [param]: data.value })
+    }
 }
+
 </script>
 
 <style scoped>
-/* Tailwind classes handled in template */
+/* 自定义滚动条样式 */
+.custom-scrollbar::-webkit-scrollbar {
+    width: 4px;
+    height: 4px;
+}
+
+.custom-scrollbar::-webkit-scrollbar-track {
+    background: rgba(255, 255, 255, 0.05);
+    border-radius: 2px;
+}
+
+.custom-scrollbar::-webkit-scrollbar-thumb {
+    background: rgba(255, 255, 255, 0.2);
+    border-radius: 2px;
+}
+
+.custom-scrollbar::-webkit-scrollbar-thumb:hover {
+    background: rgba(255, 255, 255, 0.3);
+}
+
+/* 移动端横向滚动优化 */
+.color-blocks-container {
+    scrollbar-width: thin;
+    -webkit-overflow-scrolling: touch;
+    /* iOS 平滑滚动 */
+}
 </style>

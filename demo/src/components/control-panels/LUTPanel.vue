@@ -100,8 +100,8 @@
                     <div v-if="!isMobile && selectedLutId" class="mt-4 border-t border-white/5 pt-4">
                         <ColorBlockSelector :processing="false" :quantized-color-blocks="quantizedColorBlocks"
                             :common-hsl-blocks="commonHslBlocks" :layers="layers" :active-layer-id="activeLayerId"
-                            @add-color-layer="addColorLayer" @add-hsl-layer="addHslLayer" @remove-layer="removeLayer"
-                            @select-layer="selectLayer" @update-layer="updateLayer" />
+                            :is-mobile="false" @add-color-layer="addColorLayer" @add-hsl-layer="addHslLayer"
+                            @remove-layer="removeLayer" @select-layer="selectLayer" @update-layer="updateLayer" />
                     </div>
                 </div>
 
@@ -109,7 +109,7 @@
                 <div v-if="isMobile && activeMobileTab === 'add'" class="pb-3 pt-3">
                     <ColorBlockSelector :processing="false" :quantized-color-blocks="quantizedColorBlocks"
                         :common-hsl-blocks="commonHslBlocks" :layers="layers" :active-layer-id="activeLayerId"
-                        mode="add-only" @add-color-layer="addColorLayer" @add-hsl-layer="addHslLayer"
+                        mode="add-only" :is-mobile="true" @add-color-layer="addColorLayer" @add-hsl-layer="addHslLayer"
                         @remove-layer="removeLayer" @select-layer="selectLayer" @update-layer="updateLayer" />
                 </div>
 
@@ -117,8 +117,9 @@
                 <div v-if="isMobile && activeMobileTab !== 'lut' && activeMobileTab !== 'add'" class="pb-3 pt-3">
                     <ColorBlockSelector :processing="false" :quantized-color-blocks="quantizedColorBlocks"
                         :common-hsl-blocks="commonHslBlocks" :layers="layers" :active-layer-id="activeLayerId"
-                        mode="settings-only" @add-color-layer="addColorLayer" @add-hsl-layer="addHslLayer"
-                        @remove-layer="removeLayer" @select-layer="selectLayer" @update-layer="updateLayer" />
+                        mode="settings-only" :is-mobile="true" @add-color-layer="addColorLayer"
+                        @add-hsl-layer="addHslLayer" @remove-layer="removeLayer" @select-layer="selectLayer"
+                        @update-layer="updateLayer" />
                 </div>
 
                 <!-- Mask Preview Panel (Always present but hidden content on mobile) -->
