@@ -42,6 +42,12 @@
                         <!-- Connection Lines -->
                         <v-line :config="lineConfig" />
 
+                        <!-- Rotation Handle Line -->
+                        <v-line :config="rotationLineConfig" />
+                        <!-- Rotation Handle -->
+                        <v-circle :config="rotationHandleConfig" @dragmove="handleRotatorDragMove"
+                            @mouseenter="handleMouseEnter" @mouseleave="handleMouseLeave" />
+
                         <!-- Control Points -->
                         <v-circle v-for="(point, index) in points" :key="index" :config="{
                             x: point.x,
@@ -52,7 +58,7 @@
                             strokeWidth: 2 / groupConfig.scaleX,
                             draggable: true,
                             hitStrokeWidth: 20 / groupConfig.scaleX
-                        }" @dragmove="(e) => handlePointDragMove(e, index)" @mouseenter="handleMouseEnter"
+                        }" @dragmove="(e: any) => handlePointDragMove(e, index)" @mouseenter="handleMouseEnter"
                             @mouseleave="handleMouseLeave" />
                     </v-group>
                 </v-layer>
@@ -137,6 +143,7 @@ const points = ref<Point[]>([]) // TopLeft, TopRight, BottomRight, BottomLeft
 // Editor State
 const ratios = [
     { label: 'Free', value: 0 },
+    { label: 'Original', value: -1 },
     { label: '1:1', value: 1 },
     { label: '4:3', value: 4 / 3 },
     { label: '16:9', value: 16 / 9 },
@@ -231,7 +238,11 @@ const resetPoints = () => {
 // Aspect Ratio & Rotation Logic
 const setRatio = (r: number) => {
     currentRatio.value = r
-    if (r !== 0) {
+    if (r === -1) {
+        if (imageObj.value) {
+            snapToRatio(imageObj.value.width / imageObj.value.height)
+        }
+    } else if (r !== 0) {
         snapToRatio(r)
     }
 }
@@ -347,6 +358,61 @@ const lineConfig = computed(() => {
     }
 })
 
+const rotationLineConfig = computed(() => {
+    if (points.value.length < 4) return { visible: false }
+    const p0 = points.value[0]
+    const p1 = points.value[1]
+    const cx = (p0.x + p1.x) / 2
+    const cy = (p0.y + p1.y) / 2
+
+    // Same logic as handle to find tip
+    const dx = p1.x - p0.x
+    const dy = p1.y - p0.y
+    const len = Math.sqrt(dx * dx + dy * dy) || 1
+    const nx = dy / len
+    const ny = -dx / len
+    const offset = 40 / groupConfig.value.scaleX
+
+    const tipX = cx + nx * offset
+    const tipY = cy + ny * offset
+
+    return {
+        points: [cx, cy, tipX, tipY],
+        stroke: 'white',
+        strokeWidth: 1 / groupConfig.value.scaleX,
+        dash: [4, 4],
+        listening: false
+    }
+})
+
+const rotationHandleConfig = computed(() => {
+    if (points.value.length < 4) return { visible: false }
+    const p0 = points.value[0]
+    const p1 = points.value[1]
+    const cx = (p0.x + p1.x) / 2
+    const cy = (p0.y + p1.y) / 2
+    const dx = p1.x - p0.x
+    const dy = p1.y - p0.y
+    const len = Math.sqrt(dx * dx + dy * dy) || 1
+    const nx = dy / len
+    const ny = -dx / len
+    const offset = 40 / groupConfig.value.scaleX
+
+    const tipX = cx + nx * offset
+    const tipY = cy + ny * offset
+
+    return {
+        x: tipX,
+        y: tipY,
+        radius: 8 / groupConfig.value.scaleX,
+        fill: 'white',
+        stroke: '#000',
+        strokeWidth: 1 / groupConfig.value.scaleX,
+        draggable: true,
+        hitStrokeWidth: 20 / groupConfig.value.scaleX
+    }
+})
+
 // Interaction Handlers
 const handleWheel = (e: any) => {
     const evt = e.evt
@@ -449,6 +515,47 @@ const handlePointDragMove = (e: any, index: number) => {
     newPoints[(index + 3) % 4] = rotatePointAroundOrigin(pPrevAligned, -rad)
 
     points.value = newPoints
+}
+
+const handleRotatorDragMove = (e: any) => {
+    const node = e.target
+    const center = getPointsCenter(points.value)
+    const mouseX = node.x()
+    const mouseY = node.y()
+
+    // Vector from center to mouse
+    const vMouseX = mouseX - center.x
+    const vMouseY = mouseY - center.y
+    const angleMouse = Math.atan2(vMouseY, vMouseX)
+
+    // Calculate new rotation
+    // -90 degrees (up) corresponds to 0 rotation in our logic if we consider top edge
+    // But wait, our rotation logic is:
+    // rotatePoint uses `rad`.
+    // If rotation is 0, top edge is horizontal. Center to top-mid is (0, -H/2).
+    // atan2(0, -H/2) is -PI/2 (-90 deg).
+    // So if angleMouse is -90, rotation should be 0.
+    // So rotation = angleMouse + 90.
+
+    let newRot = angleMouse * 180 / Math.PI + 90
+
+    // Normalize to -180 to 180
+    while (newRot > 180) newRot -= 360
+    while (newRot < -180) newRot += 360
+
+    const delta = newRot - rotation.value
+    rotation.value = Math.round(newRot) // Round for cleaner UI
+    lastRotation = rotation.value
+
+    const rad = delta * Math.PI / 180
+    points.value = points.value.map(p => rotatePoint(p, center, rad))
+
+    // Reset node position to match computed position to avoid drift or visual glitch
+    // Actually, if we don't reset, Konva keeps the dragged position.
+    // But since we updated points, the computed config will update.
+    // Vue-Konva should update the node position in the next tick.
+    // However, during drag, Konva might not respect the prop update immediately if it's being dragged.
+    // But usually it's fine.
 }
 
 const handleMouseEnter = (e: any) => {
