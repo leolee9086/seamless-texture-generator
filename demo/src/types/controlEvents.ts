@@ -34,6 +34,10 @@ export type UpdateAction =
   | 'lut-file-change'
   | 'mask-update'
   | 'set-preview-overlay'
+  | 'global-hsl-change'      // 新增
+  | 'add-hsl-layer'          // 新增
+  | 'update-hsl-layer'       // 新增
+  | 'remove-hsl-layer'       // 新增
 
 // 事件创建辅助函数
 export const createButtonClickEvent = (action: ButtonAction): ControlEvent => ({

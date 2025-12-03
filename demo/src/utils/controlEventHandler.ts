@@ -30,6 +30,11 @@ export interface ControlEventHandlerOptions {
   onMaskUpdate?: (maskGenerator: (() => Promise<Uint8Array | null>) | null) => void
   // 预览覆盖层处理器
   onSetPreviewOverlay?: (data: any, component: Component) => void
+  // HSL调整处理器 - 在这里添加
+  onGlobalHSLChange?: (hsl: { hue: number; saturation: number; lightness: number }) => void
+  onAddHSLLayer?: (layer: any) => void
+  onUpdateHSLLayer?: (id: string, updates: any) => void
+  onRemoveHSLLayer?: (id: string) => void
 }
 
 /**
@@ -110,6 +115,19 @@ export function createControlEventHandler(options: ControlEventHandlerOptions) {
           if (detail.data && typeof detail.data === 'object' && 'data' in detail.data && 'component' in detail.data) {
             options.onSetPreviewOverlay?.(detail.data.data, detail.data.component)
           }
+          break
+        // HSL事件处理 - 在这里添加
+        case 'global-hsl-change':
+          options.onGlobalHSLChange?.(detail.data)
+          break
+        case 'add-hsl-layer':
+          options.onAddHSLLayer?.(detail.data)
+          break
+        case 'update-hsl-layer':
+          options.onUpdateHSLLayer?.(detail.data.id, detail.data.updates)
+          break
+        case 'remove-hsl-layer':
+          options.onRemoveHSLLayer?.(detail.data)
           break
       }
     }

@@ -8,6 +8,7 @@
                 :max-resolution="maxResolution" :border-size="borderSize" :split-position="splitPosition"
                 :magnifier-enabled="magnifierEnabled" :zoom-level="zoomLevel"
                 :lut-enabled="lutEnabled" :lut-intensity="lutIntensity" :lut-file-name="lutFileName" :lut-file="lutFile"
+                :global-hsl="globalHSL" :hsl-layers="hslLayers"
                 @control-event="handleControlEvent" />
         </div>
 
@@ -52,6 +53,8 @@ const {
   lutFileName,
   lutFile,
   previewOverlay,
+  globalHSL,
+  hslLayers,
   clearPreviewOverlay,
   handleSamplingConfirmWrapper,
   handleControlEvent,

@@ -11,6 +11,7 @@
           :max-resolution="maxResolution" :border-size="borderSize" :split-position="splitPosition"
           :magnifier-enabled="magnifierEnabled" :zoom-level="zoomLevel" :lut-enabled="lutEnabled"
           :lut-intensity="lutIntensity" :lut-file-name="lutFileName" :lut-file="lutFile"
+          :global-hsl="globalHSL" :hsl-layers="hslLayers"
           @control-event="handleControlEvent" class="pointer-events-auto h-full" />
       </div>
 
@@ -62,6 +63,8 @@ const {
   handleSamplingConfirmWrapper,
   handleControlEvent,
   previewOverlay,
+  globalHSL,
+  hslLayers,
   clearPreviewOverlay,
 } = useTextureGenerator({
   enableCamera: false,

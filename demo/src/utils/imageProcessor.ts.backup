@@ -1,7 +1,6 @@
 import { makeTileable } from '../../../src/lib/HistogramPreservingBlendMakeTileable'
 import { scaleImageToMaxResolution } from './imageProcessing'
 import { processImageWithLUT, processLutData } from '@leolee9086/use-lut'
-import { HSLAdjustProcessStep, type HSLAdjustmentLayer } from './hslAdjustStep'
 
 /**
  * 管线数据接口 - 统一使用 GPUBuffer 作为数据载体
@@ -21,7 +20,6 @@ interface PipelineOptions {
   lutFile?: File | null
   lutIntensity?: number
   maskData?: Uint8Array
-  hslLayers?: HSLAdjustmentLayer[]  // 新增
 }
 
 /**
@@ -283,9 +281,7 @@ export async function processImageToTileable(
   onError?: (message: string) => void,
   lutFile?: File | null,
   lutIntensity?: number,
-  maskData?: Uint8Array,
-  hslLayers?: HSLAdjustmentLayer[]  // 新增参数
-
+  maskData?: Uint8Array
 ): Promise<string> {
   if (!originalImage) {
     throw new Error('原始图像不能为空')
@@ -300,9 +296,7 @@ export async function processImageToTileable(
       borderSize,
       lutFile,
       lutIntensity,
-      maskData,
-      hslLayers  // 新增
-
+      maskData
     }
 
     // 步骤 1: 加载和缩放图像
@@ -312,12 +306,7 @@ export async function processImageToTileable(
     // 步骤 2: LUT 处理
     const lutProcessStep = new LUTProcessStep()
     pipelineData = await lutProcessStep.execute(pipelineData, options)
-    // 步骤 2.5: HSL调整（新增）
-    if (options.hslLayers && options.hslLayers.length > 0) {
-      const device = await getGPUDevice()
-      const hslAdjustStep = new HSLAdjustProcessStep()
-      pipelineData = await hslAdjustStep.execute(pipelineData, options.hslLayers, device)
-    }
+
     // 步骤 3: 可平铺化处理
     const tileableProcessStep = new TileableProcessStep()
     pipelineData = await tileableProcessStep.execute(pipelineData, options)

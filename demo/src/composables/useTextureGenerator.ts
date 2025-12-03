@@ -1,5 +1,6 @@
 import { ref, onMounted, type Ref, type Component, markRaw } from 'vue'
 import { processImageToTileable } from '../utils/imageProcessor'
+import type { HSLAdjustmentLayer } from '../utils/hslAdjustStep'  // 新增这行
 import {
   handleImageUpload as uploadHandler,
   loadSampleImage as loadSample,
@@ -54,6 +55,8 @@ export interface UseTextureGeneratorReturn {
   lutFile: Ref<File | null>
   maskGenerator: Ref<(() => Promise<Uint8Array | null>) | null>
   previewOverlay: Ref<PreviewOverlayData | null>
+  globalHSL: Ref<{ hue: number; saturation: number; lightness: number }>  // 新增
+  hslLayers: Ref<HSLAdjustmentLayer[]>  // 新增
 
   // 方法
   handleImageUploadWrapper: (event: Event) => void
@@ -105,6 +108,13 @@ export function useTextureGenerator(options: UseTextureGeneratorOptions = {}): U
   const lutFile = ref<File | null>(null)
   const maskGenerator = ref<(() => Promise<Uint8Array | null>) | null>(null)
   const previewOverlay = ref<PreviewOverlayData | null>(null)
+  // HSL调整状态 - 新增
+  const globalHSL = ref({
+    hue: 0,
+    saturation: 0,
+    lightness: 0
+  })
+  const hslLayers = ref<HSLAdjustmentLayer[]>([])
 
   // 初始化设备检测
   onMounted(() => {
@@ -177,6 +187,30 @@ export function useTextureGenerator(options: UseTextureGeneratorOptions = {}): U
     })
   }
 
+  // 构建完整的HSL调整层数组（全局 + 色块层）
+  const buildHSLLayers = (): HSLAdjustmentLayer[] => {
+    const layers: HSLAdjustmentLayer[] = []
+    
+    // 如果有全局HSL调整，添加全局层
+    if (globalHSL.value.hue !== 0 || globalHSL.value.saturation !== 0 || globalHSL.value.lightness !== 0) {
+      layers.push({
+        id: 'global',
+        type: 'global',
+        targetColor: '#000000',
+        hue: globalHSL.value.hue,
+        saturation: globalHSL.value.saturation,
+        lightness: globalHSL.value.lightness,
+        precision: 100,
+        range: 100
+      })
+    }
+    
+    // 添加所有色块调整层
+    layers.push(...hslLayers.value)
+    
+    return layers
+  }
+
   // 处理图像
   const processImage = async () => {
     if (!originalImage.value) return
@@ -199,7 +233,8 @@ export function useTextureGenerator(options: UseTextureGeneratorOptions = {}): U
         (message) => { errorMessage.value = message },
         lutFile.value,
         lutIntensity.value,
-        maskData
+        maskData,
+        buildHSLLayers()  // 新增这个参数
       )
     } catch (error) {
       console.error('处理图像时出错:', error)
@@ -307,6 +342,34 @@ export function useTextureGenerator(options: UseTextureGeneratorOptions = {}): U
     onSetPreviewOverlay: (data: any, component: Component) => {
       setPreviewOverlay(data, component)
     },
+    // HSL处理器 - 新增
+    onGlobalHSLChange: (hsl: { hue: number; saturation: number; lightness: number }) => {
+      globalHSL.value = hsl
+      if (originalImage.value) {
+        debouncedProcessImage()
+      }
+    },
+    onAddHSLLayer: (layer: HSLAdjustmentLayer) => {
+      hslLayers.value.push(layer)
+      if (originalImage.value) {
+        debouncedProcessImage()
+      }
+    },
+    onUpdateHSLLayer: (id: string, updates: Partial<HSLAdjustmentLayer>) => {
+      const layer = hslLayers.value.find(l => l.id === id)
+      if (layer) {
+        Object.assign(layer, updates)
+        if (originalImage.value) {
+          debouncedProcessImage()
+        }
+      }
+    },
+    onRemoveHSLLayer: (id: string) => {
+      hslLayers.value = hslLayers.value.filter(l => l.id !== id)
+      if (originalImage.value) {
+        debouncedProcessImage()
+      }
+    },
   })
 
   return {
@@ -331,6 +394,8 @@ export function useTextureGenerator(options: UseTextureGeneratorOptions = {}): U
     lutFile,
     maskGenerator,
     previewOverlay,
+    globalHSL,        // 新增
+    hslLayers,        // 新增
     handleImageUploadWrapper,
     loadSampleImageWrapper,
     toggleCameraWrapper,
