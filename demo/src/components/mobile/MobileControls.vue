@@ -1,15 +1,13 @@
 <template>
   <div class="flex flex-col h-full relative">
     <!-- Header for Mobile (Fixed) -->
-    <div class="flex items-center gap-3 px-4 py-4 border-b border-white/5 flex-shrink-0">
-      <div :class="[currentGroup?.icon, 'text-xl text-white/70']"></div>
-      <div class="font-bold text-white tracking-wide">
-        {{ currentGroup?.label }}
-      </div>
+    <div class="flex items-center justify-between px-4 py-4 border-b border-white/5 flex-shrink-0">
+
+      <div id="header-actions-container"></div>
     </div>
 
     <!-- Content Area (Scrollable) -->
-    <div class="flex-1 overflow-y-auto scrollbar-hide min-h-0 px-4 pt-6 pb-28">
+    <div class="flex-1 overflow-y-auto scrollbar-hide min-h-0 px-4 pt-6 pb-44">
       <div class="flex flex-col gap-6">
         <!-- Contact Panel -->
         <ContactPanel v-if="activeGroup === 'contact'" is-mobile />
@@ -44,6 +42,11 @@
         <SavePanel v-else-if="activeGroup === 'save'" is-mobile :original-image="originalImage"
           :processed-image="processedImage" @save-original="saveOriginal" @save-result="saveResult" />
       </div>
+    </div>
+
+    <!-- Secondary Navigation Container -->
+    <div id="secondary-nav-container" class="fixed bottom-16 left-0 right-0 z-40 pointer-events-none">
+      <!-- Children should re-enable pointer-events -->
     </div>
 
     <!-- Bottom Navigation (Fixed Tab Bar) -->

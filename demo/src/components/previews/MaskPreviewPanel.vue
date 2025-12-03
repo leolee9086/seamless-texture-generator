@@ -17,7 +17,7 @@
         </div>
 
         <!-- Mask Preview -->
-        <div v-if="layers.length > 0" class="mask-preview border-t border-white/5 pt-3">
+        <div v-if="layers.length > 0 && !isMobile" class="mask-preview border-t border-white/5 pt-3">
             <h4 class="text-xs text-white/70 mb-2">蒙版预览</h4>
             <div
                 class="canvas-container flex justify-center items-center bg-black/20 rounded border border-white/10 p-2">
@@ -55,6 +55,7 @@ interface Props {
     updateMaskPreview: (originalImage: string, canvas?: HTMLCanvasElement) => Promise<void>
     generateMaskPreviewImageDataUrl: (originalImage: string) => Promise<string | null>
     generateColorBlockMask: (originalImage: string) => Promise<Uint8Array | null>
+    isMobile?: boolean
 }
 
 interface Emits {
@@ -146,6 +147,10 @@ const toggleMaskPreview = async () => {
         maskPreviewMode.value = true
     }
 }
+
+defineExpose({
+    toggleMaskPreview
+})
 </script>
 
 <style scoped>

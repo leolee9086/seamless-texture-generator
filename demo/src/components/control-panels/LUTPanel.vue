@@ -6,64 +6,127 @@
         </div>
 
         <div v-else :class="contentContainerClass">
-            <!-- LUT Gallery -->
-            <div class="px-4 pb-3 pt-3">
-                <div class="flex items-center justify-between mb-2">
-                    <label class="block text-sm font-medium text-white/80">
-                        LUT Library
-                    </label>
-                    <button @click="updateAllThumbnails" :disabled="isUpdatingThumbnails || !originalImage"
-                        class="glass-btn text-[10px] px-2 py-1 rounded bg-white/5 hover:bg-white/10 text-white/60 hover:text-white/90 transition-colors disabled:opacity-50 disabled:cursor-not-allowed flex items-center gap-1">
-                        <div :class="isUpdatingThumbnails ? 'i-carbon-circle-dash animate-spin' : 'i-carbon-renew'">
+            <!-- Header Actions (Mobile Only) -->
+            <Teleport to="#header-actions-container" v-if="isMobile && layers.length > 0">
+                <button @click="toggleMobileMaskPreview"
+                    class="p-2 rounded-full bg-white/10 text-white/80 hover:bg-white/20 active:bg-white/30 transition-colors">
+                    <div class="i-carbon-view text-lg"></div>
+                </button>
+            </Teleport>
+
+            <!-- Secondary Navigation (Mobile Only) -->
+            <Teleport to="#secondary-nav-container" v-if="isMobile">
+                <div class="flex items-center gap-2 px-4 py-2 overflow-x-auto scrollbar-hide pointer-events-auto">
+                    <!-- LUT Tab -->
+                    <button @click="switchToTab('lut')"
+                        class="flex flex-col items-center justify-center min-w-[3rem] h-12 rounded-lg border transition-all duration-200"
+                        :class="activeMobileTab === 'lut' ? 'bg-white/20 border-white/40 text-white' : 'bg-black/40 border-white/10 text-white/50'">
+                        <div class="i-carbon-color-palette text-lg mb-0.5"></div>
+                        <span class="text-[9px] font-medium">LUT</span>
+                    </button>
+
+                    <!-- Layer Tabs -->
+                    <button v-for="layer in layers" :key="layer.id" @click="switchToTab(layer.id)"
+                        class="relative flex flex-col items-center justify-center min-w-[3rem] h-12 rounded-lg border transition-all duration-200 overflow-hidden"
+                        :class="activeMobileTab === layer.id ? 'border-white/60 shadow-[0_0_8px_rgba(255,255,255,0.3)]' : 'border-white/10 opacity-80'">
+                        <!-- Background Color Preview -->
+                        <div class="absolute inset-0 opacity-50"
+                            :style="{ backgroundColor: layer.type === 'quantized' && layer.color ? `rgb(${layer.color.r},${layer.color.g},${layer.color.b})` : (layer.type === 'hsl' && layer.hslRange ? getHslBlockColor(layer.hslRange) : '#333') }">
                         </div>
-                        <span>Update All</span>
+                        <div class="relative z-10 text-xs font-bold text-white shadow-black drop-shadow-md">
+                            {{ layer.type === 'hsl' ? 'HSL' : 'RGB' }}
+                        </div>
+                        <div v-if="!layer.visible"
+                            class="absolute inset-0 flex items-center justify-center bg-black/60 z-20">
+                            <div class="i-carbon-view-off text-white/80 text-lg"></div>
+                        </div>
+                    </button>
+
+                    <!-- Add Button -->
+                    <button @click="switchToTab('add')"
+                        class="flex flex-col items-center justify-center min-w-[3rem] h-12 rounded-lg border border-dashed transition-all duration-200"
+                        :class="activeMobileTab === 'add' ? 'bg-white/10 border-white/40 text-white' : 'bg-transparent border-white/20 text-white/50'">
+                        <div class="i-carbon-add text-xl"></div>
                     </button>
                 </div>
+            </Teleport>
 
-                <LUTGallery :luts="luts" :selected-id="selectedLutId" @trigger-upload="triggerUpload"
-                    @select="handleSelectLUT" @delete="handleDeleteLUT" @update-thumbnail="handleUpdateThumbnail" />
-
-                <!-- Hidden Input -->
-                <input ref="lutInputRef" type="file" accept=".cube" multiple @change="handleLUTFileChange"
-                    class="hidden" />
-            </div>
-
-            <!-- Selected LUT Controls -->
-            <div v-if="selectedLutId" class="px-4 pb-4 border-t border-white/5 pt-4">
-                <div class="flex items-center justify-between mb-3">
-                    <span class="text-xs text-white/60">{{ selectedLutName }}</span>
-                    <div class="flex gap-2">
-                        <button v-if="processedImage" @click="updateCurrentThumbnail"
-                            class="glass-btn p-1.5 rounded bg-white/5 hover:bg-white/10 text-white/70 transition-colors"
-                            title="Update thumbnail from current result">
-                            <div class="i-carbon-image-copy text-sm"></div>
+            <!-- Main Content Area -->
+            <div class="flex flex-col gap-4">
+                <!-- LUT Gallery & Intensity (Show in 'lut' tab or on Desktop) -->
+                <div v-if="!isMobile || activeMobileTab === 'lut'" class="px-4 pb-3 pt-3">
+                    <div class="flex items-center justify-between mb-2">
+                        <label class="block text-sm font-medium text-white/80">
+                            LUT Library
+                        </label>
+                        <button @click="updateAllThumbnails" :disabled="isUpdatingThumbnails || !originalImage"
+                            class="glass-btn text-[10px] px-2 py-1 rounded bg-white/5 hover:bg-white/10 text-white/60 hover:text-white/90 transition-colors disabled:opacity-50 disabled:cursor-not-allowed flex items-center gap-1">
+                            <div :class="isUpdatingThumbnails ? 'i-carbon-circle-dash animate-spin' : 'i-carbon-renew'">
+                            </div>
+                            <span>Update All</span>
                         </button>
-                        <button @click="clearSelection"
-                            class="glass-btn p-1.5 rounded bg-white/5 hover:bg-white/10 text-white/70 transition-colors"
-                            title="Clear selection">
-                            <div class="i-carbon-close text-sm"></div>
-                        </button>
+                    </div>
+
+                    <LUTGallery :luts="luts" :selected-id="selectedLutId" @trigger-upload="triggerUpload"
+                        @select="handleSelectLUT" @delete="handleDeleteLUT" @update-thumbnail="handleUpdateThumbnail" />
+
+                    <!-- Hidden Input -->
+                    <input ref="lutInputRef" type="file" accept=".cube" multiple @change="handleLUTFileChange"
+                        class="hidden" />
+
+                    <!-- Selected LUT Controls -->
+                    <div v-if="selectedLutId" class="mt-4 border-t border-white/5 pt-4">
+                        <div class="flex items-center justify-between mb-3">
+                            <span class="text-xs text-white/60">{{ selectedLutName }}</span>
+                            <div class="flex gap-2">
+                                <button v-if="processedImage" @click="updateCurrentThumbnail"
+                                    class="glass-btn p-1.5 rounded bg-white/5 hover:bg-white/10 text-white/70 transition-colors"
+                                    title="Update thumbnail from current result">
+                                    <div class="i-carbon-image-copy text-sm"></div>
+                                </button>
+                                <button @click="clearSelection"
+                                    class="glass-btn p-1.5 rounded bg-white/5 hover:bg-white/10 text-white/70 transition-colors"
+                                    title="Clear selection">
+                                    <div class="i-carbon-close text-sm"></div>
+                                </button>
+                            </div>
+                        </div>
+
+                        <Slider :items="lutSliderItems" @updateValue="handleSliderUpdate" />
+                    </div>
+
+                    <!-- Desktop Color Block Selector (Full Mode) -->
+                    <div v-if="!isMobile && selectedLutId" class="mt-4 border-t border-white/5 pt-4">
+                        <ColorBlockSelector :processing="false" :quantized-color-blocks="quantizedColorBlocks"
+                            :common-hsl-blocks="commonHslBlocks" :layers="layers" :active-layer-id="activeLayerId"
+                            @add-color-layer="addColorLayer" @add-hsl-layer="addHslLayer" @remove-layer="removeLayer"
+                            @select-layer="selectLayer" @update-layer="updateLayer" />
                     </div>
                 </div>
 
-                <Slider :items="lutSliderItems" @updateValue="handleSliderUpdate" />
-
-                <!-- Color Block Selector for Masking -->
-                <div class="mt-4 border-t border-white/5 pt-4">
+                <!-- Mobile: Add Color Layer Mode -->
+                <div v-if="isMobile && activeMobileTab === 'add'" class="px-4 pb-3 pt-3">
                     <ColorBlockSelector :processing="false" :quantized-color-blocks="quantizedColorBlocks"
                         :common-hsl-blocks="commonHslBlocks" :layers="layers" :active-layer-id="activeLayerId"
-                        @add-color-layer="addColorLayer" @add-hsl-layer="addHslLayer"
+                        mode="add-only" @add-color-layer="addColorLayer" @add-hsl-layer="addHslLayer"
                         @remove-layer="removeLayer" @select-layer="selectLayer" @update-layer="updateLayer" />
                 </div>
 
-                <!-- Mask Preview Panel -->
-                <div class="mt-4 border-t border-white/5 pt-4">
-                    <MaskPreviewPanel :processing="false" :original-image="originalImage"
-                        :layers="layers" :mask-options="maskOptions"
+                <!-- Mobile: Layer Settings Mode -->
+                <div v-if="isMobile && activeMobileTab !== 'lut' && activeMobileTab !== 'add'" class="px-4 pb-3 pt-3">
+                    <ColorBlockSelector :processing="false" :quantized-color-blocks="quantizedColorBlocks"
+                        :common-hsl-blocks="commonHslBlocks" :layers="layers" :active-layer-id="activeLayerId"
+                        mode="settings-only" @add-color-layer="addColorLayer" @add-hsl-layer="addHslLayer"
+                        @remove-layer="removeLayer" @select-layer="selectLayer" @update-layer="updateLayer" />
+                </div>
+
+                <!-- Mask Preview Panel (Always present but hidden content on mobile) -->
+                <div v-if="selectedLutId" class="mt-4 border-t border-white/5 pt-4 px-4">
+                    <MaskPreviewPanel ref="maskPreviewPanelRef" :processing="false" :original-image="originalImage"
+                        :layers="layers" :mask-options="maskOptions" :is-mobile="isMobile"
                         :update-mask-preview="updateMaskPreview"
                         :generate-mask-preview-image-data-url="generateMaskPreviewImageDataUrl"
-                        :generate-color-block-mask="generateColorBlockMask"
-                        @update:mask-options="updateMaskOptions"
+                        :generate-color-block-mask="generateColorBlockMask" @update:mask-options="updateMaskOptions"
                         @set-preview-overlay="handleSetPreviewOverlay" />
                 </div>
             </div>
@@ -84,6 +147,7 @@
 
 <script setup lang="ts">
 import { ref, computed, onMounted, watch } from 'vue'
+import { Teleport } from 'vue'
 import { Slider } from '@leolee9086/slider-component'
 import LUTGallery from './LUTGallery.vue'
 import ColorBlockSelector from './ColorBlockSelector.vue'
@@ -91,6 +155,7 @@ import MaskPreviewPanel from '../previews/MaskPreviewPanel.vue'
 import { lutDb, type LUTItem } from '../../utils/lutDb'
 import { processImageToTileable } from '../../utils/imageProcessor'
 import { useColorBlockSelector } from '../../composables/useColorBlockSelector'
+import { getHslBlockColor } from '../../utils/lut/getHslBlockColor'
 
 const props = defineProps<{
     isMobile?: boolean
@@ -114,6 +179,8 @@ const luts = ref<LUTItem[]>([])
 const selectedLutId = ref<string | null>(null)
 const lutInputRef = ref<HTMLInputElement>()
 const isUpdatingThumbnails = ref(false)
+const activeMobileTab = ref<string>('lut')
+const maskPreviewPanelRef = ref<InstanceType<typeof MaskPreviewPanel> | null>(null)
 
 // Color Block Selector Logic
 const {
@@ -241,7 +308,7 @@ const handleUpdateThumbnail = async (id: string) => {
         console.log('Updating thumbnail for LUT:', lut.name)
 
         // Create a File object from the stored Blob
-        const lutFile = new File([lut.file], lut.name)
+        const lutFile = new File([lut.file], lut.name,{ type: 'text/plain' })
 
         // Process image with this LUT
         // Use a smaller resolution for speed, and 0 border size (no seamless processing) for pure color preview
@@ -358,6 +425,19 @@ const handleSetPreviewOverlay = (data: any, component: any) => {
     })
 }
 
+const toggleMobileMaskPreview = () => {
+    if (maskPreviewPanelRef.value) {
+        maskPreviewPanelRef.value.toggleMaskPreview()
+    }
+}
+
+const switchToTab = (tab: string) => {
+    activeMobileTab.value = tab
+    if (tab !== 'lut' && tab !== 'add') {
+        selectLayer(tab)
+    }
+}
+
 // Lifecycle
 onMounted(() => {
     loadLUTs()
@@ -405,4 +485,18 @@ watch([layers, maskOptions], () => {
     }
 }, { deep: true })
 
+// Watch activeLayerId to sync mobile tab
+watch(activeLayerId, (newId) => {
+    if (props.isMobile && newId) {
+        activeMobileTab.value = newId
+    } else if (props.isMobile && !newId && activeMobileTab.value !== 'add') {
+        // If layer deselected (or deleted) and not in add mode, go back to LUT
+        activeMobileTab.value = 'lut'
+    }
+})
+
 </script>
+
+<style scoped>
+/* Tailwind classes handled in template */
+</style>

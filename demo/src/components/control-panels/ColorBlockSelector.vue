@@ -3,7 +3,7 @@
         <label class="text-white/80 text-sm font-medium mb-2 block">选择颜色范围:</label>
         <div class="color-blocks-container flex flex-col gap-4">
             <!-- Quantized Color Blocks -->
-            <div v-if="quantizedColorBlocks.length > 0" class="color-block-section">
+            <div v-if="showAdd && quantizedColorBlocks.length > 0" class="color-block-section">
                 <h4 class="text-xs text-white/60 font-bold mb-2">图像量化色块 (点击添加)</h4>
                 <div class="color-blocks flex flex-wrap gap-1">
                     <div v-for="(color, index) in quantizedColorBlocks" :key="`quantized-${index}`"
@@ -17,7 +17,7 @@
             </div>
 
             <!-- Common HSL Blocks -->
-            <div class="color-block-section">
+            <div v-if="showAdd" class="color-block-section">
                 <h4 class="text-xs text-white/60 font-bold mb-2">常用HSL色块 (点击添加)</h4>
                 <div class="color-blocks flex flex-wrap gap-1">
                     <div v-for="(hslBlock, index) in commonHslBlocks" :key="`hsl-${index}`"
@@ -31,7 +31,7 @@
         </div>
 
         <!-- Layers Section -->
-        <div v-if="layers.length > 0" class="layers-section mt-4 pt-4 border-t border-white/5">
+        <div v-if="showList && layers.length > 0" class="layers-section mt-4 pt-4 border-t border-white/5">
             <h4 class="text-sm text-white/70 mb-2">调整图层 ({{ layers.length }})</h4>
             <div class="layers-list flex flex-col gap-1 max-h-[150px] overflow-y-auto">
                 <div v-for="layer in layers" :key="layer.id"
@@ -52,7 +52,8 @@
         </div>
 
         <!-- Layer Adjustment Panel -->
-        <div v-if="activeLayer" class="layer-adjustment-panel mt-3 p-3 bg-white/5 rounded border border-white/5">
+        <div v-if="showSettings && activeLayer"
+            class="layer-adjustment-panel mt-3 p-3 bg-white/5 rounded border border-white/5">
             <h4 class="text-xs text-white/80 mb-2 pb-2 border-b border-white/5">图层设置: {{ activeLayer.name }}</h4>
 
             <!-- Common Settings -->
@@ -166,6 +167,7 @@ interface Props {
     commonHslBlocks: HslBlock[]
     layers: AdjustmentLayer[]
     activeLayerId: string | null
+    mode?: 'full' | 'add-only' | 'settings-only' | 'list-only'
 }
 
 interface Emits {
@@ -176,8 +178,14 @@ interface Emits {
     (e: 'update-layer', id: string, updates: Partial<AdjustmentLayer>): void
 }
 
-const props = defineProps<Props>()
+const props = withDefaults(defineProps<Props>(), {
+    mode: 'full'
+})
 const emit = defineEmits<Emits>()
+
+const showAdd = computed(() => props.mode === 'full' || props.mode === 'add-only')
+const showList = computed(() => props.mode === 'full' || props.mode === 'list-only')
+const showSettings = computed(() => props.mode === 'full' || props.mode === 'settings-only')
 
 const activeLayer = computed(() => {
     return props.layers.find(l => l.id === props.activeLayerId)

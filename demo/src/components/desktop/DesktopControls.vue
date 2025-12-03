@@ -25,13 +25,7 @@
     <div
       class="flex-1 bg-black/60 backdrop-blur-xl border border-white/10 rounded-2xl shadow-2xl overflow-hidden flex flex-col min-w-0">
 
-      <!-- Header -->
-      <div class="px-6 py-5 border-b border-white/5 bg-white/5 flex items-center justify-between shrink-0">
-        <div class="text-xl font-bold text-white tracking-wide flex items-center gap-3">
-          <div :class="[currentGroup?.icon, 'opacity-70']"></div>
-          {{ currentGroup?.label }}
-        </div>
-      </div>
+    
 
       <!-- Scrollable Content -->
       <div class="flex-1 overflow-y-auto scrollbar-hide p-6">
