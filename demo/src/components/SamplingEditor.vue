@@ -107,6 +107,17 @@
 <script setup lang="ts">
 import { ref, watch, onMounted, onUnmounted, nextTick, computed } from 'vue'
 import { warpPerspective, type Point } from '../utils/homography'
+import {
+    getPointsCenter,
+    rotatePoint,
+    rotatePointAroundOrigin,
+    getDistance,
+    getCenter,
+    getBoundingBox,
+    snapPointsToRatio,
+    getNormalVector,
+    getExpectedDirection
+} from '../utils/geometry'
 const props = defineProps<{
     visible: boolean
     originalImage: string | null
@@ -247,72 +258,10 @@ const setRatio = (r: number) => {
     }
 }
 
-const getPointsCenter = (pts: Point[]) => {
-    let x = 0, y = 0
-    pts.forEach(p => { x += p.x; y += p.y })
-    return { x: x / pts.length, y: y / pts.length }
-}
-
-const rotatePoint = (p: Point, center: Point, rad: number) => {
-    const dx = p.x - center.x
-    const dy = p.y - center.y
-    return {
-        x: center.x + dx * Math.cos(rad) - dy * Math.sin(rad),
-        y: center.y + dx * Math.sin(rad) + dy * Math.cos(rad)
-    }
-}
-
-const rotatePointAroundOrigin = (p: Point, rad: number) => {
-    return {
-        x: p.x * Math.cos(rad) - p.y * Math.sin(rad),
-        y: p.x * Math.sin(rad) + p.y * Math.cos(rad)
-    }
-}
 
 const snapToRatio = (r: number) => {
     if (points.value.length < 4) return
-
-    const center = getPointsCenter(points.value)
-    const rad = -rotation.value * Math.PI / 180
-
-    // Rotate back to axis-aligned to measure size
-    const unrotatedPoints = points.value.map(p => rotatePoint(p, center, rad))
-
-    let minX = Infinity, maxX = -Infinity, minY = Infinity, maxY = -Infinity
-    unrotatedPoints.forEach(p => {
-        minX = Math.min(minX, p.x)
-        maxX = Math.max(maxX, p.x)
-        minY = Math.min(minY, p.y)
-        maxY = Math.max(maxY, p.y)
-    })
-
-    const w = maxX - minX
-    const h = maxY - minY
-    const currentR = w / h
-
-    let newW = w
-    let newH = h
-
-    if (r > currentR) {
-        // Target is wider, constrain height to match width
-        newH = w / r
-    } else {
-        // Target is taller, constrain width to match height
-        newW = h * r
-    }
-
-    const cx = (minX + maxX) / 2
-    const cy = (minY + maxY) / 2
-
-    const newPoints = [
-        { x: cx - newW / 2, y: cy - newH / 2 }, // TL
-        { x: cx + newW / 2, y: cy - newH / 2 }, // TR
-        { x: cx + newW / 2, y: cy + newH / 2 }, // BR
-        { x: cx - newW / 2, y: cy + newH / 2 }, // BL
-    ]
-
-    // Rotate back to current rotation
-    points.value = newPoints.map(p => rotatePoint(p, center, -rad))
+    points.value = snapPointsToRatio(points.value, r, rotation.value)
 }
 
 const handleRotationInput = () => {
@@ -362,22 +311,19 @@ const rotationLineConfig = computed(() => {
     if (points.value.length < 4) return { visible: false }
     const p0 = points.value[0]
     const p1 = points.value[1]
-    const cx = (p0.x + p1.x) / 2
-    const cy = (p0.y + p1.y) / 2
+    const center = getCenter(p0, p1)
 
     // Same logic as handle to find tip
     const dx = p1.x - p0.x
     const dy = p1.y - p0.y
-    const len = Math.sqrt(dx * dx + dy * dy) || 1
-    const nx = dy / len
-    const ny = -dx / len
+    const { nx, ny } = getNormalVector(dx, dy)
     const offset = 40 / groupConfig.value.scaleX
 
-    const tipX = cx + nx * offset
-    const tipY = cy + ny * offset
+    const tipX = center.x + nx * offset
+    const tipY = center.y + ny * offset
 
     return {
-        points: [cx, cy, tipX, tipY],
+        points: [center.x, center.y, tipX, tipY],
         stroke: 'white',
         strokeWidth: 1 / groupConfig.value.scaleX,
         dash: [4, 4],
@@ -389,17 +335,14 @@ const rotationHandleConfig = computed(() => {
     if (points.value.length < 4) return { visible: false }
     const p0 = points.value[0]
     const p1 = points.value[1]
-    const cx = (p0.x + p1.x) / 2
-    const cy = (p0.y + p1.y) / 2
+    const center = getCenter(p0, p1)
     const dx = p1.x - p0.x
     const dy = p1.y - p0.y
-    const len = Math.sqrt(dx * dx + dy * dy) || 1
-    const nx = dy / len
-    const ny = -dx / len
+    const { nx, ny } = getNormalVector(dx, dy)
     const offset = 40 / groupConfig.value.scaleX
 
-    const tipX = cx + nx * offset
-    const tipY = cy + ny * offset
+    const tipX = center.x + nx * offset
+    const tipY = center.y + ny * offset
 
     return {
         x: tipX,
@@ -482,13 +425,7 @@ const handlePointDragMove = (e: any, index: number) => {
     // 2 (BR) vs 0 (TL): dx > 0, dy > 0
     // 3 (BL) vs 1 (TR): dx < 0, dy > 0
 
-    let expectedSignX = 1
-    let expectedSignY = 1
-
-    if (index === 0) { expectedSignX = -1; expectedSignY = -1 }
-    else if (index === 1) { expectedSignX = 1; expectedSignY = -1 }
-    else if (index === 2) { expectedSignX = 1; expectedSignY = 1 }
-    else if (index === 3) { expectedSignX = -1; expectedSignY = 1 }
+    const { signX: expectedSignX, signY: expectedSignY } = getExpectedDirection(index)
 
     // If user drags past the opposite point, clamp it (or just enforce the sign)
     // To prevent flipping, we just ignore the user's drag direction if it flips, 
@@ -607,16 +544,6 @@ const handleDragEnd = () => { }
 let lastCenter: { x: number, y: number } | null = null
 let lastDist = 0
 
-const getDistance = (p1: { x: number, y: number }, p2: { x: number, y: number }) => {
-    return Math.sqrt(Math.pow(p2.x - p1.x, 2) + Math.pow(p2.y - p1.y, 2))
-}
-
-const getCenter = (p1: { x: number, y: number }, p2: { x: number, y: number }) => {
-    return {
-        x: (p1.x + p2.x) / 2,
-        y: (p1.y + p2.y) / 2
-    }
-}
 
 const handleTouchStart = (e: any) => {
     const evt = e.evt
@@ -692,10 +619,10 @@ const confirm = async () => {
             const img = imageObj.value!
 
             const p = points.value
-            const topWidth = Math.sqrt(Math.pow(p[1].x - p[0].x, 2) + Math.pow(p[1].y - p[0].y, 2))
-            const bottomWidth = Math.sqrt(Math.pow(p[2].x - p[3].x, 2) + Math.pow(p[2].y - p[3].y, 2))
-            const leftHeight = Math.sqrt(Math.pow(p[3].x - p[0].x, 2) + Math.pow(p[3].y - p[0].y, 2))
-            const rightHeight = Math.sqrt(Math.pow(p[2].x - p[1].x, 2) + Math.pow(p[2].y - p[1].y, 2))
+            const topWidth = getDistance(p[0], p[1])
+            const bottomWidth = getDistance(p[3], p[2])
+            const leftHeight = getDistance(p[0], p[3])
+            const rightHeight = getDistance(p[1], p[2])
 
             const width = Math.round((topWidth + bottomWidth) / 2)
             const height = Math.round((leftHeight + rightHeight) / 2)
