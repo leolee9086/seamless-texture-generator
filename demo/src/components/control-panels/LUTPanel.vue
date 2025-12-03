@@ -5,7 +5,7 @@
             <span class="text-sm">Please select an image first</span>
         </div>
 
-        <div v-else :class="contentContainerClass">
+        <div v-else>
             <!-- Header Actions (Mobile Only) -->
             <Teleport to="#header-actions-container" v-if="isMobile && layers.length > 0">
                 <button @click="toggleMobileMaskPreview"
@@ -16,7 +16,8 @@
 
             <!-- Secondary Navigation (Mobile Only) -->
             <Teleport to="#secondary-nav-container" v-if="isMobile">
-                <div class="flex items-center gap-2 px-4 py-2 overflow-x-auto scrollbar-hide pointer-events-auto">
+                <div
+                    class="flex items-center gap-2 px-4 py-2 overflow-x-auto scrollbar-hide w-full bg-black border-t border-white/5">
                     <!-- LUT Tab -->
                     <button @click="switchToTab('lut')"
                         class="flex flex-col items-center justify-center min-w-[3rem] h-12 rounded-lg border transition-all duration-200"
@@ -52,9 +53,9 @@
             </Teleport>
 
             <!-- Main Content Area -->
-            <div class="flex flex-col gap-4">
+            <div :class="contentContainerClass">
                 <!-- LUT Gallery & Intensity (Show in 'lut' tab or on Desktop) -->
-                <div v-if="!isMobile || activeMobileTab === 'lut'" class="px-4 pb-3 pt-3">
+                <div v-if="!isMobile || activeMobileTab === 'lut'" class="pb-3 pt-3" :class="{ 'px-4': !isMobile }">
                     <div class="flex items-center justify-between mb-2">
                         <label class="block text-sm font-medium text-white/80">
                             LUT Library
@@ -105,7 +106,7 @@
                 </div>
 
                 <!-- Mobile: Add Color Layer Mode -->
-                <div v-if="isMobile && activeMobileTab === 'add'" class="px-4 pb-3 pt-3">
+                <div v-if="isMobile && activeMobileTab === 'add'" class="pb-3 pt-3">
                     <ColorBlockSelector :processing="false" :quantized-color-blocks="quantizedColorBlocks"
                         :common-hsl-blocks="commonHslBlocks" :layers="layers" :active-layer-id="activeLayerId"
                         mode="add-only" @add-color-layer="addColorLayer" @add-hsl-layer="addHslLayer"
@@ -113,7 +114,7 @@
                 </div>
 
                 <!-- Mobile: Layer Settings Mode -->
-                <div v-if="isMobile && activeMobileTab !== 'lut' && activeMobileTab !== 'add'" class="px-4 pb-3 pt-3">
+                <div v-if="isMobile && activeMobileTab !== 'lut' && activeMobileTab !== 'add'" class="pb-3 pt-3">
                     <ColorBlockSelector :processing="false" :quantized-color-blocks="quantizedColorBlocks"
                         :common-hsl-blocks="commonHslBlocks" :layers="layers" :active-layer-id="activeLayerId"
                         mode="settings-only" @add-color-layer="addColorLayer" @add-hsl-layer="addHslLayer"
@@ -121,7 +122,7 @@
                 </div>
 
                 <!-- Mask Preview Panel (Always present but hidden content on mobile) -->
-                <div v-if="selectedLutId" class="mt-4 border-t border-white/5 pt-4 px-4">
+                <div v-if="selectedLutId" class="mt-4 border-t border-white/5 pt-4" :class="{ 'px-4': !isMobile }">
                     <MaskPreviewPanel ref="maskPreviewPanelRef" :processing="false" :original-image="originalImage"
                         :layers="layers" :mask-options="maskOptions" :is-mobile="isMobile"
                         :update-mask-preview="updateMaskPreview"
@@ -132,7 +133,7 @@
             </div>
 
             <!-- LUT Status Hint -->
-            <div v-if="lutEnabled && !selectedLutId" class="px-4 pb-3">
+            <div v-if="lutEnabled && !selectedLutId" class="pb-3" :class="{ 'px-4': !isMobile }">
                 <div
                     class="text-xs text-yellow-400/80 bg-yellow-400/10 rounded-lg px-3 py-2 border border-yellow-400/20">
                     <div class="flex items-start gap-2">
@@ -225,7 +226,7 @@ const emptyStateClass = computed(() =>
 
 const contentContainerClass = computed(() =>
     props.isMobile
-        ? 'flex flex-col gap-3 bg-white/5 rounded-2xl border border-white/5'
+        ? 'flex flex-col gap-3'
         : 'flex flex-col gap-3 bg-white/5 rounded-2xl border border-white/5'
 )
 
@@ -308,7 +309,7 @@ const handleUpdateThumbnail = async (id: string) => {
         console.log('Updating thumbnail for LUT:', lut.name)
 
         // Create a File object from the stored Blob
-        const lutFile = new File([lut.file], lut.name,{ type: 'text/plain' })
+        const lutFile = new File([lut.file], lut.name, { type: 'text/plain' })
 
         // Process image with this LUT
         // Use a smaller resolution for speed, and 0 border size (no seamless processing) for pure color preview

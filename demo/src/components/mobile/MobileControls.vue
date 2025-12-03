@@ -7,8 +7,8 @@
     </div>
 
     <!-- Content Area (Scrollable) -->
-    <div class="flex-1 overflow-y-auto scrollbar-hide min-h-0 px-4 pt-6 pb-44">
-      <div class="flex flex-col gap-6">
+    <div class="flex-1 overflow-y-auto scrollbar-hide min-h-0 px-4 pb-4">
+      <div class="flex flex-col gap-6 pt-6">
         <!-- Contact Panel -->
         <ContactPanel v-if="activeGroup === 'contact'" is-mobile />
 
@@ -45,12 +45,12 @@
     </div>
 
     <!-- Secondary Navigation Container -->
-    <div id="secondary-nav-container" class="fixed bottom-16 left-0 right-0 z-40 pointer-events-none">
+    <div id="secondary-nav-container" class="w-full z-40 flex-shrink-0">
       <!-- Children should re-enable pointer-events -->
     </div>
 
     <!-- Bottom Navigation (Fixed Tab Bar) -->
-    <div class="fixed bottom-0 left-0 right-0 z-50 bg-black border-t  pb-[env(safe-area-inset-bottom)]">
+    <div class="w-full z-50 bg-black border-t flex-shrink-0 pb-[env(safe-area-inset-bottom)]">
       <div class="flex items-center justify-around h-16 px-2">
         <button v-for="group in groups" :key="group.id" @click="activeGroup = group.id"
           class="flex flex-col items-center justify-center w-full h-full gap-1 transition-colors duration-200 !bg-transparent !border-none !shadow-none !outline-none"
