@@ -38,7 +38,7 @@
 
 <script setup lang="ts">
 import { ref, computed, watch, nextTick, onMounted, onUnmounted } from 'vue'
-import { SplitViewer } from '@leolee9086/split-viewer'
+import { SplitViewer, } from '@leolee9086/split-viewer'
 
 import type { Component } from 'vue'
 
@@ -60,12 +60,13 @@ const props = defineProps<{
 
 const emit = defineEmits(['update:splitPosition', 'image-load', 'clear-overlay'])
 
-const splitViewerRef = ref()
+const splitViewerRef = ref< typeof SplitViewer>()
 const containerRef = ref<HTMLElement | null>(null)
 const containerWidth = ref(1000)
 const containerHeight = ref(600)
 
 let resizeObserver: ResizeObserver | null = null
+let debounceTimer: number | null = null
 
 const magnifierConfig = computed(() => ({
   enabled: props.magnifierEnabled,
@@ -114,13 +115,24 @@ watch(() => props.zoomLevel, handleZoomChange)
 
 onMounted(() => {
   if (containerRef.value) {
+    const DEBOUNCE_DELAY = 50 // 毫秒
+
     resizeObserver = new ResizeObserver((entries) => {
       for (const entry of entries) {
         const { width, height } = entry.contentRect
         // Avoid 0 dimensions which might break canvas
         if (width > 0 && height > 0) {
-          containerWidth.value = width
-          containerHeight.value = height
+          if (debounceTimer) clearTimeout(debounceTimer)
+          debounceTimer = window.setTimeout(() => {
+            containerWidth.value = width
+            containerHeight.value = height
+            // 触发 SplitViewer 重绘以确保 Canvas 内容正确显示
+            if (splitViewerRef.value && typeof splitViewerRef.value.resetZoom === 'function') {
+                          console.log(splitViewerRef.value)
+
+              splitViewerRef.value.resetZoom()
+            }
+          }, DEBOUNCE_DELAY)
         }
       }
     })
@@ -131,6 +143,10 @@ onMounted(() => {
 onUnmounted(() => {
   if (resizeObserver) {
     resizeObserver.disconnect()
+  }
+  if (debounceTimer) {
+    clearTimeout(debounceTimer)
+    debounceTimer = null
   }
 })
 

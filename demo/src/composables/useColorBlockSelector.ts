@@ -269,14 +269,9 @@ export const useColorBlockSelector = () => {
                 finalMask = upscaleMask(finalMask, imageData.width, imageData.height, img.width, img.height)
             }
 
-            // 将单通道遮罩转换为RGBA格式（use-lut需要4通道数据）
-            // 注意：shader使用 (1.0 - maskValue) 作为强度，所以这里需要反转
-            // 我们的蒙版：255=选中，0=未选中
-            // shader期望：0=应用LUT，255=不应用LUT
-            // 所以需要反转：255-value
             const rgbaMask = new Uint8Array(finalMask.length * 4)
             for (let i = 0; i < finalMask.length; i++) {
-                const value = 255 - finalMask[i]  // 反转蒙版
+                const value =finalMask[i]
                 rgbaMask[i * 4] = value     // R
                 rgbaMask[i * 4 + 1] = value // G
                 rgbaMask[i * 4 + 2] = value // B

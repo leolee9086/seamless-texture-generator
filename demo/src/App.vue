@@ -6,7 +6,7 @@
       <!-- Controls Area -->
       <!-- Mobile: Bottom sheet, Desktop: Left sidebar -->
       <div
-        class="z-20 m-4 mt-0 md:m-4 md:mr-0 md:w-96 max-h-[40vh] md:max-h-[calc(100vh-2rem)] flex flex-col order-2 md:order-1 transition-all duration-300 pointer-events-none">
+        class="z-20 m-4 mt-0 md:m-4 md:mr-0 md:w-96 h-[40vh] md:h-auto md:max-h-[calc(100vh-2rem)] flex flex-col order-2 md:order-1 pointer-events-none">
         <MobileControls :is-processing="isProcessing" :original-image="originalImage" :processed-image="processedImage"
           :max-resolution="maxResolution" :border-size="borderSize" :split-position="splitPosition"
           :magnifier-enabled="magnifierEnabled" :zoom-level="zoomLevel" :lut-enabled="lutEnabled"
