@@ -11,20 +11,6 @@ export interface WoodParams {
     poreDensity: number;    // 导管/毛孔密度
     colorEarly: number[];   // 早材颜色 (浅) [r, g, b]
     colorLate: number[];    // 晚材颜色 (深) [r, g, b]
-
-    // 高级参数
-    fbmOctaves: number;     // FBM 噪声的 octaves 数量 (1-5)
-    fbmAmplitude: number;   // FBM 初始振幅 (0.1-1.0)
-    knotFrequency: number;  // 树结噪声频率 (0.5-2.0)
-    distortionFreq: number; // 域扭曲频率 (1.0-3.0)
-    ringNoiseFreq: number;  // 年轮噪声频率 (3.0-10.0)
-    rayFrequencyX: number;  // 髓射线 X 方向频率 (30.0-100.0)
-    rayFrequencyY: number;  // 髓射线 Y 方向频率 (1.0-5.0)
-    knotThresholdMin: number; // 树结阈值最小值 (0.0-1.0)
-    knotThresholdMax: number; // 树结阈值最大值 (0.0-1.0)
-    normalStrength: number;   // 法线强度 (1.0-20.0)
-    roughnessMin: number;     // 最小粗糙度 (0.1-0.5)
-    roughnessMax: number;     // 最大粗糙度 (0.5-1.0)
 }
 
 export const defaultWoodParams: WoodParams = {
@@ -37,20 +23,6 @@ export const defaultWoodParams: WoodParams = {
     poreDensity: 10.0,
     colorEarly: [0.86, 0.72, 0.54], // #DCC8A9
     colorLate: [0.45, 0.31, 0.20],  // #734F33
-
-    // 高级参数默认值
-    fbmOctaves: 3,
-    fbmAmplitude: 0.5,
-    knotFrequency: 0.8,
-    distortionFreq: 1.5,
-    ringNoiseFreq: 5.0,
-    rayFrequencyX: 50.0,
-    rayFrequencyY: 2.0,
-    knotThresholdMin: 0.4,
-    knotThresholdMax: 0.8,
-    normalStrength: 8.0,
-    roughnessMin: 0.35,
-    roughnessMax: 0.7,
 }
 
 export async function generateWoodTexture(params: WoodParams, width: number, height: number): Promise<string> {
@@ -66,16 +38,11 @@ export async function generateWoodTexture(params: WoodParams, width: number, hei
         usage: GPUTextureUsage.RENDER_ATTACHMENT | GPUTextureUsage.COPY_SRC,
     })
 
-    // 扩展 uniform buffer 以容纳新参数
-    // 原始: 16 (matrix) + 7 (core params) + 1 (padding) + 4 (color early) + 4 (color late) = 32 floats
-    // 新增: 12 个高级参数
-    // 总计: 32 + 12 = 44 floats
-    const uniformData = new Float32Array(44);
+    const uniformData = new Float32Array(32);
 
     // Identity Matrix for viewMatrix (not used but required)
     uniformData[0] = 1; uniformData[5] = 1; uniformData[10] = 1; uniformData[15] = 1;
 
-    // 核心参数
     uniformData[16] = params.tileSize;
     uniformData[17] = params.ringScale;
     uniformData[18] = params.ringDistortion;
@@ -94,20 +61,6 @@ export async function generateWoodTexture(params: WoodParams, width: number, hei
     uniformData[29] = params.colorLate[1];
     uniformData[30] = params.colorLate[2];
     uniformData[31] = 0; // padding3
-
-    // 高级参数
-    uniformData[32] = params.fbmOctaves;
-    uniformData[33] = params.fbmAmplitude;
-    uniformData[34] = params.knotFrequency;
-    uniformData[35] = params.distortionFreq;
-    uniformData[36] = params.ringNoiseFreq;
-    uniformData[37] = params.rayFrequencyX;
-    uniformData[38] = params.rayFrequencyY;
-    uniformData[39] = params.knotThresholdMin;
-    uniformData[40] = params.knotThresholdMax;
-    uniformData[41] = params.normalStrength;
-    uniformData[42] = params.roughnessMin;
-    uniformData[43] = params.roughnessMax;
 
     const uniformBuffer = device.createBuffer({
         size: uniformData.byteLength,

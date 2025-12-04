@@ -13,20 +13,6 @@ interface WoodParams {
     poreDensity: number;    // 导管/毛孔密度
     colorEarly: number[];   // 早材颜色 (浅)
     colorLate: number[];    // 晚材颜色 (深)
-
-    // 高级参数
-    fbmOctaves: number;     // FBM 噪声的 octaves 数量 (1-5)
-    fbmAmplitude: number;   // FBM 初始振幅 (0.1-1.0)
-    knotFrequency: number;  // 树结噪声频率 (0.5-2.0)
-    distortionFreq: number; // 域扭曲频率 (1.0-3.0)
-    ringNoiseFreq: number;  // 年轮噪声频率 (3.0-10.0)
-    rayFrequencyX: number;  // 髓射线 X 方向频率 (30.0-100.0)
-    rayFrequencyY: number;  // 髓射线 Y 方向频率 (1.0-5.0)
-    knotThresholdMin: number; // 树结阈值最小值 (0.0-1.0)
-    knotThresholdMax: number; // 树结阈值最大值 (0.0-1.0)
-    normalStrength: number;   // 法线强度 (1.0-20.0)
-    roughnessMin: number;     // 最小粗糙度 (0.1-0.5)
-    roughnessMax: number;     // 最大粗糙度 (0.5-1.0)
 }
 
 export const woodShaderWGSL = /* wgsl */`
@@ -49,20 +35,6 @@ struct Uniforms {
     padding2 : f32,
     colorLate : vec3<f32>,
     padding3 : f32,
-    
-    // --- 高级参数 ---
-    fbmOctaves : f32,
-    fbmAmplitude : f32,
-    knotFrequency : f32,
-    distortionFreq : f32,
-    ringNoiseFreq : f32,
-    rayFrequencyX : f32,
-    rayFrequencyY : f32,
-    knotThresholdMin : f32,
-    knotThresholdMax : f32,
-    normalStrength : f32,
-    roughnessMin : f32,
-    roughnessMax : f32,
 };
 
 @group(0) @binding(0) var<uniform> u : Uniforms;
@@ -107,9 +79,9 @@ fn periodicNoise(p: vec3<f32>, period: f32) -> f32 {
 }
 
 // 周期性 FBM
-fn periodicFbm(p: vec3<f32>, octaves: i32, period: f32, initialAmplitude: f32) -> f32 {
+fn periodicFbm(p: vec3<f32>, octaves: i32, period: f32) -> f32 {
     var value = 0.0;
-    var amplitude = initialAmplitude;
+    var amplitude = 0.5;
     var currentPeriod = period;
     var pos = p;
     
@@ -135,19 +107,18 @@ fn getWoodDetail(uv: vec2<f32>) -> vec4<f32> {
     // 1. 模拟树结 (Knots) - 极其重要
     // 树结是木材纹理流动的引力中心
     // 使用低频噪声模拟随机的生长压力中心
-    let knotNoise = periodicNoise(pos * u.knotFrequency, scale * u.knotFrequency);
+    let knotNoise = periodicNoise(pos * 0.8, scale * 0.8);
     // 如果噪声值超过阈值，产生强烈的局部扭曲
-    let knotFactor = smoothstep(u.knotThresholdMin, u.knotThresholdMax, abs(knotNoise)) * u.knotIntensity;
+    let knotFactor = smoothstep(0.4, 0.8, abs(knotNoise)) * u.knotIntensity;
     
     // 2. 域扭曲 (Domain Warping)
     // 基础生长扭曲 + 树结扭曲
     // 注意：所有噪声必须使用 periodicFbm 且传入 scale 以保证无缝
-    let octaves = i32(u.fbmOctaves);
-    var distortion = periodicFbm(pos * u.distortionFreq, octaves, scale * u.distortionFreq, u.fbmAmplitude);
+    var distortion = periodicFbm(pos * 1.5, 3, scale * 1.5);
     // 树结会极大地拉扯坐标
     let finalPos = pos + vec3<f32>(distortion, distortion, 0.0) * (u.ringDistortion + knotFactor * 4.0);
     
-    // 3. 计算"年轮距离场"
+    // 3. 计算“年轮距离场”
     // 在 2D 平面上，我们将 X 轴视为半径方向 (Quartersawn look) 或使用距离场模拟树心
     // 这里为了无缝平铺，我们模拟切面纹理（板材），而非整棵树的横截面
     let dist = finalPos.x; 
@@ -160,23 +131,23 @@ fn getWoodDetail(uv: vec2<f32>) -> vec4<f32> {
     
     // 使用 Power 函数调整波形：
     // latewoodBias 越大，曲线越偏向一侧，形成尖锐的深色条纹（晚材）
-    // 这种非线性映射产生了真实的"硬边"效果
+    // 这种非线性映射产生了真实的“硬边”效果
     let ringProfile = pow(ringCycle, u.latewoodBias); // 0.2 (圆润) - 5.0 (尖锐)
     
     // 反转并混合，得到基础密度信号 (0 = 晚材/深, 1 = 早材/浅)
     // 我们加入一些扰动，让每条年轮的粗细不完全一致
-    let ringSignal = smoothstep(0.1, 0.9, ringProfile + periodicNoise(pos * u.ringNoiseFreq, scale * u.ringNoiseFreq) * 0.1);
+    let ringSignal = smoothstep(0.1, 0.9, ringProfile + periodicNoise(pos * 5.0, scale*5.0) * 0.1);
 
     // 5. 髓射线 (Medullary Rays)
     // 橡木等硬木特有的垂直于年轮的细碎闪光纹理
     // 在 UV 空间中，这表现为沿 Y 轴的高频噪点，但被年轮相位调制
-    let rayNoise = periodicFbm(vec3<f32>(pos.x * u.rayFrequencyX, pos.y * u.rayFrequencyY, 0.0), 2, scale * u.rayFrequencyX, u.fbmAmplitude);
+    let rayNoise = periodicFbm(vec3<f32>(pos.x * 50.0, pos.y * 2.0, 0.0), 2, scale * 50.0);
     let rays = smoothstep(0.6, 1.0, rayNoise) * u.rayStrength;
     // 射线通常在早材中更明显，或者打断晚材
     
     // 6. 导管孔隙 (Pores)
     // 深色的小点，主要聚集在早材区域
-    let poreNoise = periodicFbm(pos * u.poreDensity, 2, scale * u.poreDensity, u.fbmAmplitude);
+    let poreNoise = periodicFbm(pos * u.poreDensity, 2, scale * u.poreDensity);
     // 孔隙只出现在 ringSignal 较高的区域 (早材)
     let pores = step(0.6, poreNoise) * ringSignal * 0.5; // 0.5 是孔隙深度
 
@@ -213,8 +184,8 @@ fn fs_main(in : VertexOutput) -> @location(0) vec4<f32> {
     
     // 2. 物理属性 (PBR)
     // 粗糙度：孔隙和晚材(深色)更粗糙，早材更光滑，但髓射线通常很光滑(高光)
-    var roughness = mix(u.roughnessMax, u.roughnessMin, density);
-    roughness = max(roughness - data.w * 0.3, u.roughnessMin * 0.5); // 射线增加反光
+    var roughness = mix(0.7, 0.35, density);
+    roughness = max(roughness - data.w * 0.3, 0.2); // 射线增加反光
     roughness = min(roughness + data.z * 1.0, 1.0); // 孔隙非常粗糙
     
     // 3. 高质量法线生成
@@ -225,7 +196,8 @@ fn fs_main(in : VertexOutput) -> @location(0) vec4<f32> {
     // 使用偏导数计算法线 (在像素着色器中无需重复采样，极大提升性能)
     let dHdUV = vec2<f32>(dpdx(height), dpdy(height));
     // 调整法线强度
-    let normal = normalize(vec3<f32>(-dHdUV.x * u.normalStrength, -dHdUV.y * u.normalStrength, 1.0));
+    let normalStrength = 8.0; 
+    let normal = normalize(vec3<f32>(-dHdUV.x * normalStrength, -dHdUV.y * normalStrength, 1.0));
     
     // 4. 简单的光照预览 (实际使用时通常只输出 G-Buffer: Albedo, Normal, Roughness)
     let lightDir = normalize(vec3<f32>(0.5, 0.5, 1.0));
@@ -256,7 +228,7 @@ fn fs_main(in : VertexOutput) -> @location(0) vec4<f32> {
 3.  **树结 (Knots) 模拟:**
 
       * 之前的版本只是整体扭曲。
-      * 现在通过 `knotFactor` 模拟了局部高压区。纹理会像流体一样绕过这些点，产生极其自然的"眼睛"形状。
+      * 现在通过 `knotFactor` 模拟了局部高压区。纹理会像流体一样绕过这些点，产生极其自然的“眼睛”形状。
 
 4.  **髓射线 (Medullary Rays):**
 
