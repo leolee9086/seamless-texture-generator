@@ -12,6 +12,8 @@
           :magnifier-enabled="magnifierEnabled" :zoom-level="zoomLevel" :lut-enabled="lutEnabled"
           :lut-intensity="lutIntensity" :lut-file-name="lutFileName" :lut-file="lutFile"
           :global-hsl="globalHSL" :hsl-layers="hslLayers"
+          :exposure-strength="exposureStrength" :exposure-manual="exposureManual"
+          :dehaze-params="dehazeParams"
           @control-event="handleControlEvent" class="pointer-events-auto h-full" />
       </div>
 
@@ -65,6 +67,9 @@ const {
   previewOverlay,
   globalHSL,
   hslLayers,
+  exposureStrength,   // 新增
+  exposureManual,     // 新增
+  dehazeParams,      // 新增
   clearPreviewOverlay,
 } = useTextureGenerator({
   enableCamera: false,

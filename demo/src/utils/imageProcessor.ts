@@ -2,6 +2,8 @@ import { makeTileable } from '../../../src/lib/HistogramPreservingBlendMakeTilea
 import { scaleImageToMaxResolution } from './imageProcessing'
 import { processImageWithLUT, processLutData } from '@leolee9086/use-lut'
 import { HSLAdjustProcessStep, type HSLAdjustmentLayer } from './hslAdjustStep'
+import { adjustExposure, adjustExposureManual } from './exposureAdjustment'  // 新增导入
+import { applyDehazeAdjustment, type DehazeParams } from './dehazeAdjustment'  // 新增导入
 
 /**
  * 管线数据接口 - 统一使用 GPUBuffer 作为数据载体
@@ -21,7 +23,10 @@ interface PipelineOptions {
   lutFile?: File | null
   lutIntensity?: number
   maskData?: Uint8Array
-  hslLayers?: HSLAdjustmentLayer[]  // 新增
+  hslLayers?: HSLAdjustmentLayer[]
+  exposureStrength?: number  // 新增
+  exposureManual?: { exposure: number; contrast: number; gamma: number }  // 新增
+  dehazeParams?: DehazeParams  // 新增
 }
 
 /**
@@ -284,7 +289,10 @@ export async function processImageToTileable(
   lutFile?: File | null,
   lutIntensity?: number,
   maskData?: Uint8Array,
-  hslLayers?: HSLAdjustmentLayer[]  // 新增参数
+  hslLayers?: HSLAdjustmentLayer[],
+  exposureStrength?: number,  // 新增参数
+  exposureManual?: { exposure: number; contrast: number; gamma: number },  // 新增参数
+  dehazeParams?: DehazeParams  // 新增参数
 
 ): Promise<string> {
   if (!originalImage) {
@@ -301,7 +309,10 @@ export async function processImageToTileable(
       lutFile,
       lutIntensity,
       maskData,
-      hslLayers  // 新增
+      hslLayers,
+      exposureStrength,  // 新增
+      exposureManual,   // 新增
+      dehazeParams  // 新增
 
     }
 
@@ -312,13 +323,73 @@ export async function processImageToTileable(
     // 步骤 2: LUT 处理
     const lutProcessStep = new LUTProcessStep()
     pipelineData = await lutProcessStep.execute(pipelineData, options)
-    // 步骤 2.5: HSL调整（新增）
+    // 步骤 2.5: HSL调整
     if (options.hslLayers && options.hslLayers.length > 0) {
       const device = await getGPUDevice()
       const hslAdjustStep = new HSLAdjustProcessStep()
       pipelineData = await hslAdjustStep.execute(pipelineData, options.hslLayers, device)
     }
-    // 步骤 3: 可平铺化处理
+    
+    // 步骤 2.6: 曝光调整（新增）
+    if (options.exposureStrength || options.exposureManual) {
+      const device = await getGPUDevice()
+      const imageData = await gpuBufferToImageData(pipelineData.buffer, pipelineData.width, pipelineData.height, device)
+      
+      let processedImageData: ImageData
+      if (options.exposureStrength) {
+        // 自动曝光调整
+        processedImageData = await adjustExposure(imageData, options.exposureStrength)
+      } else if (options.exposureManual) {
+        // 手动曝光调整
+        processedImageData = adjustExposureManual(
+          imageData,
+          options.exposureManual.exposure,
+          options.exposureManual.contrast,
+          options.exposureManual.gamma
+        )
+      } else {
+        processedImageData = imageData
+      }
+      
+      // 转换回 GPUBuffer
+      const processedBuffer = await imageDataToGPUBuffer(processedImageData, device)
+      
+      // 销毁旧的 buffer
+      pipelineData.buffer.destroy()
+      
+      pipelineData = {
+        buffer: processedBuffer,
+        width: processedImageData.width,
+        height: processedImageData.height
+      }
+    }
+  
+  // 步骤 2.7: 去雾调整（新增）
+  if (options.dehazeParams) {
+    const device = await getGPUDevice()
+    const imageData = await gpuBufferToImageData(pipelineData.buffer, pipelineData.width, pipelineData.height, device)
+    
+    try {
+      // 应用去雾调整
+      const processedImageData = await applyDehazeAdjustment(imageData, options.dehazeParams)
+      
+      // 转换回 GPUBuffer
+      const processedBuffer = await imageDataToGPUBuffer(processedImageData, device)
+      
+      // 销毁旧的 buffer
+      pipelineData.buffer.destroy()
+      
+      pipelineData = {
+        buffer: processedBuffer,
+        width: processedImageData.width,
+        height: processedImageData.height
+      }
+    } catch (error) {
+      console.warn('去雾处理失败，继续使用原始图像:', error)
+    }
+  }
+  
+  // 步骤 3: 可平铺化处理
     const tileableProcessStep = new TileableProcessStep()
     pipelineData = await tileableProcessStep.execute(pipelineData, options)
 

@@ -35,6 +35,11 @@ export interface ControlEventHandlerOptions {
   onAddHSLLayer?: (layer: any) => void
   onUpdateHSLLayer?: (id: string, updates: any) => void
   onRemoveHSLLayer?: (id: string) => void
+  // 曝光调整处理器
+  onExposureStrength?: (strength: number) => void
+  onExposureManual?: (params: { exposure: number; contrast: number; gamma: number }) => void
+  // 去雾调整处理器
+  onDehazeChange?: (params: import('./dehazeAdjustment').DehazeParams) => void
 }
 
 /**
@@ -128,6 +133,15 @@ export function createControlEventHandler(options: ControlEventHandlerOptions) {
           break
         case 'remove-hsl-layer':
           options.onRemoveHSLLayer?.(detail.data)
+          break
+        case 'exposure-strength':
+          options.onExposureStrength?.(detail.data)
+          break
+        case 'exposure-manual':
+          options.onExposureManual?.(detail.data)
+          break
+        case 'dehaze-change':
+          options.onDehazeChange?.(detail.data)
           break
       }
     }

@@ -55,8 +55,11 @@ export interface UseTextureGeneratorReturn {
   lutFile: Ref<File | null>
   maskGenerator: Ref<(() => Promise<Uint8Array | null>) | null>
   previewOverlay: Ref<PreviewOverlayData | null>
-  globalHSL: Ref<{ hue: number; saturation: number; lightness: number }>  // 新增
-  hslLayers: Ref<HSLAdjustmentLayer[]>  // 新增
+  globalHSL: Ref<{ hue: number; saturation: number; lightness: number }>
+  hslLayers: Ref<HSLAdjustmentLayer[]>
+  exposureStrength: Ref<number>  // 新增
+  exposureManual: Ref<{ exposure: number; contrast: number; gamma: number }>  // 新增
+  dehazeParams: Ref<import('../utils/dehazeAdjustment').DehazeParams>  // 新增
 
   // 方法
   handleImageUploadWrapper: (event: Event) => void
@@ -115,6 +118,29 @@ export function useTextureGenerator(options: UseTextureGeneratorOptions = {}): U
     lightness: 0
   })
   const hslLayers = ref<HSLAdjustmentLayer[]>([])
+  // 曝光调整状态 - 新增
+  const exposureStrength = ref(1.0)
+  const exposureManual = ref({
+    exposure: 1.0,
+    contrast: 1.0,
+    gamma: 1.0
+  })
+  // 去雾调整状态 - 新增
+  const dehazeParams = ref<import('../utils/dehazeAdjustment').DehazeParams>({
+    omega: 0.95,
+    t0: 0.1,
+    windowSize: 15,
+    topRatio: 0.1,
+    adaptiveMode: false,
+    spatialAdaptiveMode: false,
+    adaptiveStrength: 1.0,
+    hazeWeight: 0.5,
+    atmosphericWeight: 0.3,
+    enableEnhancement: false,
+    saturationEnhancement: 1.2,
+    contrastEnhancement: 1.1,
+    brightnessEnhancement: 1.0
+  })
 
   // 初始化设备检测
   onMounted(() => {
@@ -234,7 +260,10 @@ export function useTextureGenerator(options: UseTextureGeneratorOptions = {}): U
         lutFile.value,
         lutIntensity.value,
         maskData,
-        buildHSLLayers()  // 新增这个参数
+        buildHSLLayers(),
+        exposureStrength.value,  // 新增参数
+        exposureManual.value,    // 新增参数
+        dehazeParams.value  // 新增参数
       )
     } catch (error) {
       console.error('处理图像时出错:', error)
@@ -374,6 +403,26 @@ export function useTextureGenerator(options: UseTextureGeneratorOptions = {}): U
         debouncedProcessImage()
       }
     },
+    // 曝光调整处理器 - 新增
+    onExposureStrength: (strength: number) => {
+      exposureStrength.value = strength
+      if (originalImage.value) {
+        debouncedProcessImage()
+      }
+    },
+    onExposureManual: (params: { exposure: number; contrast: number; gamma: number }) => {
+      exposureManual.value = params
+      if (originalImage.value) {
+        debouncedProcessImage()
+      }
+    },
+    // 去雾调整处理器 - 新增
+    onDehazeChange: (params: import('../utils/dehazeAdjustment').DehazeParams) => {
+      dehazeParams.value = params
+      if (originalImage.value) {
+        debouncedProcessImage()
+      }
+    },
   })
 
   return {
@@ -398,8 +447,11 @@ export function useTextureGenerator(options: UseTextureGeneratorOptions = {}): U
     lutFile,
     maskGenerator,
     previewOverlay,
-    globalHSL,        // 新增
-    hslLayers,        // 新增
+    globalHSL,
+    hslLayers,
+    exposureStrength,   // 新增
+    exposureManual,     // 新增
+    dehazeParams,      // 新增
     handleImageUploadWrapper,
     loadSampleImageWrapper,
     toggleCameraWrapper,

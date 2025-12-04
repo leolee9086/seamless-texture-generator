@@ -17,6 +17,7 @@
     "@tensorflow/tfjs-backend-webgpu": "^4.22.0",
     "konva": "^10.0.12",
     "@leolee9086/use-lut": "link:../../useLut",
+    "@leolee9086/image-dehazing": "link:../../dehaze",
     "vconsole": "^3.15.1",
     "vue": "^3.4.21",
     "vue-konva": "^3.2.6"

@@ -24,7 +24,9 @@ export function useControlsLogic(props: ControlsProps, emit: (event: 'controlEve
     { id: 'inputs', icon: 'i-carbon-image-search', label: 'Inputs', component: 'InputsPanel' },
     { id: 'crop', icon: 'i-carbon-crop', label: 'Crop', component: 'CropPanel' },
     { id: 'lut', icon: 'i-carbon-color-palette', label: 'LUT', component: 'LUTPanel' },
-    { id: 'hsl', icon: 'i-carbon-color-switch', label: 'HSL', component: 'HSLPanel' },  // 新增这一行
+    { id: 'hsl', icon: 'i-carbon-color-switch', label: 'HSL', component: 'HSLPanel' },
+    { id: 'exposure', icon: 'i-carbon-sun', label: 'Exposure', component: 'ExposurePanel' },  // 新增曝光调整
+    { id: 'dehaze', icon: 'i-carbon-fog', label: 'Dehaze', component: 'DehazePanel' },  // 新增去雾调整
     { id: 'tileablesettings', icon: 'i-carbon-settings-adjust', label: 'Settings', component: 'SettingsPanel' },
     { id: 'view', icon: 'i-carbon-view', label: 'View', component: 'ViewPanel' },
     { id: 'save', icon: 'i-carbon-save', label: 'Save', component: 'SavePanel' },
