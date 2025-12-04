@@ -3,7 +3,7 @@
         <!-- Tabs -->
         <div class="flex p-1 bg-white/5 rounded-xl">
             <button v-for="tab in ['Upload', 'Procedural']" :key="tab" @click="activeTab = tab"
-                class="flex-1 py-1.5 text-xs font-medium rounded-lg transition-all duration-300"
+                class="glass-btn flex-1 py-1.5 text-xs font-medium rounded-lg transition-all duration-300"
                 :class="activeTab === tab ? 'bg-white/10 text-white shadow-sm' : 'text-white/40 hover:text-white/60'">
                 {{ tab }}
             </button>
@@ -58,7 +58,7 @@
             </div>
 
             <button @click="generateWood" :disabled="isGenerating"
-                class="w-full py-2.5 rounded-xl bg-blue-500/20 hover:bg-blue-500/30 border border-blue-500/30 text-blue-400 text-sm font-medium transition-all flex items-center justify-center gap-2">
+                class="glass-btn w-full py-2.5 rounded-xl bg-white/5 hover:bg-white/10 border border-white/5 text-white/60 hover:text-white/90 text-sm font-medium transition-all flex items-center justify-center gap-2 disabled:opacity-50">
                 <div v-if="isGenerating" class="i-carbon-circle-dash animate-spin text-lg"></div>
                 <div v-else class="i-carbon-magic-wand text-lg"></div>
                 {{ isGenerating ? 'Generating...' : 'Generate Wood Texture' }}
@@ -198,14 +198,14 @@ const headerClass = computed(() =>
 
 const actionButtonClass = computed(() =>
     props.isMobile
-        ? 'px-3 py-1.5 rounded-full bg-white/10 border border-white/5 text-xs font-medium text-white'
-        : 'px-4 py-1.5 rounded-full bg-white/10 hover:bg-white/20 border border-white/5 text-xs font-medium text-white transition-all disabled:opacity-50'
+        ? 'glass-btn px-3 py-1.5 rounded-full bg-white/5 hover:bg-white/10 border border-white/5 text-xs font-medium text-white/60 hover:text-white/90 transition-colors disabled:opacity-50'
+        : 'glass-btn px-4 py-1.5 rounded-full bg-white/5 hover:bg-white/10 border border-white/5 text-xs font-medium text-white/60 hover:text-white/90 transition-all disabled:opacity-50'
 )
 
 const uploadAreaClass = computed(() =>
     props.isMobile
-        ? 'relative overflow-hidden rounded-2xl border border-white/10 bg-white/5 h-28 flex items-center justify-center'
-        : 'relative overflow-hidden rounded-2xl border border-white/10 bg-white/5 hover:bg-white/10 transition-all cursor-pointer group h-32 flex items-center justify-center'
+        ? 'glass-btn relative overflow-hidden rounded-2xl border border-white/10 bg-white/5 h-28 flex items-center justify-center'
+        : 'glass-btn relative overflow-hidden rounded-2xl border border-white/10 bg-white/5 hover:bg-white/10 transition-all cursor-pointer group h-32 flex items-center justify-center'
 )
 
 const uploadTextClass = computed(() =>
