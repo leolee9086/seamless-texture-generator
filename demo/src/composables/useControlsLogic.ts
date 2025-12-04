@@ -1,4 +1,4 @@
-import { computed, ref } from 'vue'
+import { computed, ref, watch } from 'vue'
 import { createButtonClickEvent, createUpdateDataEvent } from '../types/controlEvents'
 import type { ControlEvent } from '../types/controlEvents'
 
@@ -18,6 +18,13 @@ export interface ControlsProps {
 
 export function useControlsLogic(props: ControlsProps, emit: (event: 'controlEvent', payload: ControlEvent) => void) {
   const activeGroup = ref('inputs')
+  // 追踪访问过的调整组，inputs默认被访问
+  const visitedGroups = ref<Set<string>>(new Set(['inputs']))
+
+  // 监听activeGroup变化，记录访问过的组
+  watch(activeGroup, (newGroup) => {
+    visitedGroups.value.add(newGroup)
+  })
 
   const groups = [
     { id: 'contact', icon: 'i-carbon-favorite', label: 'Contact & Sponsor', component: 'ContactPanel' },
@@ -195,6 +202,7 @@ export function useControlsLogic(props: ControlsProps, emit: (event: 'controlEve
 
   return {
     activeGroup,
+    visitedGroups,
     groups,
     inputSliderItems,
     settingsSliderItems,
