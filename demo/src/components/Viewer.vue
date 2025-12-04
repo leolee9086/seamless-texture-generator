@@ -99,7 +99,7 @@ const handleImageLoad = async (side: string) => {
   // 确保在图像加载完成后应用当前的缩放级别
   if (side === 'all' || side === 'left') {
     await nextTick()
-
+    // 这个问题似乎需要修改split-view组件,但是现在先用这个方法修复
     // 强制修复 Canvas 尺寸
     if (containerRef.value) {
       const canvas = containerRef.value.querySelector('canvas')
