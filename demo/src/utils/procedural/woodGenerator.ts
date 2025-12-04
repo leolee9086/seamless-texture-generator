@@ -9,8 +9,9 @@ export interface WoodParams {
     latewoodBias: number;   // 晚材偏差 (0.0-1.0, 控制深色硬边部分的尖锐度)
     rayStrength: number;    // 髓射线强度 (垂直于年轮的细纹)
     poreDensity: number;    // 导管/毛孔密度
-    colorEarly: number[];   // 早材颜色 (浅) [r, g, b]
-    colorLate: number[];    // 晚材颜色 (深) [r, g, b]
+
+    // 颜色渐变
+    gradientStops: { offset: number, color: string }[];
 
     // 高级参数
     fbmOctaves: number;     // FBM 噪声的 octaves 数量 (1-5)
@@ -44,8 +45,11 @@ export const defaultWoodParams: WoodParams = {
     latewoodBias: 0.8,
     rayStrength: 0.6,      // 增加强度，使射线更明显
     poreDensity: 20.0,     // 增加密度，产生更多小孔
-    colorEarly: [0.86, 0.72, 0.54], // #DCC8A9
-    colorLate: [0.45, 0.31, 0.20],  // #734F33
+
+    gradientStops: [
+        { offset: 0.0, color: '#734F33' }, // Late wood (dark)
+        { offset: 1.0, color: '#DCC8A9' }  // Early wood (light)
+    ],
 
     // 高级参数默认值
     fbmOctaves: 3,
@@ -69,6 +73,43 @@ export const defaultWoodParams: WoodParams = {
     poreStrength: 0.4,          // 强度
 }
 
+function createGradientTexture(device: GPUDevice, stops: { offset: number, color: string }[]): GPUTexture {
+    const width = 256;
+    const height = 1;
+    const canvas = document.createElement('canvas');
+    canvas.width = width;
+    canvas.height = height;
+    const ctx = canvas.getContext('2d');
+    if (!ctx) throw new Error('Could not get 2d context');
+
+    const gradient = ctx.createLinearGradient(0, 0, width, 0);
+    // Sort stops just in case
+    const sortedStops = [...stops].sort((a, b) => a.offset - b.offset);
+    sortedStops.forEach(stop => {
+        gradient.addColorStop(stop.offset, stop.color);
+    });
+
+    ctx.fillStyle = gradient;
+    ctx.fillRect(0, 0, width, height);
+
+    const imageData = ctx.getImageData(0, 0, width, height);
+
+    const texture = device.createTexture({
+        size: [width, height],
+        format: 'rgba8unorm',
+        usage: GPUTextureUsage.TEXTURE_BINDING | GPUTextureUsage.COPY_DST,
+    });
+
+    device.queue.writeTexture(
+        { texture },
+        imageData.data,
+        { bytesPerRow: width * 4 },
+        [width, height]
+    );
+
+    return texture;
+}
+
 export async function generateWoodTexture(params: WoodParams, width: number, height: number): Promise<string> {
     const device = await getWebGPUDevice()
     if (!device) {
@@ -83,10 +124,10 @@ export async function generateWoodTexture(params: WoodParams, width: number, hei
     })
 
     // 扩展 uniform buffer 以容纳新参数
-    // 原始: 16 (matrix) + 7 (core params) + 1 (padding) + 4 (color early) + 4 (color late) = 32 floats
-    // 新增: 12 个高级参数
-    // 总计: 32 + 12 = 44 floats
-    const uniformData = new Float32Array(52);
+    // 16 (matrix) + 7 (core params) + 1 (padding) = 24 floats
+    // Advanced params: 17 floats
+    // Total: 41 floats -> align to 44 floats (176 bytes)
+    const uniformData = new Float32Array(44);
 
     // Identity Matrix for viewMatrix (not used but required)
     uniformData[0] = 1; uniformData[5] = 1; uniformData[10] = 1; uniformData[15] = 1;
@@ -101,45 +142,44 @@ export async function generateWoodTexture(params: WoodParams, width: number, hei
     uniformData[22] = params.poreDensity;
     uniformData[23] = 0; // padding
 
-    uniformData[24] = params.colorEarly[0];
-    uniformData[25] = params.colorEarly[1];
-    uniformData[26] = params.colorEarly[2];
-    uniformData[27] = 0; // padding2
+    // 高级参数 (Starts at 24 now)
+    uniformData[24] = params.fbmOctaves;
+    uniformData[25] = params.fbmAmplitude;
+    uniformData[26] = params.knotFrequency;
+    uniformData[27] = params.distortionFreq;
+    uniformData[28] = params.ringNoiseFreq;
+    uniformData[29] = params.rayFrequencyX;
+    uniformData[30] = params.rayFrequencyY;
+    uniformData[31] = params.knotThresholdMin;
+    uniformData[32] = params.knotThresholdMax;
+    uniformData[33] = params.normalStrength;
+    uniformData[34] = params.roughnessMin;
+    uniformData[35] = params.roughnessMax;
+    uniformData[36] = params.poreScale;
+    uniformData[37] = params.poreThresholdEarly;
+    uniformData[38] = params.poreThresholdLate;
+    uniformData[39] = params.poreThresholdRange;
+    uniformData[40] = params.poreStrength;
 
-    uniformData[28] = params.colorLate[0];
-    uniformData[29] = params.colorLate[1];
-    uniformData[30] = params.colorLate[2];
-    uniformData[31] = 0; // padding3
-
-    // 高级参数
-    uniformData[32] = params.fbmOctaves;
-    uniformData[33] = params.fbmAmplitude;
-    uniformData[34] = params.knotFrequency;
-    uniformData[35] = params.distortionFreq;
-    uniformData[36] = params.ringNoiseFreq;
-    uniformData[37] = params.rayFrequencyX;
-    uniformData[38] = params.rayFrequencyY;
-    uniformData[39] = params.knotThresholdMin;
-    uniformData[40] = params.knotThresholdMax;
-    uniformData[41] = params.normalStrength;
-    uniformData[42] = params.roughnessMin;
-    uniformData[43] = params.roughnessMax;
-    uniformData[44] = params.poreScale;
-    uniformData[45] = params.poreThresholdEarly;
-    uniformData[46] = params.poreThresholdLate;
-    uniformData[47] = params.poreThresholdRange;
-    uniformData[48] = params.poreStrength;
-    // padding for 16-byte alignment (49->52 floats = 208 bytes)
-    uniformData[49] = 0;
-    uniformData[50] = 0;
-    uniformData[51] = 0;
-
+    // Padding
+    uniformData[41] = 0;
+    uniformData[42] = 0;
+    uniformData[43] = 0;
 
     const uniformBuffer = device.createBuffer({
         size: uniformData.byteLength,
         usage: GPUBufferUsage.UNIFORM | GPUBufferUsage.COPY_DST,
     });
     device.queue.writeBuffer(uniformBuffer, 0, uniformData);
+
+    // Create Gradient Texture
+    const gradientTexture = createGradientTexture(device, params.gradientStops);
+    const sampler = device.createSampler({
+        magFilter: 'linear',
+        minFilter: 'linear',
+        addressModeU: 'clamp-to-edge',
+        addressModeV: 'clamp-to-edge',
+    });
 
     // 3. Create Pipeline
     const module = device.createShaderModule({
@@ -176,6 +216,8 @@ export async function generateWoodTexture(params: WoodParams, width: number, hei
         layout: pipeline.getBindGroupLayout(0),
         entries: [
             { binding: 0, resource: { buffer: uniformBuffer } },
+            { binding: 1, resource: gradientTexture.createView() },
+            { binding: 2, resource: sampler },
         ],
     });
 
@@ -271,4 +313,3 @@ export async function generateWoodTexture(params: WoodParams, width: number, hei
 
     return canvas.toDataURL('image/png');
 }
-

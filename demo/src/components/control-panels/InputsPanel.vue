@@ -53,7 +53,7 @@
             <!-- Color Controls -->
             <div class="flex flex-col gap-3">
                 <div class="flex items-center justify-between">
-                    <span class="text-xs font-medium text-white/60">Colors</span>
+                    <span class="text-xs font-medium text-white/60">Colors (Gradient)</span>
                     <button @click="showColors = !showColors"
                         class="text-white/40 hover:text-white/60 transition-colors">
                         <div class="i-carbon-chevron-down text-sm transition-transform"
@@ -61,30 +61,7 @@
                     </button>
                 </div>
                 <div v-show="showColors" class="flex flex-col gap-3">
-                    <!-- Early Wood Color -->
-                    <div class="flex items-center gap-3">
-                        <label class="text-xs text-white/60 flex-1">Early Wood</label>
-                        <div class="flex items-center gap-2">
-                            <input type="color" :value="rgbToHex(woodParams.colorEarly)"
-                                @input="handleColorUpdate('colorEarly', $event.target.value)"
-                                class="w-8 h-8 rounded border border-white/20 bg-transparent cursor-pointer">
-                            <span class="text-xs text-white/40 font-mono">
-                                {{ rgbToHex(woodParams.colorEarly) }}
-                            </span>
-                        </div>
-                    </div>
-                    <!-- Late Wood Color -->
-                    <div class="flex items-center gap-3">
-                        <label class="text-xs text-white/60 flex-1">Late Wood</label>
-                        <div class="flex items-center gap-2">
-                            <input type="color" :value="rgbToHex(woodParams.colorLate)"
-                                @input="handleColorUpdate('colorLate', $event.target.value)"
-                                class="w-8 h-8 rounded border border-white/20 bg-transparent cursor-pointer">
-                            <span class="text-xs text-white/40 font-mono">
-                                {{ rgbToHex(woodParams.colorLate) }}
-                            </span>
-                        </div>
-                    </div>
+                    <GradientEditor v-model="woodParams.gradientStops" />
                 </div>
             </div>
 
@@ -192,6 +169,7 @@
 <script setup lang="ts">
 import { computed, ref, reactive } from 'vue'
 import { Slider } from '@leolee9086/slider-component'
+import GradientEditor from '../gradient/GradientEditor.vue'
 import { generateWoodTexture, defaultWoodParams, type WoodParams } from '../../utils/procedural/woodGenerator'
 const props = defineProps<{
     isMobile?: boolean
@@ -487,8 +465,10 @@ const woodPresets = {
         latewoodBias: 0.5,
         rayStrength: 0.1,
         poreDensity: 0.0,
-        colorEarly: [0.92, 0.85, 0.68], // Light yellowish
-        colorLate: [0.65, 0.45, 0.30],  // Brown
+        gradientStops: [
+            { offset: 0.0, color: '#A6734D' }, // Late wood
+            { offset: 1.0, color: '#EBD9AD' }  // Early wood
+        ],
         fbmOctaves: 3,
         fbmAmplitude: 0.5,
         knotFrequency: 0.8,
@@ -515,8 +495,10 @@ const woodPresets = {
         latewoodBias: 3.0,
         rayStrength: 0.8,
         poreDensity: 20.0,
-        colorEarly: [0.86, 0.78, 0.65], // Light brown
-        colorLate: [0.45, 0.35, 0.25], // Dark brown
+        gradientStops: [
+            { offset: 0.0, color: '#735940' },
+            { offset: 1.0, color: '#DBC7A6' }
+        ],
         fbmOctaves: 4,
         fbmAmplitude: 0.6,
         knotFrequency: 1.0,
@@ -543,8 +525,10 @@ const woodPresets = {
         latewoodBias: 1.5,
         rayStrength: 0.3,
         poreDensity: 5.0,
-        colorEarly: [0.55, 0.40, 0.25], // Dark brown
-        colorLate: [0.25, 0.15, 0.10], // Very dark brown
+        gradientStops: [
+            { offset: 0.0, color: '#40261A' },
+            { offset: 1.0, color: '#8C6640' }
+        ],
         fbmOctaves: 3,
         fbmAmplitude: 0.7,
         knotFrequency: 1.2,
@@ -569,28 +553,6 @@ const handleWoodParamUpdate = (data: { id: string; value: number }) => {
     if (data.id in woodParams) {
         (woodParams as any)[data.id] = data.value
     }
-}
-
-// Color handling functions
-const rgbToHex = (rgb: number[]): string => {
-    const toHex = (n: number) => {
-        const hex = Math.round(Math.max(0, Math.min(1, n)) * 255).toString(16)
-        return hex.length === 1 ? '0' + hex : hex
-    }
-    return `#${toHex(rgb[0])}${toHex(rgb[1])}${toHex(rgb[2])}`
-}
-
-const hexToRgb = (hex: string): number[] => {
-    const result = /^#?([a-f\d]{2})([a-f\d]{2})([a-f\d]{2})$/i.exec(hex)
-    return result ? [
-        parseInt(result[1], 16) / 255,
-        parseInt(result[2], 16) / 255,
-        parseInt(result[3], 16) / 255
-    ] : [0, 0, 0]
-}
-
-const handleColorUpdate = (paramName: 'colorEarly' | 'colorLate', hexValue: string) => {
-    woodParams[paramName] = hexToRgb(hexValue)
 }
 
 const applyPreset = (preset: Partial<WoodParams>) => {

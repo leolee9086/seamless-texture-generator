@@ -3,7 +3,7 @@
  * AdvancedWoodParams 接口
  * 包含更专业的生物学参数
  */
-interface WoodParams {
+export interface WoodParams {
     tileSize: number;       // 平铺尺寸 (例如 1.0 表示在 0-1 UV 内无缝循环)
     ringScale: number;      // 年轮总数
     ringDistortion: number; // 生长扭曲度
@@ -11,8 +11,9 @@ interface WoodParams {
     latewoodBias: number;   // 晚材偏差 (0.0-1.0, 控制深色硬边部分的尖锐度)
     rayStrength: number;    // 髓射线强度 (垂直于年轮的细纹)
     poreDensity: number;    // 导管/毛孔密度
-    colorEarly: number[];   // 早材颜色 (浅)
-    colorLate: number[];    // 晚材颜色 (深)
+
+    // 颜色渐变 (替代原来的 colorEarly/colorLate)
+    gradientStops: { offset: number, color: string }[];
 
     // 高级参数
     fbmOctaves: number;     // FBM 噪声的 octaves 数量 (1-5)
@@ -52,10 +53,7 @@ struct Uniforms {
     
     padding : f32, 
     
-    colorEarly : vec3<f32>,
-    padding2 : f32,
-    colorLate : vec3<f32>,
-    padding3 : f32,
+    // colorEarly/Late removed, using texture instead
     
     // --- 高级参数 ---
     fbmOctaves : f32,
@@ -80,15 +78,13 @@ struct Uniforms {
 };
 
 @group(0) @binding(0) var<uniform> u : Uniforms;
+@group(0) @binding(1) var gradientTexture : texture_2d<f32>;
+@group(0) @binding(2) var gradientSampler : sampler;
 
 struct VertexOutput {
     @builtin(position) Position : vec4<f32>,
     @location(0) uv : vec2<f32>, // 使用 UV 空间以保证平铺
 };
-
-// -----------------------------------------------------------
-// 核心：可平铺噪声算法 (Seamless Tileable Noise)
-// -----------------------------------------------------------
 
 // 周期性伪随机哈希
 // 输入 p，在 period 范围内循环，保证边界连续
@@ -290,21 +286,17 @@ fn vs_main(@location(0) position : vec3<f32>, @location(1) uv : vec2<f32>) -> Ve
 @fragment
 fn fs_main(in : VertexOutput) -> @location(0) vec4<f32> {
     // 获取木材结构数据
-    // x: 综合密度 (用于颜色)
-    // y: 年轮原始信号 (用于粗糙度)
-    // z: 孔隙 (用于法线)
-    // w: 射线
     let data = getWoodDetail(in.uv);
     let density = data.x;
+    // y: 年轮原始信号 (用于粗糙度)
     
-    // 1. 颜色混合
-    var albedo = mix(u.colorLate, u.colorEarly, density);
-    
-    // 2. 物理属性 (PBR)
-    // 粗糙度：孔隙和晚材(深色)更粗糙，早材更光滑，但髓射线通常很光滑(高光)
-    var roughness = mix(u.roughnessMax, u.roughnessMin, density);
-    roughness = max(roughness - data.w * 0.3, u.roughnessMin * 0.5); // 射线增加反光
-    roughness = min(roughness + data.z * 1.0, 1.0); // 孔隙非常粗糙
+    // 1. 颜色混合 - 使用渐变纹理采样
+    // density 0-1, 映射到纹理坐标
+    let albedo = textureSample(gradientTexture, gradientSampler, vec2<f32>(density, 0.5)).rgb;
+
+    // 2. 粗糙度混合
+    // 早材(浅色)更粗糙，晚材(深色)更光滑
+    let roughness = mix(u.roughnessMin, u.roughnessMax, data.y);
     
     // 3. 高质量法线生成
     // 这里的关键是：我们不只用颜色计算法线，而是用特定的高度图通道
@@ -326,4 +318,3 @@ fn fs_main(in : VertexOutput) -> @location(0) vec4<f32> {
     return vec4<f32>(finalColor, 1.0);
 }
 `
-
