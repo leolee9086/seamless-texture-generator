@@ -167,7 +167,7 @@
 </template>
 
 <script setup lang="ts">
-import { computed, ref, reactive } from 'vue'
+import { computed, ref, reactive, watch } from 'vue'
 import { Slider } from '@leolee9086/slider-component'
 import GradientEditor from '../gradient/GradientEditor.vue'
 import { generateWoodTexture, defaultWoodParams, type WoodParams } from '../../utils/procedural/woodGenerator'
@@ -559,12 +559,23 @@ const applyPreset = (preset: Partial<WoodParams>) => {
     Object.assign(woodParams, preset)
 }
 
+const pendingGeneration = ref(false)
+
 const generateWood = async () => {
+    if (isGenerating.value) {
+        pendingGeneration.value = true
+        return
+    }
+
     isGenerating.value = true
+
     try {
-        // Generate a 1024x1024 texture
-        const imageData = await generateWoodTexture(woodParams, 1024, 1024)
-        emit('set-image', imageData)
+        do {
+            pendingGeneration.value = false
+            // Generate a 1024x1024 texture
+            const imageData = await generateWoodTexture(woodParams, 1024, 1024)
+            emit('set-image', imageData)
+        } while (pendingGeneration.value)
     } catch (error) {
         console.error('Failed to generate wood texture:', error)
         // You might want to emit an error event or show a notification
@@ -572,6 +583,19 @@ const generateWood = async () => {
         isGenerating.value = false
     }
 }
+
+let debounceTimer: number | null = null
+const debouncedGenerateWood = () => {
+    if (debounceTimer) clearTimeout(debounceTimer)
+    debounceTimer = setTimeout(() => {
+        generateWood()
+    }, 50) as unknown as number
+}
+
+watch(woodParams, () => {
+    debouncedGenerateWood()
+}, { deep: true })
+
 
 const headerClass = computed(() =>
     props.isMobile
