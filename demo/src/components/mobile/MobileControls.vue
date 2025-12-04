@@ -101,10 +101,10 @@
 </template>
 
 <script setup lang="ts">
-import { computed, ref } from 'vue'
+import {  ref } from 'vue'
 import '@leolee9086/slider-component/dist/slider-component.css'
 import { useControlsLogic } from '../../composables/useControlsLogic'
-import { horizontalScroll, horizontalScrollFirst } from '../../utils/scroll'
+import { horizontalScroll } from '../../utils/scroll'
 import ContactPanel from '../control-panels/ContactPanel.vue'
 import InputsPanel from '../control-panels/InputsPanel.vue'
 import CropPanel from '../control-panels/CropPanel.vue'
@@ -171,7 +171,6 @@ const handleNavScroll = (event: WheelEvent) => {
   horizontalScroll(event)
 }
 
-const currentGroup = computed(() => groups.find(g => g.id === activeGroup.value))
 </script>
 
 <style scoped>
