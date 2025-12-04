@@ -227,6 +227,9 @@ export function useControlsLogic(props: ControlsProps, emit: (event: 'controlEve
     handleMaskUpdate: (maskGenerator: (() => Promise<Uint8Array | null>) | null) => {
       emit('controlEvent', createUpdateDataEvent('mask-update', maskGenerator))
     },
+    setImage: (imageData: string) => {
+      emit('controlEvent', createUpdateDataEvent('set-image', imageData))
+    },
     handleControlEvent
   }
 }

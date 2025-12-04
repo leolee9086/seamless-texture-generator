@@ -482,6 +482,11 @@ export function useTextureGenerator(options: UseTextureGeneratorOptions = {}): U
         debouncedProcessImage()
       }
     },
+    onSetImage: (imageData: string) => {
+      rawOriginalImage.value = imageData
+      processedImage.value = null
+      errorMessage.value = ''
+    }
   })
 
   return {

@@ -42,6 +42,8 @@ export type UpdateAction =
   | 'exposure-manual'        // 新增
   | 'dehaze-change'          // 新增
   | 'clarity-adjustment'      // 新增
+  | 'luminance-adjustment'    // 新增
+  | 'set-image'               // 新增
 
 // 事件创建辅助函数
 export const createButtonClickEvent = (action: ButtonAction): ControlEvent => ({

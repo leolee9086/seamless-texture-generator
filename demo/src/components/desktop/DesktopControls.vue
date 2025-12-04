@@ -35,7 +35,7 @@
         <!-- Inputs Panel -->
         <InputsPanel v-else-if="activeGroup === 'inputs'" :is-processing="isProcessing" :original-image="originalImage"
           :input-slider-items="inputSliderItems" @load-sample="loadSampleImage" @image-upload="handleImageUpload"
-          @slider-update="handleSliderUpdate" />
+          @slider-update="handleSliderUpdate" @set-image="setImage" />
 
         <!-- Crop Panel -->
         <CropPanel v-else-if="activeGroup === 'crop'" :original-image="originalImage"
@@ -61,11 +61,11 @@
 
         <!-- Clarity Panel -->
         <ClarityPanel v-else-if="activeGroup === 'clarity'" :original-image="originalImage"
-            @control-event="handleControlEvent" />
+          @control-event="handleControlEvent" />
 
         <!-- Luminance Panel -->
         <LuminancePanel v-else-if="activeGroup === 'luminance'" :original-image="originalImage"
-            :luminance-params="luminanceParams" @control-event="handleControlEvent" />
+          :luminance-params="luminanceParams" @control-event="handleControlEvent" />
 
         <!-- Settings Panel -->
         <SettingsPanel v-else-if="activeGroup === 'tileablesettings'" :is-processing="isProcessing"
@@ -147,6 +147,7 @@ const {
   handleLUTFileChange,
   clearLUT,
   handleMaskUpdate,
+  setImage,
   handleControlEvent
 } = useControlsLogic(props, emit)
 
