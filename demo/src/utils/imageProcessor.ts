@@ -5,6 +5,7 @@ import { HSLAdjustProcessStep, type HSLAdjustmentLayer } from './hslAdjustStep'
 import { adjustExposure, adjustExposureManual } from './exposureAdjustment'  // 新增导入
 import { applyDehazeAdjustment, type DehazeParams } from './dehazeAdjustment'  // 新增导入
 import { processClarityAdjustment, type ClarityParams } from './clarityAdjustment'  // 新增导入
+import { applyLuminanceAdjustmentToImageData, type LuminanceAdjustmentParams } from './luminanceAdjustment'  // 新增导入
 
 /**
  * 管线数据接口 - 统一使用 GPUBuffer 作为数据载体
@@ -29,6 +30,7 @@ interface PipelineOptions {
   exposureManual?: { exposure: number; contrast: number; gamma: number }  // 新增
   dehazeParams?: DehazeParams  // 新增
   clarityParams?: ClarityParams  // 新增
+  luminanceParams?: LuminanceAdjustmentParams  // 新增
 }
 
 /**
@@ -295,7 +297,8 @@ export async function processImageToTileable(
   exposureStrength?: number,  // 新增参数
   exposureManual?: { exposure: number; contrast: number; gamma: number },  // 新增参数
   dehazeParams?: DehazeParams,  // 新增参数
-  clarityParams?: ClarityParams  // 新增参数
+  clarityParams?: ClarityParams,  // 新增参数
+  luminanceParams?: LuminanceAdjustmentParams  // 新增参数
 
 ): Promise<string> {
   if (!originalImage) {
@@ -316,7 +319,8 @@ export async function processImageToTileable(
       exposureStrength,  // 新增
       exposureManual,   // 新增
       dehazeParams,  // 新增
-      clarityParams  // 新增
+      clarityParams,  // 新增
+      luminanceParams  // 新增
     }
 
     // 步骤 1: 加载和缩放图像
@@ -414,6 +418,31 @@ export async function processImageToTileable(
         }
       } catch (error) {
         console.warn('清晰度处理失败，继续使用原始图像:', error)
+      }
+    }
+
+    // 步骤 2.9: 亮度调整（新增）
+    if (options.luminanceParams) {
+      const device = await getGPUDevice()
+      const imageData = await gpuBufferToImageData(pipelineData.buffer, pipelineData.width, pipelineData.height, device)
+      
+      try {
+        // 应用亮度调整
+        const processedImageData = await applyLuminanceAdjustmentToImageData(device, imageData, options.luminanceParams)
+        
+        // 转换回 GPUBuffer
+        const processedBuffer = await imageDataToGPUBuffer(processedImageData, device)
+        
+        // 销毁旧的 buffer
+        pipelineData.buffer.destroy()
+        
+        pipelineData = {
+          buffer: processedBuffer,
+          width: processedImageData.width,
+          height: processedImageData.height
+        }
+      } catch (error) {
+        console.warn('亮度调整处理失败，继续使用原始图像:', error)
       }
     }
 

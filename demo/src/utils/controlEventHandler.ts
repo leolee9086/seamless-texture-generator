@@ -42,6 +42,8 @@ export interface ControlEventHandlerOptions {
   onDehazeChange?: (params: import('./dehazeAdjustment').DehazeParams) => void
   // 清晰度调整处理器
   onClarityAdjustment?: (params: import('./clarityAdjustment').ClarityParams) => void
+  // 亮度调整处理器
+  onLuminanceAdjustment?: (params: import('./luminanceAdjustment').LuminanceAdjustmentParams) => void
 }
 
 /**
@@ -147,6 +149,9 @@ export function createControlEventHandler(options: ControlEventHandlerOptions) {
           break
         case 'clarity-adjustment':
           options.onClarityAdjustment?.(detail.data)
+          break
+        case 'luminance-adjustment':
+          options.onLuminanceAdjustment?.(detail.data)
           break
       }
     }

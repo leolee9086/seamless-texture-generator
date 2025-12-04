@@ -60,7 +60,8 @@ export interface UseTextureGeneratorReturn {
   exposureStrength: Ref<number>  // 新增
   exposureManual: Ref<{ exposure: number; contrast: number; gamma: number }>  // 新增
   dehazeParams: Ref<import('../utils/dehazeAdjustment').DehazeParams>,  // 新增
-  clarityParams: Ref<import('../utils/clarityAdjustment').ClarityParams>  // 新增
+  clarityParams: Ref<import('../utils/clarityAdjustment').ClarityParams>,  // 新增
+  luminanceParams: Ref<import('../utils/luminanceAdjustment').LuminanceAdjustmentParams>  // 新增
 
   // 方法
   handleImageUploadWrapper: (event: Event) => void
@@ -153,6 +154,36 @@ export function useTextureGenerator(options: UseTextureGeneratorOptions = {}): U
     macroEnhancement: 0.0,
     contrastBoost: 1.2
   })
+  // 亮度调整状态 - 新增
+  const luminanceParams = ref<import('../utils/luminanceAdjustment').LuminanceAdjustmentParams>({
+    shadows: {
+      brightness: 0,
+      contrast: 0,
+      saturation: 0,
+      red: 0,
+      green: 0,
+      blue: 0
+    },
+    midtones: {
+      brightness: 0,
+      contrast: 0,
+      saturation: 0,
+      red: 0,
+      green: 0,
+      blue: 0
+    },
+    highlights: {
+      brightness: 0,
+      contrast: 0,
+      saturation: 0,
+      red: 0,
+      green: 0,
+      blue: 0
+    },
+    shadowEnd: 0.33,
+    highlightStart: 0.66,
+    softness: 0.1
+  })
 
   // 初始化设备检测
   onMounted(() => {
@@ -228,7 +259,7 @@ export function useTextureGenerator(options: UseTextureGeneratorOptions = {}): U
   // 构建完整的HSL调整层数组（全局 + 色块层）
   const buildHSLLayers = (): HSLAdjustmentLayer[] => {
     const layers: HSLAdjustmentLayer[] = []
-    
+
     // 如果有全局HSL调整，添加全局层
     if (globalHSL.value.hue !== 0 || globalHSL.value.saturation !== 0 || globalHSL.value.lightness !== 0) {
       layers.push({
@@ -242,10 +273,10 @@ export function useTextureGenerator(options: UseTextureGeneratorOptions = {}): U
         range: 100
       })
     }
-    
+
     // 添加所有色块调整层
     layers.push(...hslLayers.value)
-    
+
     return layers
   }
 
@@ -276,7 +307,8 @@ export function useTextureGenerator(options: UseTextureGeneratorOptions = {}): U
         exposureStrength.value,  // 新增参数
         exposureManual.value,    // 新增参数
         dehazeParams.value,  // 新增参数
-        clarityParams.value  // 新增参数
+        clarityParams.value,  // 新增参数
+        luminanceParams.value  // 新增参数
       )
     } catch (error) {
       console.error('处理图像时出错:', error)
@@ -443,6 +475,13 @@ export function useTextureGenerator(options: UseTextureGeneratorOptions = {}): U
         debouncedProcessImage()
       }
     },
+    // 亮度调整处理器 - 新增
+    onLuminanceAdjustment: (params: import('../utils/luminanceAdjustment').LuminanceAdjustmentParams) => {
+      luminanceParams.value = params
+      if (originalImage.value) {
+        debouncedProcessImage()
+      }
+    },
   })
 
   return {
@@ -473,6 +512,7 @@ export function useTextureGenerator(options: UseTextureGeneratorOptions = {}): U
     exposureManual,     // 新增
     dehazeParams,      // 新增
     clarityParams,      // 新增
+    luminanceParams,    // 新增
     handleImageUploadWrapper,
     loadSampleImageWrapper,
     toggleCameraWrapper,

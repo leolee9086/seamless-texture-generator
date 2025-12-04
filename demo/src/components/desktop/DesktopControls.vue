@@ -25,7 +25,7 @@
     <div
       class="flex-1 bg-black/60 backdrop-blur-xl border border-white/10 rounded-2xl shadow-2xl overflow-hidden flex flex-col min-w-0">
 
-    
+
 
       <!-- Scrollable Content -->
       <div class="flex-1 overflow-y-auto scrollbar-hide p-6">
@@ -53,16 +53,19 @@
 
         <!-- Exposure Panel -->
         <ExposurePanel v-else-if="activeGroup === 'exposure'" :original-image="originalImage"
-          :exposure-strength="exposureStrength" :exposure-manual="exposureManual"
-          @control-event="handleControlEvent" />
+          :exposure-strength="exposureStrength" :exposure-manual="exposureManual" @control-event="handleControlEvent" />
 
         <!-- Dehaze Panel -->
-        <DehazePanel v-else-if="activeGroup === 'dehaze'" :original-image="originalImage"
-          :dehaze-params="dehazeParams" @control-event="handleControlEvent" />
+        <DehazePanel v-else-if="activeGroup === 'dehaze'" :original-image="originalImage" :dehaze-params="dehazeParams"
+          @control-event="handleControlEvent" />
 
         <!-- Clarity Panel -->
         <ClarityPanel v-else-if="activeGroup === 'clarity'" :original-image="originalImage"
-          @control-event="handleControlEvent" />
+            @control-event="handleControlEvent" />
+
+        <!-- Luminance Panel -->
+        <LuminancePanel v-else-if="activeGroup === 'luminance'" :original-image="originalImage"
+            :luminance-params="luminanceParams" @control-event="handleControlEvent" />
 
         <!-- Settings Panel -->
         <SettingsPanel v-else-if="activeGroup === 'tileablesettings'" :is-processing="isProcessing"
@@ -94,6 +97,7 @@ import HSLPanel from '../control-panels/HSLPanel.vue'
 import ExposurePanel from '../control-panels/ExposurePanel.vue'  // 新增导入
 import DehazePanel from '../control-panels/DehazePanel.vue'  // 新增导入
 import ClarityPanel from '../control-panels/ClarityPanel.vue'  // 新增导入
+import LuminancePanel from '../control-panels/LuminancePanel.vue'  // 新增导入
 import SettingsPanel from '../control-panels/SettingsPanel.vue'
 import ViewPanel from '../control-panels/ViewPanel.vue'
 import SavePanel from '../control-panels/SavePanel.vue'
@@ -117,6 +121,7 @@ const props = defineProps<{
   exposureManual?: { exposure: number; contrast: number; gamma: number }  // 新增
   dehazeParams?: import('../../utils/dehazeAdjustment').DehazeParams  // 新增
   clarityParams?: import('../../utils/clarityAdjustment').ClarityParams  // 新增
+  luminanceParams?: import('../../utils/luminanceAdjustment').LuminanceAdjustmentParams  // 新增
 }>()
 
 const emit = defineEmits<{
