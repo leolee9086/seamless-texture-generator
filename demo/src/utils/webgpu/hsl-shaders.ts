@@ -176,7 +176,7 @@ fn main(@builtin(global_invocation_id) global_id: vec3<u32>) {
     }
 
     // 加载原始像素颜色
-    let originalColor = textureLoad(inputTexture, vec2<i32>(coords), 0);
+    let originalColor = textureLoad(inputTexture, vec2<i32>(i32(coords.x), i32(coords.y)), 0);
     
     // 转换为HSL
     let hsl = rgbToHsl(originalColor.rgb);
@@ -339,7 +339,7 @@ fn main(@builtin(global_invocation_id) global_id: vec3<u32>) {
     }
 
     // 加载原始像素颜色
-    let originalColor = textureLoad(inputTexture, vec2<i32>(coords), 0);
+    let originalColor = textureLoad(inputTexture, vec2<i32>(i32(coords.x), i32(coords.y)), 0);
     
     // 转换为HSL
     let hsl = rgbToHsl(originalColor.rgb);

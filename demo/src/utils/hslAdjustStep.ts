@@ -234,7 +234,7 @@ export class HSLAdjustProcessStep {
                     return;
                 }
                 
-                let color = textureLoad(inputTexture, vec2<i32>(x, y), 0);
+                let color = textureLoad(inputTexture, vec2<i32>(i32(x), i32(y)), 0);
                 
                 // Convert to RGBA8Unorm and pack into u32 (little endian: R G B A)
                 let r = u32(color.r * 255.0 + 0.5);
