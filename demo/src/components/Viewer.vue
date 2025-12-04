@@ -3,19 +3,21 @@
     <!-- 预览覆盖层 -->
     <div v-if="previewOverlay" class="preview-overlay w-full h-full relative">
       <component :is="previewOverlay.component" v-bind="previewOverlay.data" />
-      
+
       <!-- 退出按钮 -->
-      <button @click="clearOverlay" class="exit-overlay-btn absolute top-4 right-4 z-30 glass-btn p-3 rounded-full bg-black/50 hover:bg-black/70 text-white/80 hover:text-white transition-colors flex items-center gap-2">
+      <button @click="clearOverlay"
+        class="exit-overlay-btn absolute top-4 right-4 z-30 glass-btn p-3 rounded-full bg-black/50 hover:bg-black/70 text-white/80 hover:text-white transition-colors flex items-center gap-2">
         <div class="i-carbon-close text-lg"></div>
         <span class="text-sm font-medium">退出预览</span>
       </button>
     </div>
 
     <!-- 原有的图像查看器 -->
-    <div v-else-if="originalImage" class="w-full h-full relative">
-      <SplitViewer ref="splitViewerRef" :leftImage="originalImage" :rightImage="processedImage || originalImage"
-        :width="containerWidth" :height="containerHeight" :splitPosition="splitPosition" :magnifier="magnifierConfig"
-        @split-change="handleSplitChange" @image-load="handleImageLoad" class="w-full h-full" />
+    <div v-else-if="originalImage && containerWidth > 0 && containerHeight > 0" class="w-full h-full relative">
+      <SplitViewer ref="splitViewerRef" :key="viewerKey" :leftImage="originalImage"
+        :rightImage="processedImage || originalImage" :width="containerWidth" :height="containerHeight"
+        :splitPosition="splitPosition" :magnifier="magnifierConfig" @split-change="handleSplitChange"
+        @image-load="handleImageLoad" class="w-full h-full" />
     </div>
 
     <div v-if="isProcessing" class="absolute inset-0 z-10 flex-col-center bg-black/50 backdrop-blur-sm text-white">
@@ -60,10 +62,10 @@ const props = defineProps<{
 
 const emit = defineEmits(['update:splitPosition', 'image-load', 'clear-overlay'])
 
-const splitViewerRef = ref< typeof SplitViewer>()
+const splitViewerRef = ref<typeof SplitViewer>()
 const containerRef = ref<HTMLElement | null>(null)
-const containerWidth = ref(1000)
-const containerHeight = ref(600)
+const containerWidth = ref(0)
+const containerHeight = ref(0)
 
 let resizeObserver: ResizeObserver | null = null
 let debounceTimer: number | null = null
@@ -75,6 +77,18 @@ const magnifierConfig = computed(() => ({
   followCursor: true
 }))
 
+// 生成 viewer key，只在初次尺寸设置时更新，避免后续每次 resize 都重新创建组件
+const viewerKey = ref('viewer-initial')
+const sizeInitialized = ref(false)
+
+// 监听尺寸变化，只在首次初始化时更新 key
+watch([containerWidth, containerHeight], ([newWidth, newHeight]) => {
+  if (!sizeInitialized.value && newWidth > 0 && newHeight > 0) {
+    viewerKey.value = `viewer-${newWidth}-${newHeight}`
+    sizeInitialized.value = true
+  }
+})
+
 const handleSplitChange = (position: number) => {
   emit('update:splitPosition', position)
 }
@@ -85,9 +99,29 @@ const handleImageLoad = async (side: string) => {
   // 确保在图像加载完成后应用当前的缩放级别
   if (side === 'all' || side === 'left') {
     await nextTick()
+
+    // 强制修复 Canvas 尺寸
+    if (containerRef.value) {
+      const canvas = containerRef.value.querySelector('canvas')
+      if (canvas && (canvas.width === 300 || canvas.height === 150)) {
+        console.log('Fixing canvas size manually', containerWidth.value, containerHeight.value)
+        canvas.width = containerWidth.value
+        canvas.height = containerHeight.value
+      }
+    }
+
     if (splitViewerRef.value) {
-      splitViewerRef.value.setZoom(props.zoomLevel)
-      
+      // 强制重置内部状态
+      if (typeof splitViewerRef.value.resetZoom === 'function') {
+        splitViewerRef.value.resetZoom()
+      }
+
+      // 恢复缩放
+      setTimeout(() => {
+        if (splitViewerRef.value) {
+          splitViewerRef.value.setZoom(props.zoomLevel)
+        }
+      }, 50)
     }
   }
 }
@@ -117,6 +151,13 @@ watch(() => props.zoomLevel, handleZoomChange)
 
 onMounted(() => {
   if (containerRef.value) {
+    // 立即同步获取初始尺寸，避免使用默认的300x150
+    const rect = containerRef.value.getBoundingClientRect()
+    if (rect.width > 0 && rect.height > 0) {
+      containerWidth.value = rect.width
+      containerHeight.value = rect.height
+    }
+
     const DEBOUNCE_DELAY = 50 // 毫秒
 
     resizeObserver = new ResizeObserver((entries) => {
@@ -130,8 +171,6 @@ onMounted(() => {
             containerHeight.value = height
             // 触发 SplitViewer 重绘以确保 Canvas 内容正确显示
             if (splitViewerRef.value && typeof splitViewerRef.value.resetZoom === 'function') {
-                          console.log(splitViewerRef.value)
-
               splitViewerRef.value.resetZoom()
             }
           }, DEBOUNCE_DELAY)
