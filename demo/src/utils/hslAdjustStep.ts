@@ -104,7 +104,7 @@ export class HSLAdjustProcessStep {
         // 创建临时纹理用于处理
         let currentInputTexture = inputTexture
         let outputTexture: GPUTexture | null = null
-        
+
         // 统一管理所有需要销毁的纹理
         const texturesToDestroy: GPUTexture[] = []
 
@@ -216,13 +216,68 @@ export class HSLAdjustProcessStep {
             label: 'HSL Output Buffer'
         })
 
-        const commandEncoder2 = device.createCommandEncoder({ label: 'HSL Copy Output' })
+        // 使用 Compute Shader 将纹理数据打包到紧凑的 buffer 中
+        // copyTextureToBuffer 要求 bytesPerRow 必须是 256 的倍数，这会导致 buffer 大小增加
+        // 而管线后续步骤期望紧凑的 buffer (width * height * 4)
 
-        commandEncoder2.copyTextureToBuffer(
-            { texture: currentInputTexture },
-            { buffer: outputBuffer, offset: 0, bytesPerRow: alignedBytesPerRow },
-            { width: data.width, height: data.height }
-        )
+        const packShader = `
+            @group(0) @binding(0) var inputTexture: texture_2d<f32>;
+            @group(0) @binding(1) var<storage, read_write> outputBuffer: array<u32>;
+
+            @compute @workgroup_size(16, 16)
+            fn main(@builtin(global_invocation_id) global_id: vec3<u32>) {
+                let x = global_id.x;
+                let y = global_id.y;
+                let dims = textureDimensions(inputTexture);
+                
+                if (x >= dims.x || y >= dims.y) {
+                    return;
+                }
+                
+                let color = textureLoad(inputTexture, vec2<i32>(x, y), 0);
+                
+                // Convert to RGBA8Unorm and pack into u32 (little endian: R G B A)
+                let r = u32(color.r * 255.0 + 0.5);
+                let g = u32(color.g * 255.0 + 0.5);
+                let b = u32(color.b * 255.0 + 0.5);
+                let a = u32(color.a * 255.0 + 0.5);
+                
+                let packed = r | (g << 8) | (b << 16) | (a << 24);
+                
+                let index = y * dims.x + x;
+                outputBuffer[index] = packed;
+            }
+        `
+
+        const packModule = device.createShaderModule({
+            code: packShader,
+            label: 'HSL Pack Shader'
+        })
+
+        const packPipeline = await device.createComputePipelineAsync({
+            layout: 'auto',
+            compute: {
+                module: packModule,
+                entryPoint: 'main'
+            },
+            label: 'HSL Pack Pipeline'
+        })
+
+        const packBindGroup = device.createBindGroup({
+            layout: packPipeline.getBindGroupLayout(0),
+            entries: [
+                { binding: 0, resource: currentInputTexture.createView() },
+                { binding: 1, resource: { buffer: outputBuffer } }
+            ],
+            label: 'HSL Pack BindGroup'
+        })
+
+        const commandEncoder2 = device.createCommandEncoder({ label: 'HSL Pack Encoder' })
+        const pass = commandEncoder2.beginComputePass({ label: 'HSL Pack Pass' })
+        pass.setPipeline(packPipeline)
+        pass.setBindGroup(0, packBindGroup)
+        pass.dispatchWorkgroups(Math.ceil(data.width / 16), Math.ceil(data.height / 16))
+        pass.end()
 
         device.queue.submit([commandEncoder2.finish()])
 
@@ -232,14 +287,14 @@ export class HSLAdjustProcessStep {
         // 清理临时资源
         inputTexture.destroy()
         tempBuffer.destroy()
-        
+
         // 销毁所有收集到的纹理
         texturesToDestroy.forEach(texture => {
             if (texture !== currentInputTexture) {
                 texture.destroy()
             }
         })
-        
+
         // 销毁最终的输入纹理（如果不是原始输入纹理且还未被销毁）
         if (currentInputTexture !== inputTexture &&
             !texturesToDestroy.includes(currentInputTexture)) {
