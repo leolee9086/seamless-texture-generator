@@ -262,7 +262,7 @@ export function validateDehazeParams(params: Partial<DehazeParams>): {
   }
   
   if (params.windowSize !== undefined) {
-    if (params.windowSize < 3 || params.windowSize > 31 || params.windowSize % 2 === 0) {
+    if (params.windowSize < 0 || params.windowSize > 31 || params.windowSize % 2 === 0) {
       errors.push('暗通道窗口大小必须是3-31之间的奇数')
     }
   }

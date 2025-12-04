@@ -183,9 +183,9 @@ const basicSliderItems = computed(() => [
         id: 'windowSize',
         label: '窗口大小',
         value: dehazeParams.value.windowSize,
-        min: 3,
+        min: 0,
         max: 31,
-        step: 2,
+        step: 1,
         gradient: 'linear-gradient(90deg, #5856d6 0%, #af52de 100%)',
         showRuler: true
     }
@@ -208,7 +208,7 @@ const advancedSliderItems = computed(() => [
         value: dehazeParams.value.adaptiveStrength,
         min: 0.1,
         max: 2.0,
-        step: 0.1,
+        step: 0.01,
         gradient: 'linear-gradient(90deg, #34c759 0%, #30d158 100%)',
         showRuler: true
     },
@@ -218,7 +218,7 @@ const advancedSliderItems = computed(() => [
         value: dehazeParams.value.hazeWeight,
         min: 0.0,
         max: 1.0,
-        step: 0.1,
+        step: 0.01,
         gradient: 'linear-gradient(90deg, #007aff 0%, #5ac8fa 100%)',
         showRuler: true
     },
@@ -228,7 +228,7 @@ const advancedSliderItems = computed(() => [
         value: dehazeParams.value.atmosphericWeight,
         min: 0.0,
         max: 1.0,
-        step: 0.1,
+        step: 0.01,
         gradient: 'linear-gradient(90deg, #ff2d55 0%, #ff3b30 100%)',
         showRuler: true
     }
@@ -241,7 +241,7 @@ const enhancementSliderItems = computed(() => [
         value: dehazeParams.value.saturationEnhancement,
         min: 0.0,
         max: 2.0,
-        step: 0.1,
+        step: 0.01,
         gradient: 'linear-gradient(90deg, #888 0%, #ff0000 100%)',
         showRuler: true
     },
@@ -251,7 +251,7 @@ const enhancementSliderItems = computed(() => [
         value: dehazeParams.value.contrastEnhancement,
         min: 0.5,
         max: 2.0,
-        step: 0.1,
+        step: 0.01,
         gradient: 'linear-gradient(90deg, #000 0%, #fff 100%)',
         showRuler: true
     },
@@ -261,7 +261,7 @@ const enhancementSliderItems = computed(() => [
         value: dehazeParams.value.brightnessEnhancement,
         min: 0.5,
         max: 2.0,
-        step: 0.1,
+        step: 0.01,
         gradient: 'linear-gradient(90deg, #000 0%, #888 50%, #fff 100%)',
         showRuler: true
     }
