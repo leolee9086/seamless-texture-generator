@@ -65,8 +65,7 @@
                     <div class="flex items-center gap-3">
                         <label class="text-xs text-white/60 flex-1">Early Wood</label>
                         <div class="flex items-center gap-2">
-                            <input type="color"
-                                :value="rgbToHex(woodParams.colorEarly)"
+                            <input type="color" :value="rgbToHex(woodParams.colorEarly)"
                                 @input="handleColorUpdate('colorEarly', $event.target.value)"
                                 class="w-8 h-8 rounded border border-white/20 bg-transparent cursor-pointer">
                             <span class="text-xs text-white/40 font-mono">
@@ -78,8 +77,7 @@
                     <div class="flex items-center gap-3">
                         <label class="text-xs text-white/60 flex-1">Late Wood</label>
                         <div class="flex items-center gap-2">
-                            <input type="color"
-                                :value="rgbToHex(woodParams.colorLate)"
+                            <input type="color" :value="rgbToHex(woodParams.colorLate)"
                                 @input="handleColorUpdate('colorLate', $event.target.value)"
                                 class="w-8 h-8 rounded border border-white/20 bg-transparent cursor-pointer">
                             <span class="text-xs text-white/40 font-mono">
@@ -169,8 +167,7 @@
                     </button>
                 </div>
                 <div v-show="showPresets" class="grid grid-cols-2 gap-2">
-                    <button v-for="(preset, name) in woodPresets" :key="name"
-                        @click="applyPreset(preset)"
+                    <button v-for="(preset, name) in woodPresets" :key="name" @click="applyPreset(preset)"
                         class="glass-btn text-xs py-2 px-2 rounded bg-white/5 text-white/60 hover:bg-white/10 hover:text-white/90 transition-colors">
                         {{ name }}
                     </button>
@@ -196,7 +193,6 @@
 import { computed, ref, reactive } from 'vue'
 import { Slider } from '@leolee9086/slider-component'
 import { generateWoodTexture, defaultWoodParams, type WoodParams } from '../../utils/procedural/woodGenerator'
-
 const props = defineProps<{
     isMobile?: boolean
     isProcessing: boolean

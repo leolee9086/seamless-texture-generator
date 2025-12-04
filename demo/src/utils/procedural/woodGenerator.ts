@@ -26,12 +26,14 @@ export interface WoodParams {
     roughnessMin: number;     // 最小粗糙度 (0.1-0.5)
     roughnessMax: number;     // 最大粗糙度 (0.5-1.0)
 
+
     // 孔隙参数
     poreScale: number;          // 孔隙尺寸 (0.5-5.0)
     poreThresholdEarly: number; // 早材孔隙阈值下限 (0.0-1.0)
     poreThresholdLate: number;  // 晚材孔隙阈值下限 (0.0-1.0)
     poreThresholdRange: number; // 阈值范围 (0.1-0.3)
     poreStrength: number;       // 孔隙强度 (0.0-1.0)
+
 }
 
 export const defaultWoodParams: WoodParams = {
@@ -82,9 +84,8 @@ export async function generateWoodTexture(params: WoodParams, width: number, hei
 
     // 扩展 uniform buffer 以容纳新参数
     // 原始: 16 (matrix) + 7 (core params) + 1 (padding) + 4 (color early) + 4 (color late) = 32 floats
-    // 新增: 12 个高级参数 + 5 个孔隙参数
-    // 小计: 32 + 12 + 5 = 49 floats
-    // WebGPU要求16字节对齐，49 floats = 196字节，需要padding到52 floats = 208字节
+    // 新增: 12 个高级参数
+    // 总计: 32 + 12 = 44 floats
     const uniformData = new Float32Array(52);
 
     // Identity Matrix for viewMatrix (not used but required)
@@ -123,8 +124,6 @@ export async function generateWoodTexture(params: WoodParams, width: number, hei
     uniformData[41] = params.normalStrength;
     uniformData[42] = params.roughnessMin;
     uniformData[43] = params.roughnessMax;
-
-    // 孔隙参数
     uniformData[44] = params.poreScale;
     uniformData[45] = params.poreThresholdEarly;
     uniformData[46] = params.poreThresholdLate;
@@ -134,6 +133,7 @@ export async function generateWoodTexture(params: WoodParams, width: number, hei
     uniformData[49] = 0;
     uniformData[50] = 0;
     uniformData[51] = 0;
+
 
     const uniformBuffer = device.createBuffer({
         size: uniformData.byteLength,
