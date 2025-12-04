@@ -24,7 +24,7 @@
             <p :class="textClass">
                 支持我们
             </p>
-            <a href="https://afdian.net/a/leolee9086" target="_blank" rel="noopener noreferrer"
+            <a href="https://afdian.com/a/leolee9086" target="_blank" rel="noopener noreferrer"
                 :class="[buttonClass, 'bg-orange-500/10 hover:bg-orange-500/20 border-orange-500/20 hover:border-orange-500/30 overflow-hidden']">
                 <div class="i-carbon-cafe text-orange-400 group-hover:scale-110 transition-transform" :class="iconClass">
                 </div>
