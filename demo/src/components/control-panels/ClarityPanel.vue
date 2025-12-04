@@ -16,9 +16,6 @@
 
                 <div class="space-y-3">
                     <!-- Sigma (滤波强度) -->
-                    <div class="flex items-center gap-3">
-                        <label class="text-xs text-white/60 w-20">滤波强度</label>
-                        <div class="flex-1">
                             <Slider :items="[{
                                 id: 'sigma',
                                 label: 'Sigma',
@@ -29,14 +26,9 @@
                                 gradient: 'linear-gradient(90deg, #3b82f6 0%, #8b5cf6 100%)',
                                 showRuler: false
                             }]" @updateValue="handleParamUpdate" />
-                        </div>
-                        <span class="text-xs text-white/60 w-12 text-right">{{ clarityParams.sigma.toFixed(1) }}</span>
-                    </div>
+                  
 
                     <!-- Epsilon (正则化参数) -->
-                    <div class="flex items-center gap-3">
-                        <label class="text-xs text-white/60 w-20">正则化</label>
-                        <div class="flex-1">
                             <Slider :items="[{
                                 id: 'epsilon',
                                 label: 'Epsilon',
@@ -47,14 +39,10 @@
                                 gradient: 'linear-gradient(90deg, #10b981 0%, #34d399 100%)',
                                 showRuler: false
                             }]" @updateValue="handleParamUpdate" />
-                        </div>
-                        <span class="text-xs text-white/60 w-12 text-right">{{ clarityParams.epsilon.toFixed(3) }}</span>
-                    </div>
+                    
 
                     <!-- Radius (窗口半径) -->
-                    <div class="flex items-center gap-3">
-                        <label class="text-xs text-white/60 w-20">窗口半径</label>
-                        <div class="flex-1">
+             
                             <Slider :items="[{
                                 id: 'radius',
                                 label: 'Radius',
@@ -65,14 +53,10 @@
                                 gradient: 'linear-gradient(90deg, #f59e0b 0%, #f97316 100%)',
                                 showRuler: true
                             }]" @updateValue="handleParamUpdate" />
-                        </div>
-                        <span class="text-xs text-white/60 w-12 text-right">{{ clarityParams.radius }}</span>
-                    </div>
+                   
 
                     <!-- Block Size (线程组大小) -->
-                    <div class="flex items-center gap-3">
-                        <label class="text-xs text-white/60 w-20">线程组</label>
-                        <div class="flex-1">
+             
                             <Slider :items="[{
                                 id: 'blockSize',
                                 label: 'Block Size',
@@ -83,9 +67,7 @@
                                 gradient: 'linear-gradient(90deg, #8b5cf6 0%, #6366f1 100%)',
                                 showRuler: true
                             }]" @updateValue="handleParamUpdate" />
-                        </div>
-                        <span class="text-xs text-white/60 w-12 text-right">{{ clarityParams.blockSize }}</span>
-                    </div>
+             
                 </div>
             </div>
 
@@ -99,9 +81,6 @@
 
                 <div class="space-y-3">
                     <!-- Detail Strength (细节强度) -->
-                    <div class="flex items-center gap-3">
-                        <label class="text-xs text-white/60 w-20">细节强度</label>
-                        <div class="flex-1">
                             <Slider :items="[{
                                 id: 'detailStrength',
                                 label: 'Detail Strength',
@@ -112,14 +91,8 @@
                                 gradient: 'linear-gradient(90deg, #06b6d4 0%, #10b981 100%)',
                                 showRuler: false
                             }]" @updateValue="handleParamUpdate" />
-                        </div>
-                        <span class="text-xs text-white/60 w-12 text-right">{{ clarityParams.detailStrength.toFixed(1) }}</span>
-                    </div>
 
                     <!-- Enhancement Strength (增强强度) -->
-                    <div class="flex items-center gap-3">
-                        <label class="text-xs text-white/60 w-20">增强强度</label>
-                        <div class="flex-1">
                             <Slider :items="[{
                                 id: 'enhancementStrength',
                                 label: 'Enhancement Strength',
@@ -130,14 +103,8 @@
                                 gradient: 'linear-gradient(90deg, #3b82f6 0%, #8b5cf6 100%)',
                                 showRuler: false
                             }]" @updateValue="handleParamUpdate" />
-                        </div>
-                        <span class="text-xs text-white/60 w-12 text-right">{{ clarityParams.enhancementStrength.toFixed(1) }}</span>
-                    </div>
 
                     <!-- Macro Enhancement (宏观增强) -->
-                    <div class="flex items-center gap-3">
-                        <label class="text-xs text-white/60 w-20">宏观增强</label>
-                        <div class="flex-1">
                             <Slider :items="[{
                                 id: 'macroEnhancement',
                                 label: 'Macro Enhancement',
@@ -148,14 +115,8 @@
                                 gradient: 'linear-gradient(90deg, #f59e0b 0%, #f97316 100%)',
                                 showRuler: false
                             }]" @updateValue="handleParamUpdate" />
-                        </div>
-                        <span class="text-xs text-white/60 w-12 text-right">{{ clarityParams.macroEnhancement.toFixed(1) }}</span>
-                    </div>
 
                     <!-- Contrast Boost (对比度增强) -->
-                    <div class="flex items-center gap-3">
-                        <label class="text-xs text-white/60 w-20">对比度</label>
-                        <div class="flex-1">
                             <Slider :items="[{
                                 id: 'contrastBoost',
                                 label: 'Contrast Boost',
@@ -166,9 +127,6 @@
                                 gradient: 'linear-gradient(90deg, #6366f1 0%, #8b5cf6 100%)',
                                 showRuler: false
                             }]" @updateValue="handleParamUpdate" />
-                        </div>
-                        <span class="text-xs text-white/60 w-12 text-right">{{ clarityParams.contrastBoost.toFixed(1) }}</span>
-                    </div>
                 </div>
             </div>
 

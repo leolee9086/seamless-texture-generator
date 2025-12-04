@@ -69,9 +69,16 @@
 
     <!-- Bottom Navigation (Fixed Tab Bar) -->
     <div class="w-full z-50 bg-black border-t flex-shrink-0 pb-[env(safe-area-inset-bottom)]">
-      <div class="flex items-center justify-around h-16 px-2">
-        <button v-for="group in groups" :key="group.id" @click="activeGroup = group.id"
-          class="flex flex-col items-center justify-center w-full h-full gap-1 transition-colors duration-200 !bg-transparent !border-none !shadow-none !outline-none"
+      <div
+        ref="navContainer"
+        class="flex items-center h-16 px-2 overflow-x-auto scrollbar-hide"
+        @wheel="handleNavScroll"
+      >
+        <button
+          v-for="group in groups"
+          :key="group.id"
+          @click="activeGroup = group.id"
+          class="flex flex-col items-center justify-center min-w-[80px] h-full gap-1 transition-colors duration-200 !bg-transparent !border-none !shadow-none !outline-none flex-shrink-0"
           :class="activeGroup === group.id ? 'text-white' : 'text-neutral-500 hover:text-neutral-300'">
 
           <div :class="[
@@ -80,7 +87,7 @@
             activeGroup === group.id ? 'scale-100' : 'scale-90'
           ]"></div>
 
-          <span class="text-[10px] font-medium tracking-wide">
+          <span class="text-[10px] font-medium tracking-wide whitespace-nowrap">
             {{ group.label }}
           </span>
         </button>
@@ -90,9 +97,10 @@
 </template>
 
 <script setup lang="ts">
-import { computed } from 'vue'
+import { computed, ref } from 'vue'
 import '@leolee9086/slider-component/dist/slider-component.css'
 import { useControlsLogic } from '../../composables/useControlsLogic'
+import { horizontalScroll, horizontalScrollFirst } from '../../utils/scroll'
 import ContactPanel from '../control-panels/ContactPanel.vue'
 import InputsPanel from '../control-panels/InputsPanel.vue'
 import CropPanel from '../control-panels/CropPanel.vue'
@@ -150,6 +158,12 @@ const {
   clearLUT,
   handleMaskUpdate
 } = useControlsLogic(props, emit)
+
+const navContainer = ref<HTMLElement>()
+
+const handleNavScroll = (event: WheelEvent) => {
+  horizontalScroll(event)
+}
 
 const currentGroup = computed(() => groups.find(g => g.id === activeGroup.value))
 </script>
