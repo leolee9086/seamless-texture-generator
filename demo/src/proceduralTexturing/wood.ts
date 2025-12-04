@@ -27,6 +27,13 @@ interface WoodParams {
     normalStrength: number;   // 法线强度 (1.0-20.0)
     roughnessMin: number;     // 最小粗糙度 (0.1-0.5)
     roughnessMax: number;     // 最大粗糙度 (0.5-1.0)
+
+    // 孔隙参数
+    poreScale: number;          // 孔隙尺寸 (0.5-5.0)
+    poreThresholdEarly: number; // 早材孔隙阈值下限 (0.0-1.0)
+    poreThresholdLate: number;  // 晚材孔隙阈值下限 (0.0-1.0)
+    poreThresholdRange: number; // 阈值范围 (0.1-0.3)
+    poreStrength: number;       // 孔隙强度 (0.0-1.0)
 }
 
 export const woodShaderWGSL = /* wgsl */`
@@ -63,6 +70,13 @@ struct Uniforms {
     normalStrength : f32,
     roughnessMin : f32,
     roughnessMax : f32,
+    
+    // --- 孔隙参数 ---
+    poreScale : f32,
+    poreThresholdEarly : f32,
+    poreThresholdLate : f32,
+    poreThresholdRange : f32,
+    poreStrength : f32,
 };
 
 @group(0) @binding(0) var<uniform> u : Uniforms;
@@ -124,6 +138,59 @@ fn periodicFbm(p: vec3<f32>, octaves: i32, period: f32, initialAmplitude: f32) -
 }
 
 // -----------------------------------------------------------
+// 非周期性噪声（用于效果优化）
+// -----------------------------------------------------------
+
+// 标准伪随机哈希（非周期性）
+fn hash2(p: vec2<f32>) -> vec2<f32> {
+    var h = vec2<f32>(dot(p, vec2<f32>(127.1, 311.7)),
+                      dot(p, vec2<f32>(269.5, 183.3)));
+    return -1.0 + 2.0 * fract(sin(h) * 43758.5453123);
+}
+
+// 2D Worley 噪声（细胞噪声）
+// 返回最近距离（0-1 范围）
+fn worleyNoise(p: vec2<f32>, frequency: f32) -> f32 {
+    let scaledP = p * frequency;
+    let cell = floor(scaledP);
+    let localPos = fract(scaledP);
+    
+    var minDist = 1.0;
+    
+    // 检查 3x3 邻域
+    for (var dx = -1.0; dx <= 1.0; dx = dx + 1.0) {
+        for (var dy = -1.0; dy <= 1.0; dy = dy + 1.0) {
+            let neighborCell = cell + vec2<f32>(dx, dy);
+            // 为每个单元格生成随机点
+            let randomPoint = hash2(neighborCell) * 0.5 + 0.5; // 0-1 范围内
+            let pointPos = neighborCell + randomPoint;
+            let dist = distance(scaledP, pointPos);
+            if (dist < minDist) {
+                minDist = dist;
+            }
+        }
+    }
+    // 归一化距离（假设最大距离约为 sqrt(2)）
+    return 1.0 - minDist * 0.707; // 使距离越近值越大
+}
+
+// 密集髓射线生成
+// 使用多个频率的噪声叠加
+fn generateRays(pos: vec2<f32>, frequencyX: f32, frequencyY: f32, strength: f32, earlywoodWeight: f32) -> f32 {
+    // 基础条纹噪声（垂直于年轮方向）
+    let ray1 = sin(pos.x * frequencyX * 2.0 + pos.y * frequencyY * 0.5);
+    let ray2 = sin(pos.x * frequencyX * 3.0 + pos.y * frequencyY * 1.2);
+    let rayNoise = periodicNoise(vec3<f32>(pos.x * frequencyX * 4.0, pos.y * frequencyY * 2.0, 0.0), 100.0);
+    
+    // 混合
+    let rayPattern = (ray1 * 0.5 + ray2 * 0.3 + rayNoise * 0.2) * 0.5 + 0.5;
+    // 阈值化产生细条纹
+    let rays = smoothstep(0.4, 0.6, rayPattern) * strength;
+    // 早材区域增强
+    return rays * (0.2 + earlywoodWeight * 0.8);
+}
+
+// -----------------------------------------------------------
 // 核心逻辑：生物学木材生成
 // -----------------------------------------------------------
 
@@ -165,29 +232,51 @@ fn getWoodDetail(uv: vec2<f32>) -> vec4<f32> {
     
     // 反转并混合，得到基础密度信号 (0 = 晚材/深, 1 = 早材/浅)
     // 我们加入一些扰动，让每条年轮的粗细不完全一致
-    let ringSignal = smoothstep(0.1, 0.9, ringProfile + periodicNoise(pos * u.ringNoiseFreq, scale * u.ringNoiseFreq) * 0.1);
-
-    // 5. 髓射线 (Medullary Rays)
-    // 橡木等硬木特有的垂直于年轮的细碎闪光纹理
-    // 在 UV 空间中，这表现为沿 Y 轴的高频噪点，但被年轮相位调制
-    let rayNoise = periodicFbm(vec3<f32>(pos.x * u.rayFrequencyX, pos.y * u.rayFrequencyY, 0.0), 2, scale * u.rayFrequencyX, u.fbmAmplitude);
-    let rays = smoothstep(0.6, 1.0, rayNoise) * u.rayStrength;
-    // 射线通常在早材中更明显，或者打断晚材
+    // 为年轮添加随机变化，增加自然感
+    let ringNoise = periodicNoise(pos * u.ringNoiseFreq, scale * u.ringNoiseFreq);
+    let ringSignal = smoothstep(0.1, 0.9, ringProfile + ringNoise * 0.1);
     
-    // 6. 导管孔隙 (Pores)
-    // 深色的小点，主要聚集在早材区域
-    let poreNoise = periodicFbm(pos * u.poreDensity, 2, scale * u.poreDensity, u.fbmAmplitude);
-    // 孔隙只出现在 ringSignal 较高的区域 (早材)
-    let pores = step(0.6, poreNoise) * ringSignal * 0.5; // 0.5 是孔隙深度
+    // 添加局部颜色变化（模拟木材的不均匀性）
+    let colorVariation = periodicNoise(pos * 3.0, scale * 3.0) * 0.08;
+
+    // 5. 髓射线 (Medullary Rays) - 优化版
+    // 使用更高频率和更细的条纹
+    let rayNoise = periodicNoise(vec3<f32>(pos.x * u.rayFrequencyX * 2.0, pos.y * u.rayFrequencyY, 0.0), scale * u.rayFrequencyX * 2.0);
+    // 使用更窄的阈值范围产生更细的条纹
+    let rayPattern = abs(rayNoise);
+    // 提高阈值以产生更细密的条纹，同时增加密度
+    let rays = smoothstep(0.1, 0.3, rayPattern) * u.rayStrength;
+    // 早材区域定义：ringSignal高的地方是早材（浅色），ringSignal低的地方是晚材（深色）
+    // ringSignal范围是0-1，值越大越接近早材
+    let earlywoodWeight = ringSignal;
+    // 射线在早材区域强度更高，晚材也有少量可见
+    let raysVisible = rays * (0.1 + earlywoodWeight * 0.9);
+    
+    // 6. 导管孔隙 (Pores) - 使用可调参数版本
+    // 使用poreScale控制孔隙大小，poreDensity控制孔隙数量
+    let poreFreq = u.poreDensity * u.poreScale;
+    let poreNoise1 = periodicNoise(pos * poreFreq * 3.0, scale * poreFreq * 3.0);
+    let poreNoise2 = periodicNoise(pos * poreFreq * 6.0 + vec3<f32>(0.5, 0.5, 0.0), scale * poreFreq * 6.0);
+    let poreNoise3 = periodicNoise(pos * poreFreq * 12.0 + vec3<f32>(0.2, 0.8, 0.0), scale * poreFreq * 12.0);
+    // 混合噪声，早材区域增加高频成分（periodicNoise范围是-1到1）
+    let poreNoiseMixed = (poreNoise1 + poreNoise2 * 0.7 + poreNoise3 * 0.5) / 2.2;
+    // 关键：将噪声从-1到1映射到0-1范围
+    let poreNoise01 = poreNoiseMixed * 0.5 + 0.5;
+    // 动态阈值：使用用户提供的参数，早材区域使用更低的阈值产生更多孔隙
+    let poreThresholdMin = mix(u.poreThresholdLate, u.poreThresholdEarly, earlywoodWeight);
+    let poreThresholdMax = poreThresholdMin + u.poreThresholdRange;
+    let porePattern = smoothstep(poreThresholdMin, poreThresholdMax, poreNoise01);
+    // 使用用户提供的强度参数
+    let pores = porePattern * u.poreStrength;
 
     // --- 最终合成 ---
-    // 组合密度信号
-    var finalDensity = ringSignal;
-    finalDensity = finalDensity - pores; // 孔隙是凹陷且深色的
-    finalDensity = finalDensity + rays * 0.2; // 射线通常较亮
+    // 组合密度信号，添加随机颜色变化
+    var finalDensity = ringSignal + colorVariation;
+    finalDensity = finalDensity - pores; // 孔隙是暗凹陷
+    finalDensity = finalDensity + raysVisible * 0.3; // 射线略亮
     finalDensity = clamp(finalDensity, 0.0, 1.0);
 
-    return vec4<f32>(finalDensity, ringSignal, pores, rays); // 返回各通道供 PBR 使用
+    return vec4<f32>(finalDensity, ringSignal, pores, raysVisible); // 返回各通道供 PBR 使用
 }
 
 @vertex
@@ -237,47 +326,4 @@ fn fs_main(in : VertexOutput) -> @location(0) vec4<f32> {
     return vec4<f32>(finalColor, 1.0);
 }
 `
-/*
-### 为什么这个版本更强？
 
-1.  **无缝平铺 (Seamless Tiling):**
-
-      * 我编写了 `periodicNoise` 函数。它接受一个 `tileSize` 参数（例如 4.0）。
-      * 当 UV 坐标从 0 走到 1 时，噪声内部计算实际上是从 0 走到 4。
-      * 通过取模 (`%`)，4.0 的位置会精确对齐回 0.0 的哈希值。
-      * **结果：** 你生成的贴图可以像任何商业贴图一样在模型上无限重复，没有任何接缝。
-
-2.  **锯齿波 (Sawtooth) 替代正弦波:**
-
-      * 真实的木头：春季生长极快（浅色部分很宽），夏末生长极慢（颜色变深），冬天停止（一条硬线）。
-      * 代码 `pow(ringCycle, u.latewoodBias)` 精确模拟了这种非线性密度。
-      * `latewoodBias` 参数越高，深色条纹越细、越锐利，看起来越像硬木。
-
-3.  **树结 (Knots) 模拟:**
-
-      * 之前的版本只是整体扭曲。
-      * 现在通过 `knotFactor` 模拟了局部高压区。纹理会像流体一样绕过这些点，产生极其自然的"眼睛"形状。
-
-4.  **髓射线 (Medullary Rays):**
-
-      * 这是橡木、榉木等高档木材的关键特征（垂直于纹理的微小反光条）。
-      * 通过 `rayStrength` 单独控制，增加了木材的层次感和昂贵感。
-
-### 如何使用参数获得特定木材
-
-  * **红松 (Pine):**
-      * `ringScale`: 5.0 (纹理宽)
-      * `latewoodBias`: 0.5 (过渡平滑，没有太硬的边)
-      * `knotIntensity`: 1.2 (树结多且明显)
-      * `poreDensity`: 0.0 (针叶林没有明显的导管孔)
-  * **白橡 (White Oak):**
-      * `ringScale`: 12.0 (纹理密)
-      * `latewoodBias`: 3.0 (晚材线条非常锐利)
-      * `rayStrength`: 0.8 (必须有明显的髓射线)
-      * `poreDensity`: 20.0 (明显的导管孔隙)
-  * **黑胡桃 (Walnut):**
-      * `colorEarly`: 深褐色
-      * `colorLate`: 黑色
-      * `ringDistortion`: 1.5 (高度扭曲的纹理)
-      * `latewoodBias`: 1.5 (适中)
-      * */

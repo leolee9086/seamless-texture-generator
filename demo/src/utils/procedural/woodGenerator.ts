@@ -25,6 +25,13 @@ export interface WoodParams {
     normalStrength: number;   // 法线强度 (1.0-20.0)
     roughnessMin: number;     // 最小粗糙度 (0.1-0.5)
     roughnessMax: number;     // 最大粗糙度 (0.5-1.0)
+
+    // 孔隙参数
+    poreScale: number;          // 孔隙尺寸 (0.5-5.0)
+    poreThresholdEarly: number; // 早材孔隙阈值下限 (0.0-1.0)
+    poreThresholdLate: number;  // 晚材孔隙阈值下限 (0.0-1.0)
+    poreThresholdRange: number; // 阈值范围 (0.1-0.3)
+    poreStrength: number;       // 孔隙强度 (0.0-1.0)
 }
 
 export const defaultWoodParams: WoodParams = {
@@ -33,8 +40,8 @@ export const defaultWoodParams: WoodParams = {
     ringDistortion: 1.0,
     knotIntensity: 1.0,
     latewoodBias: 0.8,
-    rayStrength: 0.5,
-    poreDensity: 10.0,
+    rayStrength: 0.6,      // 增加强度，使射线更明显
+    poreDensity: 20.0,     // 增加密度，产生更多小孔
     colorEarly: [0.86, 0.72, 0.54], // #DCC8A9
     colorLate: [0.45, 0.31, 0.20],  // #734F33
 
@@ -44,13 +51,20 @@ export const defaultWoodParams: WoodParams = {
     knotFrequency: 0.8,
     distortionFreq: 1.5,
     ringNoiseFreq: 5.0,
-    rayFrequencyX: 50.0,
-    rayFrequencyY: 2.0,
+    rayFrequencyX: 30.0,   // 降低频率，适应新算法（正弦波频率）
+    rayFrequencyY: 8.0,    // 增加纵向变化
     knotThresholdMin: 0.4,
     knotThresholdMax: 0.8,
     normalStrength: 8.0,
     roughnessMin: 0.35,
     roughnessMax: 0.7,
+
+    // 孔隙参数默认值
+    poreScale: 1.0,             // 默认尺寸
+    poreThresholdEarly: 0.55,   // 早材阈值（较低，更多孔隙）
+    poreThresholdLate: 0.7,     // 晚材阈值（较高，较少孔隙）
+    poreThresholdRange: 0.2,    // 阈值范围
+    poreStrength: 0.4,          // 强度
 }
 
 export async function generateWoodTexture(params: WoodParams, width: number, height: number): Promise<string> {
@@ -68,9 +82,10 @@ export async function generateWoodTexture(params: WoodParams, width: number, hei
 
     // 扩展 uniform buffer 以容纳新参数
     // 原始: 16 (matrix) + 7 (core params) + 1 (padding) + 4 (color early) + 4 (color late) = 32 floats
-    // 新增: 12 个高级参数
-    // 总计: 32 + 12 = 44 floats
-    const uniformData = new Float32Array(44);
+    // 新增: 12 个高级参数 + 5 个孔隙参数
+    // 小计: 32 + 12 + 5 = 49 floats
+    // WebGPU要求16字节对齐，49 floats = 196字节，需要padding到52 floats = 208字节
+    const uniformData = new Float32Array(52);
 
     // Identity Matrix for viewMatrix (not used but required)
     uniformData[0] = 1; uniformData[5] = 1; uniformData[10] = 1; uniformData[15] = 1;
@@ -108,6 +123,17 @@ export async function generateWoodTexture(params: WoodParams, width: number, hei
     uniformData[41] = params.normalStrength;
     uniformData[42] = params.roughnessMin;
     uniformData[43] = params.roughnessMax;
+
+    // 孔隙参数
+    uniformData[44] = params.poreScale;
+    uniformData[45] = params.poreThresholdEarly;
+    uniformData[46] = params.poreThresholdLate;
+    uniformData[47] = params.poreThresholdRange;
+    uniformData[48] = params.poreStrength;
+    // padding for 16-byte alignment (49->52 floats = 208 bytes)
+    uniformData[49] = 0;
+    uniformData[50] = 0;
+    uniformData[51] = 0;
 
     const uniformBuffer = device.createBuffer({
         size: uniformData.byteLength,
@@ -245,3 +271,4 @@ export async function generateWoodTexture(params: WoodParams, width: number, hei
 
     return canvas.toDataURL('image/png');
 }
+

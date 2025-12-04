@@ -50,10 +50,130 @@
                 <span :class="headerClass">Procedural Wood</span>
             </div>
 
-            <!-- Wood Parameters -->
+            <!-- Color Controls -->
             <div class="flex flex-col gap-3">
-                <div v-for="param in woodSliderItems" :key="param.id">
-                    <Slider :items="[param]" @updateValue="handleWoodParamUpdate" />
+                <div class="flex items-center justify-between">
+                    <span class="text-xs font-medium text-white/60">Colors</span>
+                    <button @click="showColors = !showColors"
+                        class="text-white/40 hover:text-white/60 transition-colors">
+                        <div class="i-carbon-chevron-down text-sm transition-transform"
+                            :class="{ 'rotate-180': showColors }"></div>
+                    </button>
+                </div>
+                <div v-show="showColors" class="flex flex-col gap-3">
+                    <!-- Early Wood Color -->
+                    <div class="flex items-center gap-3">
+                        <label class="text-xs text-white/60 flex-1">Early Wood</label>
+                        <div class="flex items-center gap-2">
+                            <input type="color"
+                                :value="rgbToHex(woodParams.colorEarly)"
+                                @input="handleColorUpdate('colorEarly', $event.target.value)"
+                                class="w-8 h-8 rounded border border-white/20 bg-transparent cursor-pointer">
+                            <span class="text-xs text-white/40 font-mono">
+                                {{ rgbToHex(woodParams.colorEarly) }}
+                            </span>
+                        </div>
+                    </div>
+                    <!-- Late Wood Color -->
+                    <div class="flex items-center gap-3">
+                        <label class="text-xs text-white/60 flex-1">Late Wood</label>
+                        <div class="flex items-center gap-2">
+                            <input type="color"
+                                :value="rgbToHex(woodParams.colorLate)"
+                                @input="handleColorUpdate('colorLate', $event.target.value)"
+                                class="w-8 h-8 rounded border border-white/20 bg-transparent cursor-pointer">
+                            <span class="text-xs text-white/40 font-mono">
+                                {{ rgbToHex(woodParams.colorLate) }}
+                            </span>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Basic Parameters -->
+            <div class="flex flex-col gap-3">
+                <div class="flex items-center justify-between">
+                    <span class="text-xs font-medium text-white/60">Basic Parameters</span>
+                    <button @click="showBasicParams = !showBasicParams"
+                        class="text-white/40 hover:text-white/60 transition-colors">
+                        <div class="i-carbon-chevron-down text-sm transition-transform"
+                            :class="{ 'rotate-180': showBasicParams }"></div>
+                    </button>
+                </div>
+                <div v-show="showBasicParams" class="flex flex-col gap-3">
+                    <div v-for="param in basicWoodSliderItems" :key="param.id">
+                        <Slider :items="[param]" @updateValue="handleWoodParamUpdate" />
+                    </div>
+                </div>
+            </div>
+
+            <!-- Pore Parameters -->
+            <div class="flex flex-col gap-3">
+                <div class="flex items-center justify-between">
+                    <span class="text-xs font-medium text-white/60">Pore Parameters</span>
+                    <button @click="showPoreParams = !showPoreParams"
+                        class="text-white/40 hover:text-white/60 transition-colors">
+                        <div class="i-carbon-chevron-down text-sm transition-transform"
+                            :class="{ 'rotate-180': showPoreParams }"></div>
+                    </button>
+                </div>
+                <div v-show="showPoreParams" class="flex flex-col gap-3">
+                    <div v-for="param in poreWoodSliderItems" :key="param.id">
+                        <Slider :items="[param]" @updateValue="handleWoodParamUpdate" />
+                    </div>
+                </div>
+            </div>
+
+            <!-- Advanced Parameters -->
+            <div class="flex flex-col gap-3">
+                <div class="flex items-center justify-between">
+                    <span class="text-xs font-medium text-white/60">Advanced Parameters</span>
+                    <button @click="showAdvancedParams = !showAdvancedParams"
+                        class="text-white/40 hover:text-white/60 transition-colors">
+                        <div class="i-carbon-chevron-down text-sm transition-transform"
+                            :class="{ 'rotate-180': showAdvancedParams }"></div>
+                    </button>
+                </div>
+                <div v-show="showAdvancedParams" class="flex flex-col gap-3">
+                    <div v-for="param in advancedWoodSliderItems" :key="param.id">
+                        <Slider :items="[param]" @updateValue="handleWoodParamUpdate" />
+                    </div>
+                </div>
+            </div>
+
+            <!-- Material Properties -->
+            <div class="flex flex-col gap-3">
+                <div class="flex items-center justify-between">
+                    <span class="text-xs font-medium text-white/60">Material Properties</span>
+                    <button @click="showMaterialParams = !showMaterialParams"
+                        class="text-white/40 hover:text-white/60 transition-colors">
+                        <div class="i-carbon-chevron-down text-sm transition-transform"
+                            :class="{ 'rotate-180': showMaterialParams }"></div>
+                    </button>
+                </div>
+                <div v-show="showMaterialParams" class="flex flex-col gap-3">
+                    <div v-for="param in materialWoodSliderItems" :key="param.id">
+                        <Slider :items="[param]" @updateValue="handleWoodParamUpdate" />
+                    </div>
+                </div>
+            </div>
+
+            <!-- Presets -->
+            <div class="flex flex-col gap-3">
+                <div class="flex items-center justify-between">
+                    <span class="text-xs font-medium text-white/60">Presets</span>
+                    <button @click="showPresets = !showPresets"
+                        class="text-white/40 hover:text-white/60 transition-colors">
+                        <div class="i-carbon-chevron-down text-sm transition-transform"
+                            :class="{ 'rotate-180': showPresets }"></div>
+                    </button>
+                </div>
+                <div v-show="showPresets" class="grid grid-cols-2 gap-2">
+                    <button v-for="(preset, name) in woodPresets" :key="name"
+                        @click="applyPreset(preset)"
+                        class="glass-btn text-xs py-2 px-2 rounded bg-white/5 text-white/60 hover:bg-white/10 hover:text-white/90 transition-colors">
+                        {{ name }}
+                    </button>
                 </div>
             </div>
 
@@ -94,10 +214,19 @@ const emit = defineEmits<{
 const activeTab = ref('Upload')
 const isGenerating = ref(false)
 
+// UI State
+const showColors = ref(true)
+const showBasicParams = ref(true)
+const showPoreParams = ref(false)
+const showAdvancedParams = ref(false)
+const showMaterialParams = ref(false)
+const showPresets = ref(false)
+
 // Wood Parameters State
 const woodParams = reactive<WoodParams>({ ...defaultWoodParams })
 
-const woodSliderItems = computed(() => [
+// Basic Parameters
+const basicWoodSliderItems = computed(() => [
     {
         id: 'tileSize',
         label: 'Tile Size',
@@ -153,7 +282,7 @@ const woodSliderItems = computed(() => [
         label: 'Rays',
         value: woodParams.rayStrength,
         min: 0.0,
-        max: 1.0,
+        max: 10.0,
         step: 0.05,
         valuePosition: 'after' as const,
         showRuler: false
@@ -163,17 +292,313 @@ const woodSliderItems = computed(() => [
         label: 'Pores',
         value: woodParams.poreDensity,
         min: 0.0,
-        max: 50.0,
+        max: 150.0,
         step: 1.0,
         valuePosition: 'after' as const,
         showRuler: false
     }
 ])
 
+// Advanced Parameters
+const advancedWoodSliderItems = computed(() => [
+    {
+        id: 'fbmOctaves',
+        label: 'FBM Octaves',
+        value: woodParams.fbmOctaves,
+        min: 1,
+        max: 5,
+        step: 1,
+        valuePosition: 'after' as const,
+        showRuler: false
+    },
+    {
+        id: 'fbmAmplitude',
+        label: 'FBM Amplitude',
+        value: woodParams.fbmAmplitude,
+        min: 0.1,
+        max: 1.0,
+        step: 0.05,
+        valuePosition: 'after' as const,
+        showRuler: false
+    },
+    {
+        id: 'knotFrequency',
+        label: 'Knot Frequency',
+        value: woodParams.knotFrequency,
+        min: 0.5,
+        max: 2.0,
+        step: 0.1,
+        valuePosition: 'after' as const,
+        showRuler: false
+    },
+    {
+        id: 'distortionFreq',
+        label: 'Distortion Frequency',
+        value: woodParams.distortionFreq,
+        min: 1.0,
+        max: 3.0,
+        step: 0.1,
+        valuePosition: 'after' as const,
+        showRuler: false
+    },
+    {
+        id: 'ringNoiseFreq',
+        label: 'Ring Noise Frequency',
+        value: woodParams.ringNoiseFreq,
+        min: 3.0,
+        max: 10.0,
+        step: 0.5,
+        valuePosition: 'after' as const,
+        showRuler: false
+    },
+    {
+        id: 'rayFrequencyX',
+        label: 'Ray Frequency X',
+        value: woodParams.rayFrequencyX,
+        min: 10.0,
+        max: 300.0,
+        step: 5.0,
+        valuePosition: 'after' as const,
+        showRuler: false
+    },
+    {
+        id: 'rayFrequencyY',
+        label: 'Ray Frequency Y',
+        value: woodParams.rayFrequencyY,
+        min: 1.0,
+        max: 50.0,
+        step: 0.5,
+        valuePosition: 'after' as const,
+        showRuler: false
+    },
+    {
+        id: 'knotThresholdMin',
+        label: 'Knot Threshold Min',
+        value: woodParams.knotThresholdMin,
+        min: 0.0,
+        max: 1.0,
+        step: 0.05,
+        valuePosition: 'after' as const,
+        showRuler: false
+    },
+    {
+        id: 'knotThresholdMax',
+        label: 'Knot Threshold Max',
+        value: woodParams.knotThresholdMax,
+        min: 0.0,
+        max: 1.0,
+        step: 0.05,
+        valuePosition: 'after' as const,
+        showRuler: false
+    }
+])
+
+// Pore Parameters
+const poreWoodSliderItems = computed(() => [
+    {
+        id: 'poreScale',
+        label: 'Pore Size',
+        value: woodParams.poreScale,
+        min: 0.1,
+        max: 5.0,
+        step: 0.1,
+        valuePosition: 'after' as const,
+        showRuler: false
+    },
+    {
+        id: 'poreThresholdEarly',
+        label: 'Early Wood Threshold',
+        value: woodParams.poreThresholdEarly,
+        min: 0.0,
+        max: 1.0,
+        step: 0.01,
+        valuePosition: 'after' as const,
+        showRuler: false
+    },
+    {
+        id: 'poreThresholdLate',
+        label: 'Late Wood Threshold',
+        value: woodParams.poreThresholdLate,
+        min: 0.0,
+        max: 1.0,
+        step: 0.01,
+        valuePosition: 'after' as const,
+        showRuler: false
+    },
+    {
+        id: 'poreThresholdRange',
+        label: 'Threshold Range',
+        value: woodParams.poreThresholdRange,
+        min: 0.05,
+        max: 0.5,
+        step: 0.01,
+        valuePosition: 'after' as const,
+        showRuler: false
+    },
+    {
+        id: 'poreStrength',
+        label: 'Pore Strength',
+        value: woodParams.poreStrength,
+        min: 0.0,
+        max: 1.0,
+        step: 0.01,
+        valuePosition: 'after' as const,
+        showRuler: false
+    }
+])
+
+// Material Properties
+const materialWoodSliderItems = computed(() => [
+    {
+        id: 'normalStrength',
+        label: 'Normal Strength',
+        value: woodParams.normalStrength,
+        min: 1.0,
+        max: 20.0,
+        step: 0.5,
+        valuePosition: 'after' as const,
+        showRuler: false
+    },
+    {
+        id: 'roughnessMin',
+        label: 'Min Roughness',
+        value: woodParams.roughnessMin,
+        min: 0.1,
+        max: 0.5,
+        step: 0.05,
+        valuePosition: 'after' as const,
+        showRuler: false
+    },
+    {
+        id: 'roughnessMax',
+        label: 'Max Roughness',
+        value: woodParams.roughnessMax,
+        min: 0.5,
+        max: 1.0,
+        step: 0.05,
+        valuePosition: 'after' as const,
+        showRuler: false
+    }
+])
+
+// Wood Presets
+const woodPresets = {
+    'Pine': {
+        tileSize: 1.0,
+        ringScale: 5.0,
+        ringDistortion: 0.8,
+        knotIntensity: 1.2,
+        latewoodBias: 0.5,
+        rayStrength: 0.1,
+        poreDensity: 0.0,
+        colorEarly: [0.92, 0.85, 0.68], // Light yellowish
+        colorLate: [0.65, 0.45, 0.30],  // Brown
+        fbmOctaves: 3,
+        fbmAmplitude: 0.5,
+        knotFrequency: 0.8,
+        distortionFreq: 1.2,
+        ringNoiseFreq: 4.0,
+        rayFrequencyX: 40.0,
+        rayFrequencyY: 1.5,
+        knotThresholdMin: 0.4,
+        knotThresholdMax: 0.8,
+        normalStrength: 6.0,
+        roughnessMin: 0.4,
+        roughnessMax: 0.8,
+        poreScale: 0.8,
+        poreThresholdEarly: 0.6,
+        poreThresholdLate: 0.75,
+        poreThresholdRange: 0.2,
+        poreStrength: 0.3,
+    },
+    'White Oak': {
+        tileSize: 1.0,
+        ringScale: 12.0,
+        ringDistortion: 1.2,
+        knotIntensity: 0.8,
+        latewoodBias: 3.0,
+        rayStrength: 0.8,
+        poreDensity: 20.0,
+        colorEarly: [0.86, 0.78, 0.65], // Light brown
+        colorLate: [0.45, 0.35, 0.25], // Dark brown
+        fbmOctaves: 4,
+        fbmAmplitude: 0.6,
+        knotFrequency: 1.0,
+        distortionFreq: 1.8,
+        ringNoiseFreq: 6.0,
+        rayFrequencyX: 60.0,
+        rayFrequencyY: 2.5,
+        knotThresholdMin: 0.3,
+        knotThresholdMax: 0.7,
+        normalStrength: 10.0,
+        roughnessMin: 0.3,
+        roughnessMax: 0.7,
+        poreScale: 1.0,
+        poreThresholdEarly: 0.55,
+        poreThresholdLate: 0.7,
+        poreThresholdRange: 0.2,
+        poreStrength: 0.4,
+    },
+    'Walnut': {
+        tileSize: 1.0,
+        ringScale: 8.0,
+        ringDistortion: 1.5,
+        knotIntensity: 1.0,
+        latewoodBias: 1.5,
+        rayStrength: 0.3,
+        poreDensity: 5.0,
+        colorEarly: [0.55, 0.40, 0.25], // Dark brown
+        colorLate: [0.25, 0.15, 0.10], // Very dark brown
+        fbmOctaves: 3,
+        fbmAmplitude: 0.7,
+        knotFrequency: 1.2,
+        distortionFreq: 2.0,
+        ringNoiseFreq: 5.0,
+        rayFrequencyX: 45.0,
+        rayFrequencyY: 2.0,
+        knotThresholdMin: 0.5,
+        knotThresholdMax: 0.9,
+        normalStrength: 8.0,
+        roughnessMin: 0.35,
+        roughnessMax: 0.65,
+        poreScale: 0.6,
+        poreThresholdEarly: 0.65,
+        poreThresholdLate: 0.75,
+        poreThresholdRange: 0.15,
+        poreStrength: 0.25,
+    }
+}
+
 const handleWoodParamUpdate = (data: { id: string; value: number }) => {
     if (data.id in woodParams) {
         (woodParams as any)[data.id] = data.value
     }
+}
+
+// Color handling functions
+const rgbToHex = (rgb: number[]): string => {
+    const toHex = (n: number) => {
+        const hex = Math.round(Math.max(0, Math.min(1, n)) * 255).toString(16)
+        return hex.length === 1 ? '0' + hex : hex
+    }
+    return `#${toHex(rgb[0])}${toHex(rgb[1])}${toHex(rgb[2])}`
+}
+
+const hexToRgb = (hex: string): number[] => {
+    const result = /^#?([a-f\d]{2})([a-f\d]{2})([a-f\d]{2})$/i.exec(hex)
+    return result ? [
+        parseInt(result[1], 16) / 255,
+        parseInt(result[2], 16) / 255,
+        parseInt(result[3], 16) / 255
+    ] : [0, 0, 0]
+}
+
+const handleColorUpdate = (paramName: 'colorEarly' | 'colorLate', hexValue: string) => {
+    woodParams[paramName] = hexToRgb(hexValue)
+}
+
+const applyPreset = (preset: Partial<WoodParams>) => {
+    Object.assign(woodParams, preset)
 }
 
 const generateWood = async () => {
