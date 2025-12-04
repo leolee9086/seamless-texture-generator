@@ -18,17 +18,32 @@ export default defineConfig({
             collections: {
                 // 明确引用 carbon 图标集
                 carbon: () => import('@iconify-json/carbon/icons.json').then(i => i.default),
-            },
-        }),
+                // 自定义图标集
+                custom: {
+                    clarity:
+                        '<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="3"/><circle cx="12" cy="12" r="8"/><circle cx="12" cy="12" r="11"/><path d="M12 1v6M12 17v6M4.22 4.22l4.24 4.24M15.54 15.54l4.24 4.24M1 12h6M17 12h6M4.22 19.78l4.24-4.24M15.54 8.46l4.24-4.24"/></svg>',
+                    hsl:
+                        '<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="10"/><path d="M12 2v2M12 20v2M8 12h8M16 12h8M2 8l4-4M18 8l-4 4M2 16l4-4M18 16l-4 4M6 12a6 6 0 1 0 6-6z"/></svg>',
+                },
+            }})
+            
+            
     ],
     safelist: [
         // 强制包含这些图标类，因为它们是动态绑定的
         'i-carbon-favorite',
         'i-carbon-image-search',
         'i-carbon-crop',
+        'i-carbon-color-palette',
+        'i-carbon-sun',
+        'i-carbon-fog',
+        'i-carbon-contrast',
+        'i-custom:clarity',
+        'i-custom:hsl',
         'i-carbon-settings-adjust',
         'i-carbon-view',
         'i-carbon-save',
+
     ],
     transformers: [
         transformerDirectives(),

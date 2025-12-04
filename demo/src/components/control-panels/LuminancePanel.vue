@@ -31,8 +31,8 @@
                             <div v-else-if="key === 'enhanceHighlights'" class="i-carbon-sun"></div>
                             <div v-else-if="key === 'popColors'" class="i-carbon-palette"></div>
                             <div v-else-if="key === 'contrastBoost'" class="i-carbon-contrast"></div>
-                            <div v-else-if="key === 'warmTones'" class="i-carbon-temperature-hot"></div>
-                            <div v-else-if="key === 'coolTones'" class="i-carbon-temperature-cold"></div>
+                            <div v-else-if="key === 'warmTones'" ></div>
+                            <div v-else-if="key === 'coolTones'"></div>
                         </div>
                         <span>{{ preset.name }}</span>
                     </button>

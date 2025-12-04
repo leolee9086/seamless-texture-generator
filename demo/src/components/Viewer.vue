@@ -87,6 +87,7 @@ const handleImageLoad = async (side: string) => {
     await nextTick()
     if (splitViewerRef.value) {
       splitViewerRef.value.setZoom(props.zoomLevel)
+      
     }
   }
 }
@@ -96,6 +97,7 @@ const handleZoomChange = async () => {
   await nextTick()
   if (splitViewerRef.value) {
     splitViewerRef.value.setZoom(props.zoomLevel)
+
   }
 }
 
