@@ -14,6 +14,7 @@
           :global-hsl="globalHSL" :hsl-layers="hslLayers"
           :exposure-strength="exposureStrength" :exposure-manual="exposureManual"
           :dehaze-params="dehazeParams" :clarity-params="clarityParams"
+          :luminance-params="luminanceParams"
           @control-event="handleControlEvent" class="pointer-events-auto h-full" />
       </div>
 
@@ -71,6 +72,7 @@ const {
   exposureManual,     // 新增
   dehazeParams,      // 新增
   clarityParams,      // 新增
+  luminanceParams,    // 新增
   clearPreviewOverlay,
 } = useTextureGenerator({
   enableCamera: false,
