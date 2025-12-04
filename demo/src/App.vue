@@ -13,7 +13,7 @@
           :lut-intensity="lutIntensity" :lut-file-name="lutFileName" :lut-file="lutFile"
           :global-hsl="globalHSL" :hsl-layers="hslLayers"
           :exposure-strength="exposureStrength" :exposure-manual="exposureManual"
-          :dehaze-params="dehazeParams"
+          :dehaze-params="dehazeParams" :clarity-params="clarityParams"
           @control-event="handleControlEvent" class="pointer-events-auto h-full" />
       </div>
 
@@ -70,6 +70,7 @@ const {
   exposureStrength,   // 新增
   exposureManual,     // 新增
   dehazeParams,      // 新增
+  clarityParams,      // 新增
   clearPreviewOverlay,
 } = useTextureGenerator({
   enableCamera: false,

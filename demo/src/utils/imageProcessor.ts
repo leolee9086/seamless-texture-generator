@@ -4,6 +4,7 @@ import { processImageWithLUT, processLutData } from '@leolee9086/use-lut'
 import { HSLAdjustProcessStep, type HSLAdjustmentLayer } from './hslAdjustStep'
 import { adjustExposure, adjustExposureManual } from './exposureAdjustment'  // 新增导入
 import { applyDehazeAdjustment, type DehazeParams } from './dehazeAdjustment'  // 新增导入
+import { processClarityAdjustment, type ClarityParams } from './clarityAdjustment'  // 新增导入
 
 /**
  * 管线数据接口 - 统一使用 GPUBuffer 作为数据载体
@@ -27,6 +28,7 @@ interface PipelineOptions {
   exposureStrength?: number  // 新增
   exposureManual?: { exposure: number; contrast: number; gamma: number }  // 新增
   dehazeParams?: DehazeParams  // 新增
+  clarityParams?: ClarityParams  // 新增
 }
 
 /**
@@ -292,7 +294,8 @@ export async function processImageToTileable(
   hslLayers?: HSLAdjustmentLayer[],
   exposureStrength?: number,  // 新增参数
   exposureManual?: { exposure: number; contrast: number; gamma: number },  // 新增参数
-  dehazeParams?: DehazeParams  // 新增参数
+  dehazeParams?: DehazeParams,  // 新增参数
+  clarityParams?: ClarityParams  // 新增参数
 
 ): Promise<string> {
   if (!originalImage) {
@@ -312,8 +315,8 @@ export async function processImageToTileable(
       hslLayers,
       exposureStrength,  // 新增
       exposureManual,   // 新增
-      dehazeParams  // 新增
-
+      dehazeParams,  // 新增
+      clarityParams  // 新增
     }
 
     // 步骤 1: 加载和缩放图像
@@ -329,12 +332,12 @@ export async function processImageToTileable(
       const hslAdjustStep = new HSLAdjustProcessStep()
       pipelineData = await hslAdjustStep.execute(pipelineData, options.hslLayers, device)
     }
-    
+
     // 步骤 2.6: 曝光调整（新增）
     if (options.exposureStrength || options.exposureManual) {
       const device = await getGPUDevice()
       const imageData = await gpuBufferToImageData(pipelineData.buffer, pipelineData.width, pipelineData.height, device)
-      
+
       let processedImageData: ImageData
       if (options.exposureStrength) {
         // 自动曝光调整
@@ -350,46 +353,71 @@ export async function processImageToTileable(
       } else {
         processedImageData = imageData
       }
-      
+
       // 转换回 GPUBuffer
       const processedBuffer = await imageDataToGPUBuffer(processedImageData, device)
-      
+
       // 销毁旧的 buffer
       pipelineData.buffer.destroy()
-      
+
       pipelineData = {
         buffer: processedBuffer,
         width: processedImageData.width,
         height: processedImageData.height
       }
     }
-  
-  // 步骤 2.7: 去雾调整（新增）
-  if (options.dehazeParams) {
-    const device = await getGPUDevice()
-    const imageData = await gpuBufferToImageData(pipelineData.buffer, pipelineData.width, pipelineData.height, device)
-    
-    try {
-      // 应用去雾调整
-      const processedImageData = await applyDehazeAdjustment(imageData, options.dehazeParams)
-      
-      // 转换回 GPUBuffer
-      const processedBuffer = await imageDataToGPUBuffer(processedImageData, device)
-      
-      // 销毁旧的 buffer
-      pipelineData.buffer.destroy()
-      
-      pipelineData = {
-        buffer: processedBuffer,
-        width: processedImageData.width,
-        height: processedImageData.height
+
+    // 步骤 2.7: 去雾调整（新增）
+    if (options.dehazeParams) {
+      const device = await getGPUDevice()
+      const imageData = await gpuBufferToImageData(pipelineData.buffer, pipelineData.width, pipelineData.height, device)
+
+      try {
+        // 应用去雾调整
+        const processedImageData = await applyDehazeAdjustment(imageData, options.dehazeParams)
+
+        // 转换回 GPUBuffer
+        const processedBuffer = await imageDataToGPUBuffer(processedImageData, device)
+
+        // 销毁旧的 buffer
+        pipelineData.buffer.destroy()
+
+        pipelineData = {
+          buffer: processedBuffer,
+          width: processedImageData.width,
+          height: processedImageData.height
+        }
+      } catch (error) {
+        console.warn('去雾处理失败，继续使用原始图像:', error)
       }
-    } catch (error) {
-      console.warn('去雾处理失败，继续使用原始图像:', error)
     }
-  }
-  
-  // 步骤 3: 可平铺化处理
+
+    // 步骤 2.8: 清晰度调整（新增）
+    if (options.clarityParams) {
+      const device = await getGPUDevice()
+      const imageData = await gpuBufferToImageData(pipelineData.buffer, pipelineData.width, pipelineData.height, device)
+
+      try {
+        // 应用清晰度调整
+        const processedImageData = await processClarityAdjustment(device, imageData, options.clarityParams)
+
+        // 转换回 GPUBuffer
+        const processedBuffer = await imageDataToGPUBuffer(processedImageData, device)
+
+        // 销毁旧的 buffer
+        pipelineData.buffer.destroy()
+
+        pipelineData = {
+          buffer: processedBuffer,
+          width: processedImageData.width,
+          height: processedImageData.height
+        }
+      } catch (error) {
+        console.warn('清晰度处理失败，继续使用原始图像:', error)
+      }
+    }
+
+    // 步骤 3: 可平铺化处理
     const tileableProcessStep = new TileableProcessStep()
     pipelineData = await tileableProcessStep.execute(pipelineData, options)
 

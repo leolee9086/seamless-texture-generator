@@ -40,6 +40,8 @@ export interface ControlEventHandlerOptions {
   onExposureManual?: (params: { exposure: number; contrast: number; gamma: number }) => void
   // 去雾调整处理器
   onDehazeChange?: (params: import('./dehazeAdjustment').DehazeParams) => void
+  // 清晰度调整处理器
+  onClarityAdjustment?: (params: import('./clarityAdjustment').ClarityParams) => void
 }
 
 /**
@@ -142,6 +144,9 @@ export function createControlEventHandler(options: ControlEventHandlerOptions) {
           break
         case 'dehaze-change':
           options.onDehazeChange?.(detail.data)
+          break
+        case 'clarity-adjustment':
+          options.onClarityAdjustment?.(detail.data)
           break
       }
     }

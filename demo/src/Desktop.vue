@@ -9,6 +9,8 @@
                 :magnifier-enabled="magnifierEnabled" :zoom-level="zoomLevel"
                 :lut-enabled="lutEnabled" :lut-intensity="lutIntensity" :lut-file-name="lutFileName" :lut-file="lutFile"
                 :global-hsl="globalHSL" :hsl-layers="hslLayers"
+                :exposure-strength="exposureStrength" :exposure-manual="exposureManual"
+                :dehaze-params="dehazeParams" :clarity-params="clarityParams"
                 @control-event="handleControlEvent" />
         </div>
 
@@ -55,6 +57,10 @@ const {
   previewOverlay,
   globalHSL,
   hslLayers,
+  exposureStrength,   // 新增
+  exposureManual,     // 新增
+  dehazeParams,      // 新增
+  clarityParams,      // 新增
   clearPreviewOverlay,
   handleSamplingConfirmWrapper,
   handleControlEvent,

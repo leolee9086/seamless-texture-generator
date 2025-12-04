@@ -42,6 +42,10 @@
         <DehazePanel v-else-if="activeGroup === 'dehaze'" is-mobile :original-image="originalImage"
           :dehaze-params="dehazeParams" @control-event="emit('controlEvent', $event)" />
 
+        <!-- Clarity Panel -->
+        <ClarityPanel v-else-if="activeGroup === 'clarity'" is-mobile :original-image="originalImage"
+          @control-event="emit('controlEvent', $event)" />
+
         <!-- Settings Panel -->
         <SettingsPanel v-else-if="activeGroup === 'tileablesettings'" is-mobile :isProcessing="isProcessing"
           :original-image="originalImage" :settings-slider-items="settingsSliderItems" @process-image="processImage"
@@ -96,6 +100,7 @@ import LUTPanel from '../control-panels/LUTPanel.vue'
 import HSLPanel from '../control-panels/HSLPanel.vue'
 import ExposurePanel from '../control-panels/ExposurePanel.vue'  // 新增导入
 import DehazePanel from '../control-panels/DehazePanel.vue'  // 新增导入
+import ClarityPanel from '../control-panels/ClarityPanel.vue'  // 新增导入
 import SettingsPanel from '../control-panels/SettingsPanel.vue'
 import ViewPanel from '../control-panels/ViewPanel.vue'
 import SavePanel from '../control-panels/SavePanel.vue'
@@ -118,6 +123,7 @@ const props = defineProps<{
   exposureStrength?: number  // 新增
   exposureManual?: { exposure: number; contrast: number; gamma: number }  // 新增
   dehazeParams?: import('../../utils/dehazeAdjustment').DehazeParams  // 新增
+  clarityParams?: import('../../utils/clarityAdjustment').ClarityParams  // 新增
 }>()
 
 const emit = defineEmits<{

@@ -59,7 +59,8 @@ export interface UseTextureGeneratorReturn {
   hslLayers: Ref<HSLAdjustmentLayer[]>
   exposureStrength: Ref<number>  // 新增
   exposureManual: Ref<{ exposure: number; contrast: number; gamma: number }>  // 新增
-  dehazeParams: Ref<import('../utils/dehazeAdjustment').DehazeParams>  // 新增
+  dehazeParams: Ref<import('../utils/dehazeAdjustment').DehazeParams>,  // 新增
+  clarityParams: Ref<import('../utils/clarityAdjustment').ClarityParams>  // 新增
 
   // 方法
   handleImageUploadWrapper: (event: Event) => void
@@ -140,6 +141,17 @@ export function useTextureGenerator(options: UseTextureGeneratorOptions = {}): U
     saturationEnhancement: 1.2,
     contrastEnhancement: 1.1,
     brightnessEnhancement: 1.0
+  })
+  // 清晰度调整状态 - 新增
+  const clarityParams = ref<import('../utils/clarityAdjustment').ClarityParams>({
+    sigma: 8.0,
+    epsilon: 0.04,
+    radius: 8,
+    blockSize: 16,
+    detailStrength: 2.0,
+    enhancementStrength: 1.0,
+    macroEnhancement: 0.0,
+    contrastBoost: 1.2
   })
 
   // 初始化设备检测
@@ -263,7 +275,8 @@ export function useTextureGenerator(options: UseTextureGeneratorOptions = {}): U
         buildHSLLayers(),
         exposureStrength.value,  // 新增参数
         exposureManual.value,    // 新增参数
-        dehazeParams.value  // 新增参数
+        dehazeParams.value,  // 新增参数
+        clarityParams.value  // 新增参数
       )
     } catch (error) {
       console.error('处理图像时出错:', error)
@@ -423,6 +436,13 @@ export function useTextureGenerator(options: UseTextureGeneratorOptions = {}): U
         debouncedProcessImage()
       }
     },
+    // 清晰度调整处理器 - 新增
+    onClarityAdjustment: (params: import('../utils/clarityAdjustment').ClarityParams) => {
+      clarityParams.value = params
+      if (originalImage.value) {
+        debouncedProcessImage()
+      }
+    },
   })
 
   return {
@@ -452,6 +472,7 @@ export function useTextureGenerator(options: UseTextureGeneratorOptions = {}): U
     exposureStrength,   // 新增
     exposureManual,     // 新增
     dehazeParams,      // 新增
+    clarityParams,      // 新增
     handleImageUploadWrapper,
     loadSampleImageWrapper,
     toggleCameraWrapper,
