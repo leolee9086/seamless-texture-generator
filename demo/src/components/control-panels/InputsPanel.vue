@@ -53,9 +53,9 @@
             <!-- Texture Type Selector -->
             <div class="flex flex-col gap-2">
                 <span class="text-xs font-medium text-white/60">Type</span>
-                <div class="flex gap-2">
+                <div class="flex gap-2 overflow-x-auto custom-scrollbar pb-2" @wheel="horizontalScroll">
                     <button v-for="type in textureTypes" :key="type" @click="proceduralType = type"
-                        class="glass-btn flex-1 py-2 text-xs font-medium rounded-lg transition-all duration-300"
+                        class="glass-btn py-2 px-4 text-xs font-medium rounded-lg transition-all duration-300 whitespace-nowrap flex-shrink-0"
                         :class="proceduralType === type ? 'bg-white/10 text-white shadow-sm' : 'text-white/40 hover:text-white/60'">
                         {{ type }}
                     </button>
@@ -77,6 +77,10 @@
             <!-- Twill Weave Panel -->
             <TwillWeavePanel v-if="proceduralType === 'Twill Weave'" :is-generating="isGenerating"
                 @set-image="$emit('set-image', $event)" />
+
+            <!-- Velvet Panel -->
+            <VelvetPanel v-if="proceduralType === 'Velvet'" :is-generating="isGenerating"
+                @set-image="$emit('set-image', $event)" />
         </div>
 
         <!-- Max Resolution Slider -->
@@ -89,10 +93,12 @@
 <script setup lang="ts">
 import { computed, ref } from 'vue'
 import { Slider } from '@leolee9086/slider-component'
+import { horizontalScroll } from '../../utils/scroll'
 import WoodPanel from './WoodPanel.vue'
 import PlainWeavePanel from './PlainWeavePanel.vue'
 import LeatherPanel from './LeatherPanel.vue'
 import TwillWeavePanel from './TwillWeavePanel.vue'
+import VelvetPanel from './VelvetPanel.vue'
 
 const props = defineProps<{
     isMobile?: boolean
@@ -109,7 +115,7 @@ const emit = defineEmits<{
 }>()
 
 const activeTab = ref('Upload')
-const textureTypes = ['Wood', 'Plain Weave', 'Leather', 'Twill Weave'] as const
+const textureTypes = ['Wood', 'Plain Weave', 'Leather', 'Twill Weave', 'Velvet'] as const
 const proceduralType = ref<typeof textureTypes[number]>('Wood')
 const isGenerating = ref(false)
 
@@ -149,3 +155,33 @@ const sliderContainerClass = computed(() =>
         : 'bg-white/5 rounded-2xl border border-white/5'
 )
 </script>
+
+<style scoped>
+/* 自定义滚动条样式 */
+.custom-scrollbar::-webkit-scrollbar {
+    width: 4px;
+    height: 4px;
+}
+
+.custom-scrollbar::-webkit-scrollbar-track {
+    background: rgba(255, 255, 255, 0.05);
+    border-radius: 2px;
+}
+
+.custom-scrollbar::-webkit-scrollbar-thumb {
+    background: rgba(255, 255, 255, 0.2);
+    border-radius: 2px;
+}
+
+.custom-scrollbar::-webkit-scrollbar-thumb:hover {
+    background: rgba(255, 255, 255, 0.3);
+}
+
+/* 确保滚动容器样式正确 */
+.overflow-x-auto {
+    scrollbar-width: thin;
+    -webkit-overflow-scrolling: touch;
+    flex-wrap: nowrap;
+    padding-bottom: 8px;
+}
+</style>
