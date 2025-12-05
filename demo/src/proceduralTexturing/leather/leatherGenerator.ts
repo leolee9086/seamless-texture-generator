@@ -1,81 +1,48 @@
-import { plainWeaveShaderWGSL } from './plainWeave'
+import { leatherShaderWGSL, LeatherParams } from './leather'
+export type { LeatherParams }
 import { getWebGPUDevice } from '../../utils/webgpu/webgpuDevice'
 
-export interface PlainWeaveParams {
-    tileSize: number;           // 平铺尺寸 (例如 1.0 表示在 0-1 UV 内无缝循环)
-    threadDensity: number;      // 纱线密度 (每单位长度的纱线数)
-    threadThickness: number;    // 纱线粗细 (0.1-1.0)
-    warpWeftRatio: number;      // 经纬线密度比 (0.5-2.0, 1.0表示相等)
-
-    // 纱线结构
-    threadTwist: number;        // 纱线捻度 (0.0-1.0)
-    fiberDetail: number;        // 纤维细节程度 (0.0-1.0)
-    fuzziness: number;          // 毛绒感 (0.0-1.0)
-
-    // 织造特征
-    weaveTightness: number;     // 织造紧密度 (0.0-1.0)
-    threadUnevenness: number;   // 纱线粗细不均匀度 (0.0-1.0)
-    weaveImperfection: number;  // 织造不完美度 (0.0-1.0, 模拟手工感)
-
-    // 颜色渐变
-    gradientStops: { offset: number, color: string }[];
-
-    // 高级参数
-    fbmOctaves: number;         // FBM 噪声的 octaves 数量 (1-5)
-    fbmAmplitude: number;       // FBM 初始振幅 (0.1-1.0)
-    noiseFrequency: number;     // 噪声频率 (1.0-10.0)
-    colorVariation: number;     // 颜色变化幅度 (0.0-0.2)
-
-    // 光泽和材质
-    warpSheen: number;          // 经线光泽 (0.0-1.0)
-    weftSheen: number;          // 纬线光泽 (0.0-1.0)
-    roughnessMin: number;       // 最小粗糙度 (0.3-0.7)
-    roughnessMax: number;       // 最大粗糙度 (0.7-1.0)
-    normalStrength: number;     // 法线强度 (1.0-20.0)
-
-    // 纱线厚度调节
-    threadHeightScale: number;  // 纱线高度缩放 (0.5-2.0)
-    threadShadowStrength: number; // 纱线交叉处阴影强度 (0.0-1.0)
-}
-
-export const defaultPlainWeaveParams: PlainWeaveParams = {
+/**
+ * Default parameters for a generic cowhide leather
+ */
+export const defaultLeatherParams: LeatherParams = {
     tileSize: 1.0,
-    threadDensity: 20.0,        // 每单位长度20根纱线
-    threadThickness: 0.45,      // 中等粗细
-    warpWeftRatio: 1.0,         // 经纬线密度相等
 
-    // 纱线结构
-    threadTwist: 0.5,           // 中等捻度
-    fiberDetail: 0.3,           // 适度的纤维细节
-    fuzziness: 0.2,             // 少量毛绒
+    // Grid-like but slightly organic
+    cellScale: 15.0,
+    cellRandomness: 0.7,
+    cellStretch: 0.0,
+    cellStretchAngle: 0.0,
 
-    // 织造特征
-    weaveTightness: 0.7,        // 较紧密的织造
-    threadUnevenness: 0.15,     // 轻微的不均匀
-    weaveImperfection: 0.1,     // 轻微的不完美
+    grooveWidth: 0.15,
+    grooveDepth: 1.0,
+    grooveProfile: 0.5, // U/V mix
 
-    // 颜色渐变 - 默认为浅米色织物
-    gradientStops: [
-        { offset: 0.0, color: '#D4C8B8' }, // 较暗的纱线部分
-        { offset: 1.0, color: '#F0E8DC' }  // 较亮的纱线部分
-    ],
+    wrinkleScale: 8.0,
+    wrinkleIntensity: 0.5,
 
-    // 高级参数默认值
-    fbmOctaves: 3,
-    fbmAmplitude: 0.3,
-    noiseFrequency: 2.0,
-    colorVariation: 0.05,
+    poreDensity: 2.0,
+    poreDepth: 0.3,
+    poreVisibility: 0.6,
 
-    // 光泽和材质
-    warpSheen: 0.3,             // 经线有一定光泽
-    weftSheen: 0.25,            // 纬线光泽稍弱
+    creaseIntensity: 0.0, // Clean by default
+    creaseFrequency: 1.5,
+
+    wearLevel: 0.0,
+    scratchCount: 0.0,
+    scratchIntensity: 0.5,
+
     roughnessMin: 0.4,
-    roughnessMax: 0.8,
-    normalStrength: 5.0,
+    roughnessMax: 0.7,
+    normalStrength: 8.0,
 
-    // 纱线厚度调节
-    threadHeightScale: 1.0,
-    threadShadowStrength: 0.3,
+    patinaStrength: 0.2, // Slight darkening in grooves
+    colorVariation: 0.1,
+
+    gradientStops: [
+        { offset: 0.0, color: '#3E2723' }, // Dark Brown (Grooves)
+        { offset: 1.0, color: '#8D6E63' }  // Light Brown (Surface)
+    ],
 }
 
 function createGradientTexture(device: GPUDevice, stops: { offset: number, color: string }[]): GPUTexture {
@@ -114,7 +81,7 @@ function createGradientTexture(device: GPUDevice, stops: { offset: number, color
     return texture;
 }
 
-export async function generatePlainWeaveTexture(params: PlainWeaveParams, width: number, height: number): Promise<string> {
+export async function generateLeatherTexture(params: LeatherParams, width: number, height: number): Promise<string> {
     const device = await getWebGPUDevice()
     if (!device) {
         throw new Error('WebGPU not supported')
@@ -127,57 +94,48 @@ export async function generatePlainWeaveTexture(params: PlainWeaveParams, width:
         usage: GPUTextureUsage.RENDER_ATTACHMENT | GPUTextureUsage.COPY_SRC,
     })
 
-    // Uniform buffer 结构:
-    // 16 (matrix) + 4 (core) + 3 (thread) + 3 (weave) + 1 (padding1) = 27
-    // + 4 (advanced) + 5 (sheen) + 2 (thread height) + 1 (padding2) = 39
+    // 2. Uniforms
+    // 16 floats for Matrix + 25 floats for params = 41 floats
     // Align to 44 floats (176 bytes)
     const uniformData = new Float32Array(44);
 
-    // Identity Matrix for viewMatrix (not used but required)
+    // Identity Matrix
     uniformData[0] = 1; uniformData[5] = 1; uniformData[10] = 1; uniformData[15] = 1;
 
-    // 核心参数 (16-19)
-    uniformData[16] = params.tileSize;
-    uniformData[17] = params.threadDensity;
-    uniformData[18] = params.threadThickness;
-    uniformData[19] = params.warpWeftRatio;
+    // Start filling at index 16
+    let i = 16;
+    uniformData[i++] = params.tileSize;
+    uniformData[i++] = params.cellScale;
+    uniformData[i++] = params.cellRandomness;
+    uniformData[i++] = params.cellStretch;
+    uniformData[i++] = params.cellStretchAngle;
 
-    // 纱线结构 (20-22)
-    uniformData[20] = params.threadTwist;
-    uniformData[21] = params.fiberDetail;
-    uniformData[22] = params.fuzziness;
+    uniformData[i++] = params.grooveWidth;
+    uniformData[i++] = params.grooveDepth;
+    uniformData[i++] = params.grooveProfile;
 
-    // 织造特征 (23-25)
-    uniformData[23] = params.weaveTightness;
-    uniformData[24] = params.threadUnevenness;
-    uniformData[25] = params.weaveImperfection;
+    uniformData[i++] = params.wrinkleScale;
+    uniformData[i++] = params.wrinkleIntensity;
+    uniformData[i++] = params.poreDensity;
+    uniformData[i++] = params.poreDepth;
+    uniformData[i++] = params.poreVisibility;
 
-    uniformData[26] = 0; // padding1
+    uniformData[i++] = params.creaseIntensity;
+    uniformData[i++] = params.creaseFrequency;
+    uniformData[i++] = params.wearLevel;
+    uniformData[i++] = params.scratchCount;
+    uniformData[i++] = params.scratchIntensity;
 
-    // 高级参数 (27-30)
-    uniformData[27] = params.fbmOctaves;
-    uniformData[28] = params.fbmAmplitude;
-    uniformData[29] = params.noiseFrequency;
-    uniformData[30] = params.colorVariation;
+    uniformData[i++] = params.roughnessMin;
+    uniformData[i++] = params.roughnessMax;
+    uniformData[i++] = params.normalStrength;
 
-    // 光泽和材质 (31-35)
-    uniformData[31] = params.warpSheen;
-    uniformData[32] = params.weftSheen;
-    uniformData[33] = params.roughnessMin;
-    uniformData[34] = params.roughnessMax;
-    uniformData[35] = params.normalStrength;
+    uniformData[i++] = params.patinaStrength;
+    uniformData[i++] = params.colorVariation;
 
-    // 纱线厚度调节 (36-37)
-    uniformData[36] = params.threadHeightScale;
-    uniformData[37] = params.threadShadowStrength;
-
-    // Padding (38-43)
-    uniformData[38] = 0;
-    uniformData[39] = 0;
-    uniformData[40] = 0;
-    uniformData[41] = 0;
-    uniformData[42] = 0;
-    uniformData[43] = 0;
+    // Padding
+    uniformData[i++] = 0;
+    uniformData[i++] = 0;
 
     const uniformBuffer = device.createBuffer({
         size: uniformData.byteLength,
@@ -185,7 +143,7 @@ export async function generatePlainWeaveTexture(params: PlainWeaveParams, width:
     });
     device.queue.writeBuffer(uniformBuffer, 0, uniformData);
 
-    // Create Gradient Texture
+    // 3. Gradient
     const gradientTexture = createGradientTexture(device, params.gradientStops);
     const sampler = device.createSampler({
         magFilter: 'linear',
@@ -194,9 +152,9 @@ export async function generatePlainWeaveTexture(params: PlainWeaveParams, width:
         addressModeV: 'clamp-to-edge',
     });
 
-    // 3. Create Pipeline
+    // 4. Pipeline
     const module = device.createShaderModule({
-        code: plainWeaveShaderWGSL,
+        code: leatherShaderWGSL,
     });
 
     const pipeline = device.createRenderPipeline({
@@ -206,7 +164,7 @@ export async function generatePlainWeaveTexture(params: PlainWeaveParams, width:
             entryPoint: 'vs_main',
             buffers: [
                 {
-                    arrayStride: 20, // 3 pos + 2 uv = 5 floats * 4 bytes
+                    arrayStride: 20, // 3 pos + 2 uv
                     attributes: [
                         { shaderLocation: 0, offset: 0, format: 'float32x3' },
                         { shaderLocation: 1, offset: 12, format: 'float32x2' },
@@ -224,7 +182,6 @@ export async function generatePlainWeaveTexture(params: PlainWeaveParams, width:
         },
     });
 
-    // 4. Create Bind Group
     const bindGroup = device.createBindGroup({
         layout: pipeline.getBindGroupLayout(0),
         entries: [
@@ -234,8 +191,7 @@ export async function generatePlainWeaveTexture(params: PlainWeaveParams, width:
         ],
     });
 
-    // 5. Create Fullscreen Quad Buffer
-    // x, y, z, u, v
+    // 5. Quad (Full screen)
     const vertices = new Float32Array([
         -1, -1, 0, 0, 1,
         1, -1, 0, 1, 1,
@@ -268,8 +224,7 @@ export async function generatePlainWeaveTexture(params: PlainWeaveParams, width:
     passEncoder.draw(6, 1, 0, 0);
     passEncoder.end();
 
-    // 7. Read back texture
-    // Align bytesPerRow to 256
+    // 7. Readback
     const bytesPerPixel = 4;
     const unalignedBytesPerRow = width * bytesPerPixel;
     const align = 256;
@@ -291,17 +246,16 @@ export async function generatePlainWeaveTexture(params: PlainWeaveParams, width:
     await readBuffer.mapAsync(GPUMapMode.READ);
     const arrayBuffer = readBuffer.getMappedRange();
 
-    // 8. Convert to ImageData and then Base64
-    const canvas = document.createElement('canvas');
-    canvas.width = width;
-    canvas.height = height;
-    const ctx = canvas.getContext('2d');
-    if (!ctx) throw new Error('Could not get 2d context');
+    const canvasBack = document.createElement('canvas');
+    canvasBack.width = width;
+    canvasBack.height = height;
+    const ctxBack = canvasBack.getContext('2d');
+    if (!ctxBack) throw new Error('Could not get 2d context');
 
     const data = new Uint8Array(arrayBuffer);
-    const imageData = ctx.createImageData(width, height);
+    const imageData = ctxBack.createImageData(width, height);
 
-    // Copy row by row to remove padding and swizzle BGRA to RGBA
+    // Copy to imageData (removing padding and swizzling if needed)
     for (let y = 0; y < height; y++) {
         const srcOffset = y * bytesPerRow;
         const dstOffset = y * width * 4;
@@ -309,6 +263,12 @@ export async function generatePlainWeaveTexture(params: PlainWeaveParams, width:
         for (let x = 0; x < width; x++) {
             const i = srcOffset + x * 4;
             const j = dstOffset + x * 4;
+
+            // bgra8unorm internal -> MapRead.
+            // CAREFUL: In WebGPU, 'bgra8unorm' usually means B is at 0, G at 1, R at 2, A at 3.
+            // But MapRead layout depends on the texture.
+            // Let's assume standard BGR mapping if it was BGRA.
+
             imageData.data[j] = data[i + 2];     // R
             imageData.data[j + 1] = data[i + 1]; // G
             imageData.data[j + 2] = data[i];     // B
@@ -316,8 +276,8 @@ export async function generatePlainWeaveTexture(params: PlainWeaveParams, width:
         }
     }
 
-    ctx.putImageData(imageData, 0, 0);
+    ctxBack.putImageData(imageData, 0, 0);
     readBuffer.unmap();
 
-    return canvas.toDataURL('image/png');
+    return canvasBack.toDataURL('image/png');
 }

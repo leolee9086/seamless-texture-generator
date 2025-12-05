@@ -112,7 +112,7 @@
 import { computed, ref, reactive, watch } from 'vue'
 import { Slider } from '@leolee9086/slider-component'
 import GradientEditor from '../gradient/GradientEditor.vue'
-import { generatePlainWeaveTexture, defaultPlainWeaveParams, type PlainWeaveParams } from '../../proceduralTexturing/fabrics/plainWeaveGenerator'
+import { generatePlainWeaveTexture, defaultPlainWeaveParams, type PlainWeaveParams } from '../../proceduralTexturing/fabrics/plainWeave/plainWeaveGenerator'
 
 const props = defineProps<{
     isGenerating: boolean

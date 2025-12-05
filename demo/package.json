@@ -9,7 +9,7 @@
     "build": "vite build",
     "preview": "vite preview",
     "ssl:generate": "node generate-ssl.cjs",
-    "gh-deploy": "pnpm build && gh-pages -d dist"
+    "gh": "pnpm build && gh-pages -d dist"
   },
   "dependencies": {
     "@leolee9086/clarity-enhancement": "link:../../clarity",
