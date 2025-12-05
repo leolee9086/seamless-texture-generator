@@ -107,16 +107,7 @@ export const useColorBlockSelector = () => {
     // 图层系统
     const layers = ref<AdjustmentLayer[]>([])
     const activeLayerId = ref<string | null>(null)
-    const ColorBlockSelectorCtx: ColorBlockSelectorCtx = {
-        quantizedColorBlocks,
-        commonHslBlocks,
-        selectedColorBlocks,
-        maskOptions,
-        maskManager,
-        maskPreviewCanvas,
-        layers,
-        activeLayerId
-    }
+
     /**
      * 生成色块
      */
