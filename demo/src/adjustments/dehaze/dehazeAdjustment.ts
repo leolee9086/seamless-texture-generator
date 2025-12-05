@@ -66,8 +66,10 @@ export async function applyDehazeAdjustment(
     const result = await dehazeImageWebGPUSimple(imageData, options)
     
     // 转换为标准ImageData格式
+    // 需要创建一个新的Uint8ClampedArray，确保底层的ArrayBuffer类型正确
+    const dataArray = new Uint8ClampedArray(result.imageData.data)
     const outputImageData = new ImageData(
-      result.imageData.data,
+      dataArray,
       result.imageData.width,
       result.imageData.height
     )
@@ -105,4 +107,3 @@ export function clearDehazeCache(): void {
     console.warn('清理去雾缓存失败:', error)
   }
 }
-
