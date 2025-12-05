@@ -119,9 +119,9 @@ const props = defineProps<{
   hslLayers?: any[]
   exposureStrength?: number  // 新增
   exposureManual?: { exposure: number; contrast: number; gamma: number }  // 新增
-  dehazeParams?: import('../../utils/dehazeAdjustment').DehazeParams  // 新增
-  clarityParams?: import('../../utils/clarityAdjustment').ClarityParams  // 新增
-  luminanceParams?: import('../../utils/luminanceAdjustment').LuminanceAdjustmentParams  // 新增
+  dehazeParams?: import('../../adjustments/dehazeAdjustment').DehazeParams  // 新增
+  clarityParams?: import('../../adjustments/clarityAdjustment').ClarityParams  // 新增
+  luminanceParams?: import('../../adjustments/luminanceAdjustment').LuminanceAdjustmentParams  // 新增
 }>()
 
 const emit = defineEmits<{

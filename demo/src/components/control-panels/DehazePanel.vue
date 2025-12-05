@@ -23,8 +23,7 @@
                 <div class="grid grid-cols-3 gap-2 mb-4">
                     <button v-for="(preset, key) in DEHAZE_PRESETS" :key="key"
                         class="glass-btn text-xs py-2 px-2 rounded bg-white/5 hover:bg-white/10 text-white/60 hover:text-white/90 transition-colors flex flex-col items-center gap-1"
-                        :class="{ 'bg-white/20 text-white/90': currentPreset === key }"
-                        @click="applyPreset(key)">
+                        :class="{ 'bg-white/20 text-white/90': currentPreset === key }" @click="applyPreset(key)">
                         <div class="text-lg opacity-70">
                             <div v-if="key === 'light'" class="i-carbon-sun"></div>
                             <div v-else-if="key === 'medium'" class="i-carbon-cloud"></div>
@@ -66,7 +65,7 @@
 
                 <div v-if="showAdvanced" class="space-y-4">
                     <Slider :items="advancedSliderItems" @updateValue="handleAdvancedSliderUpdate" />
-                    
+
                     <!-- 自适应选项 -->
                     <div class="space-y-3">
                         <div class="flex items-center justify-between">
@@ -74,14 +73,14 @@
                             <input type="checkbox" v-model="dehazeParams.adaptiveMode"
                                 class="w-4 h-4 rounded border-white/20 bg-white/10 text-white/60 focus:ring-white/20">
                         </div>
-                        
+
                         <div class="flex items-center justify-between">
                             <label class="text-xs text-white/70">空间自适应</label>
                             <input type="checkbox" v-model="dehazeParams.spatialAdaptiveMode"
                                 :disabled="!dehazeParams.adaptiveMode"
                                 class="w-4 h-4 rounded border-white/20 bg-white/10 text-white/60 focus:ring-white/20">
                         </div>
-                        
+
                         <div class="flex items-center justify-between">
                             <label class="text-xs text-white/70">增强功能</label>
                             <input type="checkbox" v-model="dehazeParams.enableEnhancement"
@@ -92,7 +91,8 @@
             </div>
 
             <!-- 增强参数 -->
-            <div v-if="dehazeParams.enableEnhancement" class="border-t border-white/5 pt-3 pb-3" :class="{ 'px-4': !isMobile }">
+            <div v-if="dehazeParams.enableEnhancement" class="border-t border-white/5 pt-3 pb-3"
+                :class="{ 'px-4': !isMobile }">
                 <div class="flex items-center justify-between mb-3">
                     <label class="block text-sm font-medium text-white/80">
                         增强参数
@@ -114,15 +114,15 @@
 <script setup lang="ts">
 import { ref, computed, watch } from 'vue'
 import { Slider } from '@leolee9086/slider-component'
-import { 
-    DEFAULT_DEHAZE_PARAMS, 
-    DEHAZE_PRESETS, 
-    type DehazeParams, 
+import {
+    DEFAULT_DEHAZE_PARAMS,
+    DEHAZE_PRESETS,
+    type DehazeParams,
     type DehazePreset,
     applyDehazeAdjustment,
     getDehazePreset,
     validateDehazeParams
-} from '../../utils/dehazeAdjustment'
+} from '../../adjustments/dehazeAdjustment'
 import { createUpdateDataEvent } from '../../types/controlEvents'
 import type { ControlEvent } from '../../types/controlEvents'
 

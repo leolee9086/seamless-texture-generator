@@ -1,5 +1,5 @@
 import { watch, Ref } from 'vue'
-import { loadImage, scaleImageToMaxResolution } from './imageProcessing'
+import { loadImage, scaleImageToMaxResolution } from './imageLoader'
 
 /**
  * 监听原始图像和最大分辨率的变化，更新显示的图像

@@ -1,14 +1,14 @@
-import type { HSLAdjustmentLayer } from './hslAdjustStep'
+import type { HSLAdjustmentLayer } from '../utils/hslAdjustStep'
 
 export interface ExposureAdjustmentParams {
-  strength: number
-  targetExposure: number
-  localAdjustFactor: number
+    strength: number
+    targetExposure: number
+    localAdjustFactor: number
 }
 
 export interface ExposureHistogramData {
-  brightness: Uint32Array
-  totalPixels: number
+    brightness: Uint32Array
+    totalPixels: number
 }
 
 // WebGPU 着色器代码
@@ -362,7 +362,7 @@ function calculateExposureParams(histogram: Uint32Array): ExposureAdjustmentPara
 
     // 分析直方图特征
     const features = analyzeHistogramFeatures(histogram)
-    
+
     // 如果有明显的峰值，向该方向适当调整
     if (features.peakBin < 0.3) {
         // 暗部有峰值，增加曝光补偿
@@ -738,14 +738,14 @@ export function exposureToHSLAdjustment(
     // 这是一个简化的转换，实际应用中可能需要更复杂的算法
     const hue = 0 // 曝光调整不改变色相
     let saturation = 0
-    
+
     // 根据对比度调整饱和度
     if (contrast > 1.0) {
         saturation = Math.min(20, (contrast - 1.0) * 20)
     } else if (contrast < 1.0) {
         saturation = Math.max(-20, (contrast - 1.0) * 20)
     }
-    
+
     // 根据曝光调整明度
     const lightness = (exposure - 1.0) * 50
 

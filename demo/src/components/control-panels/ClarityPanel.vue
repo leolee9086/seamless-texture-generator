@@ -16,58 +16,58 @@
 
                 <div class="space-y-3">
                     <!-- Sigma (滤波强度) -->
-                            <Slider :items="[{
-                                id: 'sigma',
-                                label: 'Sigma',
-                                value: clarityParams.sigma,
-                                min: 1.0,
-                                max: 16.0,
-                                step: 0.5,
-                                gradient: 'linear-gradient(90deg, #3b82f6 0%, #8b5cf6 100%)',
-                                showRuler: false
-                            }]" @updateValue="handleParamUpdate" />
-                  
+                    <Slider :items="[{
+                        id: 'sigma',
+                        label: 'Sigma',
+                        value: clarityParams.sigma,
+                        min: 1.0,
+                        max: 16.0,
+                        step: 0.5,
+                        gradient: 'linear-gradient(90deg, #3b82f6 0%, #8b5cf6 100%)',
+                        showRuler: false
+                    }]" @updateValue="handleParamUpdate" />
+
 
                     <!-- Epsilon (正则化参数) -->
-                            <Slider :items="[{
-                                id: 'epsilon',
-                                label: 'Epsilon',
-                                value: clarityParams.epsilon,
-                                min: 0.01,
-                                max: 0.1,
-                                step: 0.01,
-                                gradient: 'linear-gradient(90deg, #10b981 0%, #34d399 100%)',
-                                showRuler: false
-                            }]" @updateValue="handleParamUpdate" />
-                    
+                    <Slider :items="[{
+                        id: 'epsilon',
+                        label: 'Epsilon',
+                        value: clarityParams.epsilon,
+                        min: 0.01,
+                        max: 0.1,
+                        step: 0.01,
+                        gradient: 'linear-gradient(90deg, #10b981 0%, #34d399 100%)',
+                        showRuler: false
+                    }]" @updateValue="handleParamUpdate" />
+
 
                     <!-- Radius (窗口半径) -->
-             
-                            <Slider :items="[{
-                                id: 'radius',
-                                label: 'Radius',
-                                value: clarityParams.radius,
-                                min: 4,
-                                max: 32,
-                                step: 2,
-                                gradient: 'linear-gradient(90deg, #f59e0b 0%, #f97316 100%)',
-                                showRuler: true
-                            }]" @updateValue="handleParamUpdate" />
-                   
+
+                    <Slider :items="[{
+                        id: 'radius',
+                        label: 'Radius',
+                        value: clarityParams.radius,
+                        min: 4,
+                        max: 32,
+                        step: 2,
+                        gradient: 'linear-gradient(90deg, #f59e0b 0%, #f97316 100%)',
+                        showRuler: true
+                    }]" @updateValue="handleParamUpdate" />
+
 
                     <!-- Block Size (线程组大小) -->
-             
-                            <Slider :items="[{
-                                id: 'blockSize',
-                                label: 'Block Size',
-                                value: clarityParams.blockSize,
-                                min: 8,
-                                max: 32,
-                                step: 8,
-                                gradient: 'linear-gradient(90deg, #8b5cf6 0%, #6366f1 100%)',
-                                showRuler: true
-                            }]" @updateValue="handleParamUpdate" />
-             
+
+                    <Slider :items="[{
+                        id: 'blockSize',
+                        label: 'Block Size',
+                        value: clarityParams.blockSize,
+                        min: 8,
+                        max: 32,
+                        step: 8,
+                        gradient: 'linear-gradient(90deg, #8b5cf6 0%, #6366f1 100%)',
+                        showRuler: true
+                    }]" @updateValue="handleParamUpdate" />
+
                 </div>
             </div>
 
@@ -81,52 +81,52 @@
 
                 <div class="space-y-3">
                     <!-- Detail Strength (细节强度) -->
-                            <Slider :items="[{
-                                id: 'detailStrength',
-                                label: 'Detail Strength',
-                                value: clarityParams.detailStrength,
-                                min: 0.1,
-                                max: 20.0,
-                                step: 0.1,
-                                gradient: 'linear-gradient(90deg, #06b6d4 0%, #10b981 100%)',
-                                showRuler: false
-                            }]" @updateValue="handleParamUpdate" />
+                    <Slider :items="[{
+                        id: 'detailStrength',
+                        label: 'Detail Strength',
+                        value: clarityParams.detailStrength,
+                        min: 0.1,
+                        max: 20.0,
+                        step: 0.1,
+                        gradient: 'linear-gradient(90deg, #06b6d4 0%, #10b981 100%)',
+                        showRuler: false
+                    }]" @updateValue="handleParamUpdate" />
 
                     <!-- Enhancement Strength (增强强度) -->
-                            <Slider :items="[{
-                                id: 'enhancementStrength',
-                                label: 'Enhancement Strength',
-                                value: clarityParams.enhancementStrength,
-                                min: 0.1,
-                                max: 10.0,
-                                step: 0.1,
-                                gradient: 'linear-gradient(90deg, #3b82f6 0%, #8b5cf6 100%)',
-                                showRuler: false
-                            }]" @updateValue="handleParamUpdate" />
+                    <Slider :items="[{
+                        id: 'enhancementStrength',
+                        label: 'Enhancement Strength',
+                        value: clarityParams.enhancementStrength,
+                        min: 0.1,
+                        max: 10.0,
+                        step: 0.1,
+                        gradient: 'linear-gradient(90deg, #3b82f6 0%, #8b5cf6 100%)',
+                        showRuler: false
+                    }]" @updateValue="handleParamUpdate" />
 
                     <!-- Macro Enhancement (宏观增强) -->
-                            <Slider :items="[{
-                                id: 'macroEnhancement',
-                                label: 'Macro Enhancement',
-                                value: clarityParams.macroEnhancement,
-                                min: 0.0,
-                                max: 2.0,
-                                step: 0.1,
-                                gradient: 'linear-gradient(90deg, #f59e0b 0%, #f97316 100%)',
-                                showRuler: false
-                            }]" @updateValue="handleParamUpdate" />
+                    <Slider :items="[{
+                        id: 'macroEnhancement',
+                        label: 'Macro Enhancement',
+                        value: clarityParams.macroEnhancement,
+                        min: 0.0,
+                        max: 2.0,
+                        step: 0.1,
+                        gradient: 'linear-gradient(90deg, #f59e0b 0%, #f97316 100%)',
+                        showRuler: false
+                    }]" @updateValue="handleParamUpdate" />
 
                     <!-- Contrast Boost (对比度增强) -->
-                            <Slider :items="[{
-                                id: 'contrastBoost',
-                                label: 'Contrast Boost',
-                                value: clarityParams.contrastBoost,
-                                min: 1.0,
-                                max: 3.0,
-                                step: 0.1,
-                                gradient: 'linear-gradient(90deg, #6366f1 0%, #8b5cf6 100%)',
-                                showRuler: false
-                            }]" @updateValue="handleParamUpdate" />
+                    <Slider :items="[{
+                        id: 'contrastBoost',
+                        label: 'Contrast Boost',
+                        value: clarityParams.contrastBoost,
+                        min: 1.0,
+                        max: 3.0,
+                        step: 0.1,
+                        gradient: 'linear-gradient(90deg, #6366f1 0%, #8b5cf6 100%)',
+                        showRuler: false
+                    }]" @updateValue="handleParamUpdate" />
                 </div>
             </div>
 
@@ -172,8 +172,8 @@
 <script setup lang="ts">
 import { ref, computed } from 'vue'
 import { Slider } from '@leolee9086/slider-component'
-import type { ClarityParams } from '../../utils/clarityAdjustment'
-import { DEFAULT_CLARITY_PARAMS, CLARITY_PRESETS, getClarityPreset, createClarityAdjustmentEvent } from '../../utils/clarityAdjustment'
+import type { ClarityParams } from '../../adjustments/clarityAdjustment'
+import { DEFAULT_CLARITY_PARAMS, CLARITY_PRESETS, getClarityPreset, createClarityAdjustmentEvent } from '../../adjustments/clarityAdjustment'
 import type { ControlEvent } from '../../types/controlEvents'
 
 const props = defineProps<{
@@ -207,10 +207,10 @@ const handleParamUpdate = (data: { id: string; value: number }) => {
     const updates: Partial<ClarityParams> = {}
     updates[data.id as keyof ClarityParams] = data.value
     Object.assign(clarityParams.value, updates)
-    
+
     // 清除当前预设
     currentPreset.value = null
-    
+
     // 发送更新事件
     emit('controlEvent', createClarityAdjustmentEvent(clarityParams.value))
 }

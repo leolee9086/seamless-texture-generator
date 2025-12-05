@@ -73,15 +73,9 @@
 
     <!-- Bottom Navigation (Fixed Tab Bar) -->
     <div class="w-full z-50 bg-black border-t flex-shrink-0 pb-[env(safe-area-inset-bottom)]">
-      <div
-        ref="navContainer"
-        class="flex items-center h-16 px-2 overflow-x-auto scrollbar-hide"
-        @wheel="handleNavScroll"
-      >
-        <button
-          v-for="group in groups"
-          :key="group.id"
-          @click="activeGroup = group.id"
+      <div ref="navContainer" class="flex items-center h-16 px-2 overflow-x-auto scrollbar-hide"
+        @wheel="handleNavScroll">
+        <button v-for="group in groups" :key="group.id" @click="activeGroup = group.id"
           class="flex flex-col items-center justify-center min-w-[80px] h-full gap-1 transition-colors duration-200 !bg-transparent !border-none !shadow-none !outline-none flex-shrink-0"
           :class="activeGroup === group.id ? 'text-white' : 'text-neutral-500 hover:text-neutral-300'">
 
@@ -101,7 +95,7 @@
 </template>
 
 <script setup lang="ts">
-import {  ref } from 'vue'
+import { ref } from 'vue'
 import '@leolee9086/slider-component/dist/slider-component.css'
 import { useControlsLogic } from '../../composables/useControlsLogic'
 import { horizontalScroll } from '../../utils/scroll'
@@ -135,9 +129,9 @@ const props = defineProps<{
   hslLayers?: any[]
   exposureStrength?: number  // 新增
   exposureManual?: { exposure: number; contrast: number; gamma: number }  // 新增
-  dehazeParams?: import('../../utils/dehazeAdjustment').DehazeParams  // 新增
-  clarityParams?: import('../../utils/clarityAdjustment').ClarityParams  // 新增
-  luminanceParams?: import('../../utils/luminanceAdjustment').LuminanceAdjustmentParams  // 新增
+  dehazeParams?: import('../../adjustments/dehazeAdjustment').DehazeParams  // 新增
+  clarityParams?: import('../../adjustments/clarityAdjustment').ClarityParams  // 新增
+  luminanceParams?: import('../../adjustments/luminanceAdjustment').LuminanceAdjustmentParams  // 新增
 }>()
 
 const emit = defineEmits<{

@@ -1,11 +1,11 @@
 import { makeTileable } from '../../../src/lib/HistogramPreservingBlendMakeTileable'
-import { scaleImageToMaxResolution } from './imageProcessing'
+import { scaleImageToMaxResolution } from './imageLoader'
 import { processImageWithLUT, processLutData } from '@leolee9086/use-lut'
 import { HSLAdjustProcessStep, type HSLAdjustmentLayer } from './hslAdjustStep'
-import { adjustExposure, adjustExposureManual } from './exposureAdjustment'  // 新增导入
-import { applyDehazeAdjustment, type DehazeParams, DEFAULT_DEHAZE_PARAMS } from './dehazeAdjustment'  // 新增导入
-import { processClarityAdjustment, type ClarityParams } from './clarityAdjustment'  // 新增导入
-import { applyLuminanceAdjustmentToImageData, type LuminanceAdjustmentParams } from './luminanceAdjustment'  // 新增导入
+import { adjustExposure, adjustExposureManual } from '../adjustments/exposureAdjustment'  // 新增导入
+import { applyDehazeAdjustment, type DehazeParams, DEFAULT_DEHAZE_PARAMS } from '../adjustments/dehazeAdjustment'  // 新增导入
+import { processClarityAdjustment, type ClarityParams } from '../adjustments/clarityAdjustment'  // 新增导入
+import { applyLuminanceAdjustmentToImageData, type LuminanceAdjustmentParams } from '../adjustments/luminanceAdjustment'  // 新增导入
 
 /**
  * 管线数据接口 - 统一使用 GPUBuffer 作为数据载体

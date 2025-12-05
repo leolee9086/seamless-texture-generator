@@ -3,9 +3,9 @@
  * Provides functions for managing luminance-based adjustments (Shadows, Midtones, Highlights)
  */
 
-import type { LuminanceAdjustmentParams, ZoneAdjustment } from './webgpu/luminance-shaders';
-import { WebGPULuminanceProcessor, processLuminanceAdjustment } from './webgpu/luminance-processor';
-export type { LuminanceAdjustmentParams, ZoneAdjustment } from './webgpu/luminance-shaders';
+import type { LuminanceAdjustmentParams, ZoneAdjustment } from '../utils/webgpu/luminance-shaders';
+import { WebGPULuminanceProcessor, processLuminanceAdjustment } from '../utils/webgpu/luminance-processor';
+export type { LuminanceAdjustmentParams, ZoneAdjustment } from '../utils/webgpu/luminance-shaders';
 
 // Default parameters for luminance adjustment
 export const DEFAULT_LUMINANCE_PARAMS: LuminanceAdjustmentParams = {

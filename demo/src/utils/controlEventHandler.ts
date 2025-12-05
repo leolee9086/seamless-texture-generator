@@ -38,11 +38,11 @@ export interface ControlEventHandlerOptions {
   onExposureStrength?: (strength: number) => void
   onExposureManual?: (params: { exposure: number; contrast: number; gamma: number }) => void
   // 去雾调整处理器
-  onDehazeChange?: (params: import('./dehazeAdjustment').DehazeParams) => void
+  onDehazeChange?: (params: import('../adjustments/dehazeAdjustment').DehazeParams) => void
   // 清晰度调整处理器
-  onClarityAdjustment?: (params: import('./clarityAdjustment').ClarityParams) => void
+  onClarityAdjustment?: (params: import('../adjustments/clarityAdjustment').ClarityParams) => void
   // 亮度调整处理器
-  onLuminanceAdjustment?: (params: import('./luminanceAdjustment').LuminanceAdjustmentParams) => void
+  onLuminanceAdjustment?: (params: import('../adjustments/luminanceAdjustment').LuminanceAdjustmentParams) => void
   // 设置图片
   onSetImage?: (imageData: string) => void
 }
@@ -187,11 +187,11 @@ export interface ControlEventHandlerOptions {
   onExposureStrength?: (strength: number) => void
   onExposureManual?: (params: { exposure: number; contrast: number; gamma: number }) => void
   // 鍘婚浘璋冩暣澶勭悊鍣?
-  onDehazeChange?: (params: import('./dehazeAdjustment').DehazeParams) => void
+  onDehazeChange?: (params: import('../adjustments/dehazeAdjustment').DehazeParams) => void
   // 娓呮櫚搴﹁皟鏁村鐞嗗櫒
-  onClarityAdjustment?: (params: import('./clarityAdjustment').ClarityParams) => void
+  onClarityAdjustment?: (params: import('../adjustments/clarityAdjustment').ClarityParams) => void
   // 浜害璋冩暣澶勭悊鍣?
-  onLuminanceAdjustment?: (params: import('./luminanceAdjustment').LuminanceAdjustmentParams) => void
+  onLuminanceAdjustment?: (params: import('../adjustments/luminanceAdjustment').LuminanceAdjustmentParams) => void
   onSetImage?: (imageData: string) => void
 }
 

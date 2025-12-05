@@ -23,15 +23,14 @@
                 <div class="grid grid-cols-3 gap-2 mb-4">
                     <button v-for="(preset, key) in LUMINANCE_PRESETS" :key="key"
                         class="glass-btn text-xs py-2 px-2 rounded bg-white/5 hover:bg-white/10 text-white/60 hover:text-white/90 transition-colors flex flex-col items-center gap-1"
-                        :class="{ 'bg-white/20 text-white/90': currentPreset === key }"
-                        @click="applyPreset(key)">
+                        :class="{ 'bg-white/20 text-white/90': currentPreset === key }" @click="applyPreset(key)">
                         <div class="text-lg opacity-70">
                             <div v-if="key === 'default'" class="i-carbon-settings"></div>
                             <div v-else-if="key === 'enhanceShadows'" class="i-carbon-moon"></div>
                             <div v-else-if="key === 'enhanceHighlights'" class="i-carbon-sun"></div>
                             <div v-else-if="key === 'popColors'" class="i-carbon-palette"></div>
                             <div v-else-if="key === 'contrastBoost'" class="i-carbon-contrast"></div>
-                            <div v-else-if="key === 'warmTones'" ></div>
+                            <div v-else-if="key === 'warmTones'"></div>
                             <div v-else-if="key === 'coolTones'"></div>
                         </div>
                         <span>{{ preset.name }}</span>
@@ -127,7 +126,7 @@ import {
     validateLuminanceParams,
     createLuminanceAdjustmentEvent,
     getLuminancePreset
-} from '../../utils/luminanceAdjustment'
+} from '../../adjustments/luminanceAdjustment'
 import type { ZoneAdjustment } from '../../utils/webgpu/luminance-shaders'
 import type { ControlEvent } from '../../types/controlEvents'
 
@@ -183,8 +182,8 @@ const hasHighlightAdjustments = computed(() => {
 
 const hasRangeAdjustments = computed(() => {
     return luminanceParams.value.shadowEnd !== DEFAULT_LUMINANCE_PARAMS.shadowEnd ||
-           luminanceParams.value.highlightStart !== DEFAULT_LUMINANCE_PARAMS.highlightStart ||
-           luminanceParams.value.softness !== DEFAULT_LUMINANCE_PARAMS.softness
+        luminanceParams.value.highlightStart !== DEFAULT_LUMINANCE_PARAMS.highlightStart ||
+        luminanceParams.value.softness !== DEFAULT_LUMINANCE_PARAMS.softness
 })
 
 const shadowSliderItems = computed(() => [
