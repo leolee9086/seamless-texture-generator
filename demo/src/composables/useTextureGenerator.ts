@@ -16,6 +16,9 @@ import { handlePhotoCaptured, handleCameraError, toggleCamera } from '../utils/d
 import { saveOriginalImage, saveProcessedImage } from '../utils/download'
 import { createControlEventHandler } from '../utils/controlEventHandler'
 import type { ControlEvent } from '../types/controlEvents'
+import type { DehazeParams } from '../adjustments/dehazeAdjustment'
+import type { ClarityParams } from '../adjustments/clarityAdjustment'
+import type { LuminanceAdjustmentParams } from '../adjustments/luminanceAdjustment'
 
 // 定义overlay数据接口
 interface PreviewOverlayData {
@@ -59,9 +62,9 @@ export interface UseTextureGeneratorReturn {
   hslLayers: Ref<HSLAdjustmentLayer[]>
   exposureStrength: Ref<number>  // 新增
   exposureManual: Ref<{ exposure: number; contrast: number; gamma: number }>  // 新增
-  dehazeParams: Ref<import('../adjustments/dehazeAdjustment').DehazeParams>,  // 新增
-  clarityParams: Ref<import('../adjustments/clarityAdjustment').ClarityParams>,  // 新增
-  luminanceParams: Ref<import('../adjustments/luminanceAdjustment').LuminanceAdjustmentParams>  // 新增
+  dehazeParams: Ref<DehazeParams>,  // 新增
+  clarityParams: Ref<ClarityParams>,  // 新增
+  luminanceParams: Ref<LuminanceAdjustmentParams>  // 新增
 
   // 方法
   handleImageUploadWrapper: (event: Event) => void
@@ -128,7 +131,7 @@ export function useTextureGenerator(options: UseTextureGeneratorOptions = {}): U
     gamma: 1.0
   })
   // 去雾调整状态 - 新增
-  const dehazeParams = ref<import('../adjustments/dehazeAdjustment').DehazeParams>({
+  const dehazeParams = ref<DehazeParams>({
     omega: 0.95,
     t0: 0.1,
     windowSize: 15,
@@ -144,7 +147,7 @@ export function useTextureGenerator(options: UseTextureGeneratorOptions = {}): U
     brightnessEnhancement: 1.0
   })
   // 清晰度调整状态 - 新增
-  const clarityParams = ref<import('../adjustments/clarityAdjustment').ClarityParams>({
+  const clarityParams = ref<ClarityParams>({
     sigma: 8.0,
     epsilon: 0.04,
     radius: 8,
@@ -155,7 +158,7 @@ export function useTextureGenerator(options: UseTextureGeneratorOptions = {}): U
     contrastBoost: 1.2
   })
   // 亮度调整状态 - 新增
-  const luminanceParams = ref<import('../adjustments/luminanceAdjustment').LuminanceAdjustmentParams>({
+  const luminanceParams = ref<LuminanceAdjustmentParams>({
     shadows: {
       brightness: 0,
       contrast: 0,
@@ -462,21 +465,21 @@ export function useTextureGenerator(options: UseTextureGeneratorOptions = {}): U
       }
     },
     // 去雾调整处理器 - 新增
-    onDehazeChange: (params: import('../adjustments/dehazeAdjustment').DehazeParams) => {
+    onDehazeChange: (params: DehazeParams) => {
       dehazeParams.value = params
       if (originalImage.value) {
         debouncedProcessImage()
       }
     },
     // 清晰度调整处理器 - 新增
-    onClarityAdjustment: (params: import('../adjustments/clarityAdjustment').ClarityParams) => {
+    onClarityAdjustment: (params: ClarityParams) => {
       clarityParams.value = params
       if (originalImage.value) {
         debouncedProcessImage()
       }
     },
     // 亮度调整处理器 - 新增
-    onLuminanceAdjustment: (params: import('../adjustments/luminanceAdjustment').LuminanceAdjustmentParams) => {
+    onLuminanceAdjustment: (params: LuminanceAdjustmentParams) => {
       luminanceParams.value = params
       if (originalImage.value) {
         debouncedProcessImage()
