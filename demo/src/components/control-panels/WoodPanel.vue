@@ -112,7 +112,7 @@
 import { computed, ref, reactive, watch } from 'vue'
 import { Slider } from '@leolee9086/slider-component'
 import GradientEditor from '../gradient/GradientEditor.vue'
-import { generateWoodTexture, defaultWoodParams, type WoodParams } from '../../utils/procedural/woodGenerator'
+import { generateWoodTexture, defaultWoodParams, type WoodParams } from '../../proceduralTexturing/wood/woodGenerator'
 
 const props = defineProps<{
     isGenerating: boolean

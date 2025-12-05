@@ -1,76 +1,81 @@
-import { woodShaderWGSL } from '../../proceduralTexturing/wood'
-import { getWebGPUDevice } from '../webgpu/webgpuDevice'
+import { plainWeaveShaderWGSL } from './plainWeave'
+import { getWebGPUDevice } from '../../utils/webgpu/webgpuDevice'
 
-export interface WoodParams {
-    tileSize: number;       // 平铺尺寸 (例如 1.0 表示在 0-1 UV 内无缝循环)
-    ringScale: number;      // 年轮总数
-    ringDistortion: number; // 生长扭曲度
-    knotIntensity: number;  // 树结强度
-    latewoodBias: number;   // 晚材偏差 (0.0-1.0, 控制深色硬边部分的尖锐度)
-    rayStrength: number;    // 髓射线强度 (垂直于年轮的细纹)
-    poreDensity: number;    // 导管/毛孔密度
+export interface PlainWeaveParams {
+    tileSize: number;           // 平铺尺寸 (例如 1.0 表示在 0-1 UV 内无缝循环)
+    threadDensity: number;      // 纱线密度 (每单位长度的纱线数)
+    threadThickness: number;    // 纱线粗细 (0.1-1.0)
+    warpWeftRatio: number;      // 经纬线密度比 (0.5-2.0, 1.0表示相等)
+
+    // 纱线结构
+    threadTwist: number;        // 纱线捻度 (0.0-1.0)
+    fiberDetail: number;        // 纤维细节程度 (0.0-1.0)
+    fuzziness: number;          // 毛绒感 (0.0-1.0)
+
+    // 织造特征
+    weaveTightness: number;     // 织造紧密度 (0.0-1.0)
+    threadUnevenness: number;   // 纱线粗细不均匀度 (0.0-1.0)
+    weaveImperfection: number;  // 织造不完美度 (0.0-1.0, 模拟手工感)
 
     // 颜色渐变
     gradientStops: { offset: number, color: string }[];
 
     // 高级参数
-    fbmOctaves: number;     // FBM 噪声的 octaves 数量 (1-5)
-    fbmAmplitude: number;   // FBM 初始振幅 (0.1-1.0)
-    knotFrequency: number;  // 树结噪声频率 (0.5-2.0)
-    distortionFreq: number; // 域扭曲频率 (1.0-3.0)
-    ringNoiseFreq: number;  // 年轮噪声频率 (3.0-10.0)
-    rayFrequencyX: number;  // 髓射线 X 方向频率 (30.0-100.0)
-    rayFrequencyY: number;  // 髓射线 Y 方向频率 (1.0-5.0)
-    knotThresholdMin: number; // 树结阈值最小值 (0.0-1.0)
-    knotThresholdMax: number; // 树结阈值最大值 (0.0-1.0)
-    normalStrength: number;   // 法线强度 (1.0-20.0)
-    roughnessMin: number;     // 最小粗糙度 (0.1-0.5)
-    roughnessMax: number;     // 最大粗糙度 (0.5-1.0)
+    fbmOctaves: number;         // FBM 噪声的 octaves 数量 (1-5)
+    fbmAmplitude: number;       // FBM 初始振幅 (0.1-1.0)
+    noiseFrequency: number;     // 噪声频率 (1.0-10.0)
+    colorVariation: number;     // 颜色变化幅度 (0.0-0.2)
 
+    // 光泽和材质
+    warpSheen: number;          // 经线光泽 (0.0-1.0)
+    weftSheen: number;          // 纬线光泽 (0.0-1.0)
+    roughnessMin: number;       // 最小粗糙度 (0.3-0.7)
+    roughnessMax: number;       // 最大粗糙度 (0.7-1.0)
+    normalStrength: number;     // 法线强度 (1.0-20.0)
 
-    // 孔隙参数
-    poreScale: number;          // 孔隙尺寸 (0.5-5.0)
-    poreThresholdEarly: number; // 早材孔隙阈值下限 (0.0-1.0)
-    poreThresholdLate: number;  // 晚材孔隙阈值下限 (0.0-1.0)
-    poreThresholdRange: number; // 阈值范围 (0.1-0.3)
-    poreStrength: number;       // 孔隙强度 (0.0-1.0)
-
+    // 纱线厚度调节
+    threadHeightScale: number;  // 纱线高度缩放 (0.5-2.0)
+    threadShadowStrength: number; // 纱线交叉处阴影强度 (0.0-1.0)
 }
 
-export const defaultWoodParams: WoodParams = {
+export const defaultPlainWeaveParams: PlainWeaveParams = {
     tileSize: 1.0,
-    ringScale: 8.0,
-    ringDistortion: 1.0,
-    knotIntensity: 1.0,
-    latewoodBias: 0.8,
-    rayStrength: 0.6,      // 增加强度，使射线更明显
-    poreDensity: 20.0,     // 增加密度，产生更多小孔
+    threadDensity: 20.0,        // 每单位长度20根纱线
+    threadThickness: 0.45,      // 中等粗细
+    warpWeftRatio: 1.0,         // 经纬线密度相等
 
+    // 纱线结构
+    threadTwist: 0.5,           // 中等捻度
+    fiberDetail: 0.3,           // 适度的纤维细节
+    fuzziness: 0.2,             // 少量毛绒
+
+    // 织造特征
+    weaveTightness: 0.7,        // 较紧密的织造
+    threadUnevenness: 0.15,     // 轻微的不均匀
+    weaveImperfection: 0.1,     // 轻微的不完美
+
+    // 颜色渐变 - 默认为浅米色织物
     gradientStops: [
-        { offset: 0.0, color: '#734F33' }, // Late wood (dark)
-        { offset: 1.0, color: '#DCC8A9' }  // Early wood (light)
+        { offset: 0.0, color: '#D4C8B8' }, // 较暗的纱线部分
+        { offset: 1.0, color: '#F0E8DC' }  // 较亮的纱线部分
     ],
 
     // 高级参数默认值
     fbmOctaves: 3,
-    fbmAmplitude: 0.5,
-    knotFrequency: 0.8,
-    distortionFreq: 1.5,
-    ringNoiseFreq: 5.0,
-    rayFrequencyX: 30.0,   // 降低频率，适应新算法（正弦波频率）
-    rayFrequencyY: 8.0,    // 增加纵向变化
-    knotThresholdMin: 0.4,
-    knotThresholdMax: 0.8,
-    normalStrength: 8.0,
-    roughnessMin: 0.35,
-    roughnessMax: 0.7,
+    fbmAmplitude: 0.3,
+    noiseFrequency: 2.0,
+    colorVariation: 0.05,
 
-    // 孔隙参数默认值
-    poreScale: 1.0,             // 默认尺寸
-    poreThresholdEarly: 0.55,   // 早材阈值（较低，更多孔隙）
-    poreThresholdLate: 0.7,     // 晚材阈值（较高，较少孔隙）
-    poreThresholdRange: 0.2,    // 阈值范围
-    poreStrength: 0.4,          // 强度
+    // 光泽和材质
+    warpSheen: 0.3,             // 经线有一定光泽
+    weftSheen: 0.25,            // 纬线光泽稍弱
+    roughnessMin: 0.4,
+    roughnessMax: 0.8,
+    normalStrength: 5.0,
+
+    // 纱线厚度调节
+    threadHeightScale: 1.0,
+    threadShadowStrength: 0.3,
 }
 
 function createGradientTexture(device: GPUDevice, stops: { offset: number, color: string }[]): GPUTexture {
@@ -83,7 +88,6 @@ function createGradientTexture(device: GPUDevice, stops: { offset: number, color
     if (!ctx) throw new Error('Could not get 2d context');
 
     const gradient = ctx.createLinearGradient(0, 0, width, 0);
-    // Sort stops just in case
     const sortedStops = [...stops].sort((a, b) => a.offset - b.offset);
     sortedStops.forEach(stop => {
         gradient.addColorStop(stop.offset, stop.color);
@@ -110,7 +114,7 @@ function createGradientTexture(device: GPUDevice, stops: { offset: number, color
     return texture;
 }
 
-export async function generateWoodTexture(params: WoodParams, width: number, height: number): Promise<string> {
+export async function generatePlainWeaveTexture(params: PlainWeaveParams, width: number, height: number): Promise<string> {
     const device = await getWebGPUDevice()
     if (!device) {
         throw new Error('WebGPU not supported')
@@ -123,45 +127,54 @@ export async function generateWoodTexture(params: WoodParams, width: number, hei
         usage: GPUTextureUsage.RENDER_ATTACHMENT | GPUTextureUsage.COPY_SRC,
     })
 
-    // 扩展 uniform buffer 以容纳新参数
-    // 16 (matrix) + 7 (core params) + 1 (padding) = 24 floats
-    // Advanced params: 17 floats
-    // Total: 41 floats -> align to 44 floats (176 bytes)
+    // Uniform buffer 结构:
+    // 16 (matrix) + 4 (core) + 3 (thread) + 3 (weave) + 1 (padding1) = 27
+    // + 4 (advanced) + 5 (sheen) + 2 (thread height) + 1 (padding2) = 39
+    // Align to 44 floats (176 bytes)
     const uniformData = new Float32Array(44);
 
     // Identity Matrix for viewMatrix (not used but required)
     uniformData[0] = 1; uniformData[5] = 1; uniformData[10] = 1; uniformData[15] = 1;
 
-    // 核心参数
+    // 核心参数 (16-19)
     uniformData[16] = params.tileSize;
-    uniformData[17] = params.ringScale;
-    uniformData[18] = params.ringDistortion;
-    uniformData[19] = params.knotIntensity;
-    uniformData[20] = params.latewoodBias;
-    uniformData[21] = params.rayStrength;
-    uniformData[22] = params.poreDensity;
-    uniformData[23] = 0; // padding
+    uniformData[17] = params.threadDensity;
+    uniformData[18] = params.threadThickness;
+    uniformData[19] = params.warpWeftRatio;
 
-    // 高级参数 (Starts at 24 now)
-    uniformData[24] = params.fbmOctaves;
-    uniformData[25] = params.fbmAmplitude;
-    uniformData[26] = params.knotFrequency;
-    uniformData[27] = params.distortionFreq;
-    uniformData[28] = params.ringNoiseFreq;
-    uniformData[29] = params.rayFrequencyX;
-    uniformData[30] = params.rayFrequencyY;
-    uniformData[31] = params.knotThresholdMin;
-    uniformData[32] = params.knotThresholdMax;
-    uniformData[33] = params.normalStrength;
-    uniformData[34] = params.roughnessMin;
-    uniformData[35] = params.roughnessMax;
-    uniformData[36] = params.poreScale;
-    uniformData[37] = params.poreThresholdEarly;
-    uniformData[38] = params.poreThresholdLate;
-    uniformData[39] = params.poreThresholdRange;
-    uniformData[40] = params.poreStrength;
+    // 纱线结构 (20-22)
+    uniformData[20] = params.threadTwist;
+    uniformData[21] = params.fiberDetail;
+    uniformData[22] = params.fuzziness;
 
-    // Padding
+    // 织造特征 (23-25)
+    uniformData[23] = params.weaveTightness;
+    uniformData[24] = params.threadUnevenness;
+    uniformData[25] = params.weaveImperfection;
+
+    uniformData[26] = 0; // padding1
+
+    // 高级参数 (27-30)
+    uniformData[27] = params.fbmOctaves;
+    uniformData[28] = params.fbmAmplitude;
+    uniformData[29] = params.noiseFrequency;
+    uniformData[30] = params.colorVariation;
+
+    // 光泽和材质 (31-35)
+    uniformData[31] = params.warpSheen;
+    uniformData[32] = params.weftSheen;
+    uniformData[33] = params.roughnessMin;
+    uniformData[34] = params.roughnessMax;
+    uniformData[35] = params.normalStrength;
+
+    // 纱线厚度调节 (36-37)
+    uniformData[36] = params.threadHeightScale;
+    uniformData[37] = params.threadShadowStrength;
+
+    // Padding (38-43)
+    uniformData[38] = 0;
+    uniformData[39] = 0;
+    uniformData[40] = 0;
     uniformData[41] = 0;
     uniformData[42] = 0;
     uniformData[43] = 0;
@@ -183,7 +196,7 @@ export async function generateWoodTexture(params: WoodParams, width: number, hei
 
     // 3. Create Pipeline
     const module = device.createShaderModule({
-        code: woodShaderWGSL,
+        code: plainWeaveShaderWGSL,
     });
 
     const pipeline = device.createRenderPipeline({
@@ -288,15 +301,10 @@ export async function generateWoodTexture(params: WoodParams, width: number, hei
     const data = new Uint8Array(arrayBuffer);
     const imageData = ctx.createImageData(width, height);
 
-    // Copy row by row to remove padding
+    // Copy row by row to remove padding and swizzle BGRA to RGBA
     for (let y = 0; y < height; y++) {
         const srcOffset = y * bytesPerRow;
         const dstOffset = y * width * 4;
-        // In BGRA, we need to swizzle to RGBA for ImageData?
-        // WebGPU 'bgra8unorm' usually maps to surface, but when reading back...
-        // Let's check. copyTextureToBuffer copies raw bytes.
-        // If texture is bgra8unorm, the bytes are B, G, R, A.
-        // ImageData expects R, G, B, A.
 
         for (let x = 0; x < width; x++) {
             const i = srcOffset + x * 4;
