@@ -73,6 +73,10 @@
             <!-- Leather Panel -->
             <LeatherPanel v-if="proceduralType === 'Leather'" :is-generating="isGenerating"
                 @set-image="$emit('set-image', $event)" />
+
+            <!-- Twill Weave Panel -->
+            <TwillWeavePanel v-if="proceduralType === 'Twill Weave'" :is-generating="isGenerating"
+                @set-image="$emit('set-image', $event)" />
         </div>
 
         <!-- Max Resolution Slider -->
@@ -88,6 +92,7 @@ import { Slider } from '@leolee9086/slider-component'
 import WoodPanel from './WoodPanel.vue'
 import PlainWeavePanel from './PlainWeavePanel.vue'
 import LeatherPanel from './LeatherPanel.vue'
+import TwillWeavePanel from './TwillWeavePanel.vue'
 
 const props = defineProps<{
     isMobile?: boolean
@@ -104,7 +109,7 @@ const emit = defineEmits<{
 }>()
 
 const activeTab = ref('Upload')
-const textureTypes = ['Wood', 'Plain Weave', 'Leather'] as const
+const textureTypes = ['Wood', 'Plain Weave', 'Leather', 'Twill Weave'] as const
 const proceduralType = ref<typeof textureTypes[number]>('Wood')
 const isGenerating = ref(false)
 
