@@ -86,7 +86,6 @@
 </template>
 
 <script setup lang="ts">
-import { computed } from 'vue'
 import '@leolee9086/slider-component/dist/slider-component.css'
 import { useControlsLogic } from '../../composables/useControlsLogic'
 import type { DehazeParams } from '../../adjustments/dehaze/types'
@@ -99,7 +98,7 @@ import LUTPanel from '../control-panels/LUTPanel.vue'
 import HSLPanel from '../control-panels/HSLPanel.vue'
 import ExposurePanel from '../control-panels/ExposurePanel.vue'  // 新增导入
 import DehazePanel from '../control-panels/dehaze/DehazePanel.vue'  // 新增导入
-import ClarityPanel from '../control-panels/ClarityPanel.vue'  // 新增导入
+import ClarityPanel from '../control-panels/clarity/ClarityPanel.vue'  // 新增导入
 import LuminancePanel from '../control-panels/LuminancePanel.vue'  // 新增导入
 import SettingsPanel from '../control-panels/SettingsPanel.vue'
 import ViewPanel from '../control-panels/ViewPanel.vue'

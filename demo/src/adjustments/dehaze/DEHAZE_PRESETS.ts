@@ -1,7 +1,7 @@
 /**
  * 预设去雾配置
  */
-
+import { DehazeParams } from "./types";
 export const DEHAZE_PRESETS = {
   /** 轻度去雾 */
   light: {
@@ -98,5 +98,20 @@ export const DEHAZE_PRESETS = {
     saturationEnhancement: 1.4,
     contrastEnhancement: 1.2,
     brightnessEnhancement: 1.1
+  },
+  default: {
+    omega: 0.95,
+    t0: 0.1,
+    windowSize: 15,
+    topRatio: 0.1,
+    adaptiveMode: false,
+    spatialAdaptiveMode: false,
+    adaptiveStrength: 1.0,
+    hazeWeight: 0.5,
+    atmosphericWeight: 0.3,
+    enableEnhancement: false,
+    saturationEnhancement: 1.2,
+    contrastEnhancement: 1.1,
+    brightnessEnhancement: 1.0
   }
-} as const;
+} as const ;

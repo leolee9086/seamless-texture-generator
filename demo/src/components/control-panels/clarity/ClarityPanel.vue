@@ -172,9 +172,9 @@
 <script setup lang="ts">
 import { ref, computed } from 'vue'
 import { Slider } from '@leolee9086/slider-component'
-import type { ClarityParams } from '../../adjustments/clarityAdjustment'
-import { DEFAULT_CLARITY_PARAMS, CLARITY_PRESETS, getClarityPreset, createClarityAdjustmentEvent } from '../../adjustments/clarityAdjustment'
-import type { ControlEvent } from '../../types/controlEvents'
+import type { ClarityParams } from '../../../adjustments/clarityAdjustment'
+import { DEFAULT_CLARITY_PARAMS, CLARITY_PRESETS, getClarityPreset, createClarityAdjustmentEvent } from '../../../adjustments/clarityAdjustment'
+import type { ControlEvent } from '../../../types/controlEvents'
 
 const props = defineProps<{
     isMobile?: boolean
