@@ -35,59 +35,10 @@ export interface UseTextureGeneratorOptions {
   initialBorderSize?: number
 }
 
-export interface UseTextureGeneratorReturn {
-  // 状态
-  originalImage: Ref<string | null>
-  rawOriginalImage: Ref<string | null>
-  processedImage: Ref<string | null>
-  borderSize: Ref<number>
-  maxResolution: Ref<number>
-  splitPosition: Ref<number>
-  isProcessing: Ref<boolean>
-  isSampling: Ref<boolean>
-  errorMessage: Ref<string>
-  viewerRef: Ref<any>
-  zoomLevel: Ref<number>
-  magnifierEnabled: Ref<boolean>
-  isMobile: Ref<boolean>
-  cameraActive: Ref<boolean>
-  supportsNativeCamera: Ref<boolean>
-  lutEnabled: Ref<boolean>
-  lutIntensity: Ref<number>
-  lutFileName: Ref<string | null>
-  lutFile: Ref<File | null>
-  maskGenerator: Ref<(() => Promise<Uint8Array | null>) | null>
-  previewOverlay: Ref<PreviewOverlayData | null>
-  globalHSL: Ref<{ hue: number; saturation: number; lightness: number }>
-  hslLayers: Ref<HSLAdjustmentLayer[]>
-  exposureStrength: Ref<number>  // 新增
-  exposureManual: Ref<{ exposure: number; contrast: number; gamma: number }>  // 新增
-  dehazeParams: Ref<DehazeParams>,  // 新增
-  clarityParams: Ref<ClarityParams>,  // 新增
-  luminanceParams: Ref<LuminanceAdjustmentParams>  // 新增
-
-  // 方法
-  handleImageUploadWrapper: (event: Event) => void
-  loadSampleImageWrapper: () => void
-  toggleCameraWrapper: () => void
-  handlePhotoCapturedWrapper: (imageData: string) => void
-  handleCameraErrorWrapper: (message: string) => void
-  handleSamplingConfirmWrapper: (imageData: string) => void
-  processImage: () => Promise<void>
-  toggleMagnifierWrapper: () => void
-  resetZoomWrapper: () => void
-  saveResultWrapper: () => void
-  saveOriginalWrapper: () => void
-  openSamplingEditor: () => void
-  handleControlEvent: (event: ControlEvent) => void
-  setPreviewOverlay: (data: any, component: Component) => void
-  clearPreviewOverlay: () => void
-}
-
 /**
  * 纹理生成器的共享逻辑可组合函数
  */
-export function useTextureGenerator(options: UseTextureGeneratorOptions = {}): UseTextureGeneratorReturn {
+export function useTextureGenerator(options: UseTextureGeneratorOptions = {}) {
   const {
     enableCamera = false,
     initialMaxResolution = 4096,
