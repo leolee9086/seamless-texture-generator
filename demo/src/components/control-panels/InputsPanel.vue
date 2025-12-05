@@ -81,6 +81,10 @@
             <!-- Velvet Panel -->
             <VelvetPanel v-if="proceduralType === 'Velvet'" :is-generating="isGenerating"
                 @set-image="$emit('set-image', $event)" />
+
+            <!-- Turing Panel -->
+            <TuringPanel v-if="proceduralType === 'Turing'" :is-generating="isGenerating"
+                @set-image="$emit('set-image', $event)" />
         </div>
 
         <!-- Max Resolution Slider -->
@@ -99,6 +103,7 @@ import PlainWeavePanel from './PlainWeavePanel.vue'
 import LeatherPanel from './LeatherPanel.vue'
 import TwillWeavePanel from './TwillWeavePanel.vue'
 import VelvetPanel from './VelvetPanel.vue'
+import TuringPanel from './TuringPanel.vue'
 
 const props = defineProps<{
     isMobile?: boolean
@@ -115,7 +120,7 @@ const emit = defineEmits<{
 }>()
 
 const activeTab = ref('Upload')
-const textureTypes = ['Wood', 'Plain Weave', 'Leather', 'Twill Weave', 'Velvet'] as const
+const textureTypes = ['Wood', 'Plain Weave', 'Leather', 'Twill Weave', 'Velvet', 'Turing'] as const
 const proceduralType = ref<typeof textureTypes[number]>('Wood')
 const isGenerating = ref(false)
 

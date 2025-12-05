@@ -151,13 +151,13 @@
 import { ref, computed, onMounted, watch } from 'vue'
 import { Teleport } from 'vue'
 import { Slider } from '@leolee9086/slider-component'
-import LUTGallery from './lut/LUTGallery.vue'
-import ColorBlockSelector from './ColorBlockSelector.vue'
-import MaskPreviewPanel from '../previews/MaskPreviewPanel.vue'
-import { lutDb, type LUTItem } from '../../utils/lutDb'
-import { processImageToTileable } from '../../utils/imageProcessor'
-import { useColorBlockSelector } from '../../composables/useColorBlockSelector'
-import { getHslBlockColor } from '../../utils/lut/getHslBlockColor'
+import LUTGallery from './LUTGallery.vue'
+import ColorBlockSelector from '../ColorBlockSelector.vue'
+import MaskPreviewPanel from '../../previews/MaskPreviewPanel.vue'
+import { lutDb, type LUTItem } from '../../../utils/lutDb'
+import { processImageToTileable } from '../../../utils/imageProcessor'
+import { useColorBlockSelector } from '../../../composables/useColorBlockSelector'
+import { getHslBlockColor } from '../../../utils/lut/getHslBlockColor'
 
 const props = defineProps<{
     isMobile?: boolean

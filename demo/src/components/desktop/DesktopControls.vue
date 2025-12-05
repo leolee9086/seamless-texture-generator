@@ -94,7 +94,7 @@ import type { LuminanceAdjustmentParams } from '../../adjustments/luminanceAdjus
 import ContactPanel from '../control-panels/ContactPanel.vue'
 import InputsPanel from '../control-panels/InputsPanel.vue'
 import CropPanel from '../control-panels/CropPanel.vue'
-import LUTPanel from '../control-panels/LUTPanel.vue'
+import LUTPanel from '../control-panels/lut/LUTPanel.vue'
 import HSLPanel from '../control-panels/HSLPanel.vue'
 import ExposurePanel from '../control-panels/ExposurePanel.vue'  // 新增导入
 import DehazePanel from '../control-panels/dehaze/DehazePanel.vue'  // 新增导入
