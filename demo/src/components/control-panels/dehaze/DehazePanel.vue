@@ -116,15 +116,13 @@ import { ref, computed, watch } from 'vue'
 import { Slider } from '@leolee9086/slider-component'
 import {
     DEFAULT_DEHAZE_PARAMS,
-    DEHAZE_PRESETS,
-    type DehazeParams,
     type DehazePreset,
-    applyDehazeAdjustment,
-    getDehazePreset,
-    validateDehazeParams
-} from '../../adjustments/dehazeAdjustment'
-import { createUpdateDataEvent } from '../../types/controlEvents'
-import type { ControlEvent } from '../../types/controlEvents'
+    getDehazePreset} from '../../../adjustments/dehaze/dehazeAdjustment'
+import { DEHAZE_PRESETS } from '@/adjustments/dehaze/DEHAZE_PRESETS'
+import { type DehazeParams } from '@/adjustments/dehaze/types'
+import { validateDehazeParams } from '@/adjustments/dehaze/validateDehazeParams'
+import { createUpdateDataEvent } from '../../../types/controlEvents'
+import type { ControlEvent } from '../../../types/controlEvents'
 
 const props = defineProps<{
     isMobile?: boolean

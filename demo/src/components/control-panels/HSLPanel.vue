@@ -105,7 +105,7 @@ const props = defineProps<{
     isMobile?: boolean
     originalImage: string | null
     globalHSL?: { hue: number; saturation: number; lightness: number }
-    hslLayers?: import('../../utils/hslAdjustStep').HSLAdjustmentLayer[]
+    hslLayers?: HSLAdjustmentLayer[]
 }>()
 
 const emit = defineEmits<{

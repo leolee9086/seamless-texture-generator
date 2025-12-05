@@ -89,13 +89,16 @@
 import { computed } from 'vue'
 import '@leolee9086/slider-component/dist/slider-component.css'
 import { useControlsLogic } from '../../composables/useControlsLogic'
+import type { DehazeParams } from '../../adjustments/dehaze/types'
+import type { ClarityParams } from '../../adjustments/clarityAdjustment'
+import type { LuminanceAdjustmentParams } from '../../adjustments/luminanceAdjustment'
 import ContactPanel from '../control-panels/ContactPanel.vue'
 import InputsPanel from '../control-panels/InputsPanel.vue'
 import CropPanel from '../control-panels/CropPanel.vue'
 import LUTPanel from '../control-panels/LUTPanel.vue'
 import HSLPanel from '../control-panels/HSLPanel.vue'
 import ExposurePanel from '../control-panels/ExposurePanel.vue'  // 新增导入
-import DehazePanel from '../control-panels/DehazePanel.vue'  // 新增导入
+import DehazePanel from '../control-panels/dehaze/DehazePanel.vue'  // 新增导入
 import ClarityPanel from '../control-panels/ClarityPanel.vue'  // 新增导入
 import LuminancePanel from '../control-panels/LuminancePanel.vue'  // 新增导入
 import SettingsPanel from '../control-panels/SettingsPanel.vue'
@@ -119,9 +122,9 @@ const props = defineProps<{
   hslLayers?: any[]
   exposureStrength?: number  // 新增
   exposureManual?: { exposure: number; contrast: number; gamma: number }  // 新增
-  dehazeParams?: import('../../adjustments/dehazeAdjustment').DehazeParams  // 新增
-  clarityParams?: import('../../adjustments/clarityAdjustment').ClarityParams  // 新增
-  luminanceParams?: import('../../adjustments/luminanceAdjustment').LuminanceAdjustmentParams  // 新增
+  dehazeParams?: DehazeParams  // 新增
+  clarityParams?: ClarityParams  // 新增
+  luminanceParams?: LuminanceAdjustmentParams  // 新增
 }>()
 
 const emit = defineEmits<{
@@ -151,7 +154,6 @@ const {
   handleControlEvent
 } = useControlsLogic(props, emit)
 
-const currentGroup = computed(() => groups.find(g => g.id === activeGroup.value))
 
 </script>
 

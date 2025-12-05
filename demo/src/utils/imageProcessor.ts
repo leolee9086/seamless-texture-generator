@@ -3,7 +3,8 @@ import { scaleImageToMaxResolution } from './imageLoader'
 import { processImageWithLUT, processLutData } from '@leolee9086/use-lut'
 import { HSLAdjustProcessStep, type HSLAdjustmentLayer } from './hslAdjustStep'
 import { adjustExposure, adjustExposureManual } from '../adjustments/exposureAdjustment'  // 新增导入
-import { applyDehazeAdjustment, type DehazeParams, DEFAULT_DEHAZE_PARAMS } from '../adjustments/dehazeAdjustment'  // 新增导入
+import { applyDehazeAdjustment, DEFAULT_DEHAZE_PARAMS } from '../adjustments/dehaze/dehazeAdjustment'  // 新增导入
+import { type DehazeParams } from '@/adjustments/dehaze/types'
 import { processClarityAdjustment, type ClarityParams } from '../adjustments/clarityAdjustment'  // 新增导入
 import { applyLuminanceAdjustmentToImageData, type LuminanceAdjustmentParams } from '../adjustments/luminanceAdjustment'  // 新增导入
 
