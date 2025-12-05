@@ -49,8 +49,8 @@
 
 <script setup lang="ts">
 import { ref, computed } from 'vue'
-import type { LUTItem } from '../../utils/lutDb'
-import { isMobileDevice } from '../../utils/deviceDetection'
+import type { LUTItem } from '../../../utils/lutDb'
+import { isMobileDevice } from '../../../utils/deviceDetection'
 
 defineProps<{
     luts: LUTItem[]
