@@ -79,7 +79,11 @@ struct VertexOutput {
     @location(0) uv : vec2<f32>,
 };
 
-// --- Noise Functions (复用且增强的高质量噪声) ---
+// --- Noise Functions ---
+
+fn hash2(p: vec2<f32>) -> f32 {
+    return fract(sin(dot(p, vec2<f32>(127.1, 311.7))) * 43758.5453123);
+}
 
 fn hash2_periodic(p: vec2<f32>, period: vec2<f32>) -> vec2<f32> {
     let wrappedP = p % period;
@@ -121,11 +125,18 @@ fn flowFbm(p: vec2<f32>, octaves: i32, period: f32, persistence: f32) -> f32 {
 
 // --- Velvet Logic ---
 
-// 旋转向量工具
 fn rotateVector(v: vec3<f32>, axis: vec3<f32>, angle: f32) -> vec3<f32> {
     let c = cos(angle);
     let s = sin(angle);
     return v * c + cross(axis, v) * s + axis * dot(axis, v) * (1.0 - c);
+}
+
+// Charlie Sheen NDF approximation for velvet
+fn charlieD(NdotH: f32, roughness: f32) -> f32 {
+    let invAlpha = 1.0 / roughness;
+    let cos2h = NdotH * NdotH;
+    let sin2h = 1.0 - cos2h;
+    return (2.0 + invAlpha) * pow(sin2h, invAlpha * 0.5) / (2.0 * 3.14159);
 }
 
 @vertex
@@ -142,10 +153,7 @@ fn fs_main(in : VertexOutput) -> @location(0) vec4<f32> {
     let scale = u.tileSize;
     let pos = uv * scale;
     
-    // 1. Base Normal Generation (Flat surface initially)
-    var normal = vec3<f32>(0.0, 0.0, 1.0);
-    
-    // 2. Generate "Crush" Map (The flow of the velvet fibers)
+    // 1. Generate "Crush" Map (The flow of the velvet fibers)
     // Velvet fibers aren't perfectly straight up. They lean.
     // Crushed velvet has regions leaning in chaotic directions.
     
@@ -158,106 +166,100 @@ fn fs_main(in : VertexOutput) -> @location(0) vec4<f32> {
     var fiberDir = vec3<f32>(cos(rad), sin(rad), 0.0);
     
     // Perturb fiber direction based on crush noise
-    // The crushStrength mixes between uniform slant and chaotic swirl
     let randomAngle = (noise1 * 2.0 * 3.14159) * u.crushStrength;
     fiberDir = rotateVector(fiberDir, vec3<f32>(0.0, 0.0, 1.0), randomAngle);
     
-    // Calculate the actual normal of the fibers
-    // If slant is 0, normal is (0,0,1). If slant is 1, it lays nearly flat.
-    // We modify the Z component based on slant.
-    // However, for lighting, we usually treat the "Micro-facet" normal distribution.
-    // Here we simulate the aggregate normal of a cluster of fibers.
+    // 2. High Frequency "Micro-Fiber" Noise
+    // Real velvet has millions of fibers. Standard perlin is too smooth.
+    // We use a high frequency hash to simulate the random orientation of individual tips.
+    let fiberFreq = 800.0 * (1.0 + u.pileDensity); // Very high frequency
+    let microNoise = hash2(pos * fiberFreq); // 0.0 to 1.0 white noise
     
-    let leanAmount = u.pileSlant * (0.5 + 0.5 * noise2 * u.crushDetail); // Varying lean height
-    let tangent = normalize(vec3<f32>(fiberDir.x, fiberDir.y, 1.0 - leanAmount)); 
+    // 3. Normal Construction
+    // Combine macro lean (crush) with micro variation
     
-    // Apply Corduroy/Stripes effect (Modulates the normal height/lean)
+    let leanAmount = u.pileSlant * (0.5 + 0.5 * noise2 * u.crushDetail); 
+    
+    // The "Macro" normal of the pile tuft
+    var macroNormal = normalize(vec3<f32>(fiberDir.x * leanAmount, fiberDir.y * leanAmount, 1.0 - leanAmount * 0.5));
+    
+    // Apply Corduroy/Stripes
     if (u.stripes > 0.0) {
         let stripePattern = sin(dot(uv, vec2<f32>(cos(rad), sin(rad))) * u.stripeFrequency * 100.0);
         let stripeH = smoothstep(-0.5, 0.5, stripePattern);
-        // Stripes affect the normal Z (height) and create valleys
-        normal = normalize(mix(tangent, vec3<f32>(0.0,0.0,1.0), (1.0 - stripeH) * u.stripes * 0.5));
-    } else {
-        normal = tangent;
+        macroNormal = normalize(mix(macroNormal, vec3<f32>(0.0,0.0,1.0), (1.0 - stripeH) * u.stripes * 0.7));
     }
     
-    // 3. Micro-details (Grain)
-    let grainFreq = 200.0 * (1.0 + u.pileDensity);
-    let grain = periodicNoise2D(pos * grainFreq, scale * grainFreq);
-    // Perturb normal slightly for grain
-    normal = normalize(normal + vec3<f32>(grain, grain, 0.0) * u.fiberGrain * 0.1);
+    // Perturb with micro-noise to get "fuzzy" normal
+    // The fibers don't all point exactly the same way
+    let grainStrength = u.fiberGrain * 0.3;
+    // Map 0..1 to -1..1
+    let microPerturb = (microNoise - 0.5) * 2.0; 
+    var N = normalize(macroNormal + vec3<f32>(microPerturb * grainStrength, microPerturb * grainStrength, 0.0));
     
-    // 4. Lighting Calculation (Velvet / Sheen Model)
+    // 4. Lighting Calculation
     
-    // Light and View setup
-    // We simulate a light source that is slightly off-center to show anisotropy
     let lightDir = normalize(vec3<f32>(u.lightSourceX, u.lightSourceY, 1.0));
-    let viewDir = vec3<f32>(0.0, 0.0, 1.0); // Top-down view for texture generation
-    
+    // View dir is top down
+    let V = vec3<f32>(0.0, 0.0, 1.0); 
     let L = lightDir;
-    let V = viewDir;
-    let N = normal;
     let H = normalize(L + V);
     
-    // --- Velvet Lighting Physics ---
+    let NdotL = max(dot(N, L), 0.0);
+    let NdotV = max(dot(N, V), 0.0);
+    let NdotH = max(dot(N, H), 0.0);
+    let VdotH = max(dot(V, H), 0.0);
     
-    // A. Diffuse (Wrap lighting to simulate sub-surface scattering in pile)
-    let NdotL = dot(N, L);
-    let diffuseTerm = max(NdotL, 0.0) * 0.6 + 0.4; // Wrap lighting
+    // A. Base Diffuse (Deep Scattering)
+    // Velvet is dark when viewed straight on (light gets trapped) and bright at edges
+    // But color also depends on light alignment.
+    // We use a modified diffuse that is softer
+    let diffuse = pow(NdotL, 1.0 + u.pileHeight) * (0.5 + 0.5 * u.ambientOcclusion);
     
-    // B. Sheen / Asperity Scattering
-    // The key to velvet is that it brightens at grazing angles (edges) or when fibers point at light.
-    // Standard specular (Blinn-Phong) looks like plastic.
-    // We use a simplified form of Ashikhmin or Charlie sheen.
+    // B. Velvet Sheen
+    // The "fuzzy" look comes from backscattering at grazing angles.
+    // We approximate this using a term that gets stronger as N is perpendicular to V
+    // or as L aligns with the fibers.
     
-    // "Backscattering" component: light reflects off the tips
-    let dotNH = max(dot(N, H), 0.0);
-    let sheenDist = pow(1.0 - dotNH, u.sheenFalloff * 0.5); // Invert standard specular logic somewhat
+    // 1. Term dependent on View Angle (Rim / Grazing)
+    // As NdotV approaches 0 (grazing), velvet gets brighter/sheenier.
+    let grazing = 1.0 - NdotV;
+    let rimSheen = pow(grazing, u.sheenFalloff);
     
-    // Rim effect: when the fiber side faces the view
-    let edgeness = 1.0 - max(dot(N, V), 0.0);
-    let rim = pow(edgeness, u.sheenFalloff);
+    // 2. Term dependent on Light Angle relative to Fiber Normals (Backscatter)
+    // "Charlie" Sheen like distribution
+    let roughness = mix(0.3, 1.0, u.noiseRoughness);
+    let sheenDist = charlieD(NdotH, roughness);
     
-    // Combine sheen
-    let sheenValue = (sheenDist * 0.5 + rim * 0.5) * u.sheenIntensity;
+    // Combine terms
+    let sheenFactor = (rimSheen + sheenDist * 0.5) * u.sheenIntensity;
     
-    // 5. Color Blending
-    
+    // 5. Color Composition
     let baseCol = vec3<f32>(u.baseColorR, u.baseColorG, u.baseColorB);
     let sheenCol = vec3<f32>(u.sheenColorR, u.sheenColorG, u.sheenColorB);
     
-    // Color variation noise (larger patches)
+    // Color Variation (Large scale)
     let colVarNoise = flowFbm(pos * u.crushScale * 2.0, 2, crushPeriod, 0.5);
-    let variedBase = baseCol * (1.0 + colVarNoise * u.colorVariation);
+    // Darken the valleys/deep parts more
+    let depth = 1.0 - (noise2 * 0.5 + 0.5); 
+    let variedBase = baseCol * (1.0 + colVarNoise * u.colorVariation) * (mix(1.0, depth, u.ambientOcclusion * 0.5));
     
-    // AO calculation based on "depth" of fibers
-    // If the fiber is standing up (N.z is high) vs laying down.
-    // Or based on stripe valleys.
-    var ao = 1.0;
-    if (u.stripes > 0.0) {
-        let stripePattern = sin(dot(uv, vec2<f32>(cos(rad), sin(rad))) * u.stripeFrequency * 100.0);
-        ao = smoothstep(-1.0, 0.5, stripePattern); // Darker in valleys
-        ao = mix(1.0, ao, u.ambientOcclusion);
-    }
+    // Mix Base and Sheen
+    // Start with base
+    var finalColor = variedBase * diffuse;
     
-    // Composite
-    // Darker when looking directly into the pile (N aligned with V) -> handled by rim logic inverse?
-    // Actually velvet is often darker where fibers are upright and facing viewer (traps light), 
-    // and lighter where crushed flat or at edges.
+    // Add sheen (Additive)
+    // Sheen should be masked by shadows, but velvet sheen often glows a bit even in soft light
+    // We'll multiply by a soft shadow term
+    let softShadow = smoothstep(-0.1, 0.2, NdotL); 
+    finalColor = finalColor + sheenCol * sheenFactor * softShadow;
     
-    // Self-shadowing approximation:
-    // If N points away from light strongly, it should be dark (shadows between fibers).
-    let shadow = smoothstep(-0.2, 0.2, NdotL);
+    // High frequency sparkle/grain (Simulates individual fiber tips catching light)
+    // This is distinct from the normal map "grain", this is specular highlights on tips
+    let sparkle = step(0.98 - u.pileDensity * 0.05, microNoise) * NdotL;
+    // Sparkle is subtle
+    finalColor = finalColor + sheenCol * sparkle * u.sheenIntensity * 0.2;
     
-    var finalColor = variedBase * diffuseTerm * shadow * ao;
-    
-    // Add Sheen (additive)
-    finalColor = finalColor + sheenCol * sheenValue * shadow;
-    
-    // Dithering to prevent banding in dark gradients
-    let dither = (fract(sin(dot(uv, vec2<f32>(12.9898, 78.233))) * 43758.5453) - 0.5) * 0.01;
-    finalColor = finalColor + dither;
-
     return vec4<f32>(finalColor, 1.0);
 }
 `;
