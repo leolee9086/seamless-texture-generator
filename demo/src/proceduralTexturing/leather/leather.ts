@@ -36,6 +36,13 @@ export interface LeatherParams {
     roughnessMax: number;       // Roughness in grooves/pores
     normalStrength: number;     // Global normal intensity
 
+    // --- NEW: Fibers & Fine Lines ---
+    fiberScale: number;         // Scale of the fine fiber texture
+    fiberStrength: number;      // Intensity
+    fiberDetail: number;        // Detail/Roughness of fibers
+    fiberDirectionality: number; // How strongly directional the fibers are
+    fiberRandomness: number;    // How much the direction varies (0=uniform, 1=chaotic swirl)
+
     // --- Color ---
     gradientStops: { offset: number, color: string }[];
     patinaStrength: number;     // Darkening in grooves
@@ -72,6 +79,12 @@ struct Uniforms {
     roughnessMin : f32,
     roughnessMax : f32,
     normalStrength : f32,
+
+    fiberScale : f32,
+    fiberStrength : f32,
+    fiberDetail : f32,
+    fiberDirectionality : f32,
+    fiberRandomness : f32,
     
     patinaStrength : f32,
     colorVariation : f32,
@@ -192,6 +205,51 @@ fn rotateUV(uv: vec2<f32>, angle: f32) -> vec2<f32> {
     return vec2<f32>(uv.x * c - uv.y * s, uv.x * s + uv.y * c);
 }
 
+// --- Flow Noise for Fibers ---
+
+fn rot2d(angle: f32) -> mat2x2<f32> {
+    let s = sin(angle);
+    let c = cos(angle);
+    return mat2x2<f32>(c, -s, s, c);
+}
+
+// Directional flow noise
+fn flowNoise(p: vec2<f32>, scale: f32, directionality: f32, randomness: f32, period: f32) -> f32 {
+    // 1. Generate flow field "angle"
+    // Use low frequency noise to determine direction
+    let flowAngle = periodicNoise(p * 0.5, period * 0.5) * 6.28318 * randomness;
+    
+    // 2. Rotate coordinate system based on flow angle
+    // If directionality is high, we stretch the noise along X before rotating
+    // Base coordinate
+    var q = p;
+    
+    // Apply local rotation
+    let rot = rot2d(flowAngle);
+    // Rotating the coordinate effectively rotates the "grain" if the grain is anisotropic
+    
+    // Anisotropy: Stretch X, Shrink Y (or vice versa)
+    // Strong fibers = High stretching
+    let stretchFactor = 1.0 + directionality * 4.0;
+    
+    // We want to sample noise that is stretched.
+    // So we scale the coordinate: q.x * stretch, q.y / stretch?
+    // Actually simpler:
+    // 1. Rotate P by angle.
+    // 2. Scale P.x by stretch.
+    // 3. Sample noise.
+    
+    var localP = p;
+    if (directionality > 0.01) {
+       // Center of rotation? Just 0,0 is fine for noise field.
+       localP = rot * p;
+       localP = vec2<f32>(localP.x * stretchFactor, localP.y);
+    }
+    
+    // Scale must adapt to 'scale' param
+    return periodicFbm(localP * scale, 3, period * scale);
+}
+
 // -----------------------------------------------------------
 // Core Logic: Leather Generation
 // -----------------------------------------------------------
@@ -277,6 +335,22 @@ fn getLeatherDetail(uv: vec2<f32>) -> vec4<f32> {
     h = h + microDetail;
     // Apply Creases
     h = h - creaseLine;
+    
+    // 8.5. Apply Fibers (NEW)
+    // Fibers are very fine, directional.
+    // Base fiber noise
+    let fiberVal = flowNoise(pos, u.fiberScale, u.fiberDirectionality, u.fiberRandomness, scale);
+    // Detail layer
+    let fiberDetailVal = periodicFbm(pos * u.fiberScale * 2.0, 2, scale * u.fiberScale * 2.0);
+    
+    // Composite fiber
+    let fiberInfo = (fiberVal + fiberDetailVal * u.fiberDetail) * 0.5;
+    // Fibers add roughness/normals but shouldn't affect height too massively or it looks like fur.
+    // But for normal map, we need height variation.
+    let fibers = fiberInfo * u.fiberStrength * 0.1;
+    
+    // Fibers are usually subtractive (gaps between fibers) and additive (fiber strands).
+    h = h + fibers;
     
     h = clamp(h, 0.0, 1.0);
     

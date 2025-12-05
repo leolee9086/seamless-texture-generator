@@ -36,6 +36,13 @@ export const defaultLeatherParams: LeatherParams = {
     roughnessMax: 0.7,
     normalStrength: 8.0,
 
+    // Fiber defaults
+    fiberScale: 20.0,
+    fiberStrength: 0.5,
+    fiberDetail: 0.5,
+    fiberDirectionality: 0.2, // Subtle direction
+    fiberRandomness: 0.5,
+
     patinaStrength: 0.2, // Slight darkening in grooves
     colorVariation: 0.1,
 
@@ -95,9 +102,10 @@ export async function generateLeatherTexture(params: LeatherParams, width: numbe
     })
 
     // 2. Uniforms
-    // 16 floats for Matrix + 25 floats for params = 41 floats
-    // Align to 44 floats (176 bytes)
-    const uniformData = new Float32Array(44);
+    // 16 floats (Matrix) + 25 (Old Params) + 5 (Fiber) = 46 floats.
+    // Align to 48 or 52? 48 is divisible by 4. (48 * 4 = 192 bytes).
+    // Let's use 48 floats.
+    const uniformData = new Float32Array(48);
 
     // Identity Matrix
     uniformData[0] = 1; uniformData[5] = 1; uniformData[10] = 1; uniformData[15] = 1;
@@ -130,12 +138,24 @@ export async function generateLeatherTexture(params: LeatherParams, width: numbe
     uniformData[i++] = params.roughnessMax;
     uniformData[i++] = params.normalStrength;
 
+    // Fiber Params (New)
+    uniformData[i++] = params.fiberScale;
+    uniformData[i++] = params.fiberStrength;
+    uniformData[i++] = params.fiberDetail;
+    uniformData[i++] = params.fiberDirectionality;
+    uniformData[i++] = params.fiberRandomness;
+
     uniformData[i++] = params.patinaStrength;
     uniformData[i++] = params.colorVariation;
 
-    // Padding
-    uniformData[i++] = 0;
-    uniformData[i++] = 0;
+    // Padding (Fill to 48)
+    // currently at 16 + 5 + 3 + 5 + 5 + 3 + 5 + 2 = 44 used indices (0-43 filled, i=44)
+    // Need 4 more to reach 48? No, index 44, 45, 46, 47 are padding?
+    // i is now 44.
+    uniformData[i++] = 0; // 44
+    uniformData[i++] = 0; // 45
+    uniformData[i++] = 0; // 46
+    uniformData[i++] = 0; // 47
 
     const uniformBuffer = device.createBuffer({
         size: uniformData.byteLength,

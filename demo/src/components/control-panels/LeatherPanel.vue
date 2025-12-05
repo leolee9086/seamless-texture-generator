@@ -65,6 +65,23 @@
             </div>
         </div>
 
+        <!-- Fiber & Fine Lines (New) -->
+        <div class="flex flex-col gap-3">
+            <div class="flex items-center justify-between">
+                <span class="text-xs font-medium text-white/60">Fibers & Fine Lines</span>
+                <button @click="showFiberParams = !showFiberParams"
+                    class="text-white/40 hover:text-white/60 transition-colors">
+                    <div class="i-carbon-chevron-down text-sm transition-transform"
+                        :class="{ 'rotate-180': showFiberParams }"></div>
+                </button>
+            </div>
+            <div v-show="showFiberParams" class="flex flex-col gap-3">
+                <div v-for="param in fiberSliderItems" :key="param.id">
+                    <Slider :items="[param]" @updateValue="handleParamUpdate" />
+                </div>
+            </div>
+        </div>
+
         <!-- Imperfections & Aging -->
         <div class="flex flex-col gap-3">
             <div class="flex items-center justify-between">
@@ -144,6 +161,7 @@ const showColors = ref(true)
 const showGrainParams = ref(true)
 const showBoundaryParams = ref(false)
 const showSurfaceParams = ref(false)
+const showFiberParams = ref(false)
 const showAgingParams = ref(false)
 const showMaterialParams = ref(false)
 const showPresets = ref(false)
@@ -210,6 +228,29 @@ const surfaceSliderItems = computed(() => [
     },
     {
         id: 'poreVisibility', label: 'Pore Visibility', value: leatherParams.poreVisibility,
+        min: 0.0, max: 1.0, step: 0.05, valuePosition: 'after' as const, showRuler: false
+    },
+])
+
+const fiberSliderItems = computed(() => [
+    {
+        id: 'fiberScale', label: 'Fiber Scale', value: leatherParams.fiberScale,
+        min: 5.0, max: 50.0, step: 1.0, valuePosition: 'after' as const, showRuler: false
+    },
+    {
+        id: 'fiberStrength', label: 'Fiber Strength', value: leatherParams.fiberStrength,
+        min: 0.0, max: 1.0, step: 0.05, valuePosition: 'after' as const, showRuler: false
+    },
+    {
+        id: 'fiberDetail', label: 'Fiber Detail', value: leatherParams.fiberDetail,
+        min: 0.0, max: 1.0, step: 0.05, valuePosition: 'after' as const, showRuler: false
+    },
+    {
+        id: 'fiberDirectionality', label: 'Directionality', value: leatherParams.fiberDirectionality,
+        min: 0.0, max: 1.0, step: 0.05, valuePosition: 'after' as const, showRuler: false
+    },
+    {
+        id: 'fiberRandomness', label: 'Random Direction', value: leatherParams.fiberRandomness,
         min: 0.0, max: 1.0, step: 0.05, valuePosition: 'after' as const, showRuler: false
     },
 ])
