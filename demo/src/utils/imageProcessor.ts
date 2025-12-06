@@ -7,20 +7,11 @@ import { applyDehazeAdjustment, DEFAULT_DEHAZE_PARAMS } from '../adjustments/deh
 import { type DehazeParams } from '@/adjustments/dehaze/types'
 import { processClarityAdjustment, type ClarityParams } from '../adjustments/clarityAdjustment'  // 新增导入
 import { applyLuminanceAdjustmentToImageData, type LuminanceAdjustmentParams } from '../adjustments/luminanceAdjustment'  // 新增导入
-
-/**
- * 管线数据接口 - 统一使用 GPUBuffer 作为数据载体
- */
-interface PipelineData {
-  buffer: GPUBuffer
-  width: number
-  height: number
-}
-
+import { baseOptions, GeneralSynthesisPipelineStep, PipelineData } from '../types/PipelineData.type'
 /**
  * 管线步骤选项
  */
-interface PipelineOptions {
+interface PipelineOptions extends baseOptions {
   maxResolution?: number
   borderSize?: number
   lutFile?: File | null
@@ -35,9 +26,9 @@ interface PipelineOptions {
 }
 
 /**
- * 管线步骤接口
+ * 图片后处理管线步骤接口
  */
-interface PipelineStep {
+interface ImageProcessPipelineStep extends GeneralSynthesisPipelineStep {
   execute(data: PipelineData, options: PipelineOptions): Promise<PipelineData>
 }
 
@@ -101,7 +92,7 @@ async function getGPUDevice(): Promise<GPUDevice> {
 /**
  * 步骤 1: 图像加载和缩放
  */
-class ImageLoadStep implements PipelineStep {
+class ImageLoadStep implements ImageProcessPipelineStep {
   async execute(data: PipelineData, options: PipelineOptions): Promise<PipelineData> {
     // 这是管线的第一步，data 参数实际上不会被使用
     // 我们需要从外部传入的 originalImage 加载图像
@@ -142,7 +133,7 @@ class ImageLoadStep implements PipelineStep {
 /**
  * 步骤 2: LUT 处理
  */
-class LUTProcessStep implements PipelineStep {
+class LUTProcessStep implements ImageProcessPipelineStep {
   async execute(data: PipelineData, options: PipelineOptions): Promise<PipelineData> {
     // 如果没有 LUT 文件，直接返回原数据
     if (!options.lutFile) {
@@ -215,7 +206,7 @@ class LUTProcessStep implements PipelineStep {
 /**
  * 步骤 3: 可平铺化处理
  */
-class TileableProcessStep implements PipelineStep {
+class TileableProcessStep implements ImageProcessPipelineStep {
   async execute(data: PipelineData, options: PipelineOptions): Promise<PipelineData> {
     // 当 borderSize 为 0 时，不进行无缝化处理，直接返回原始数据
     if (options.borderSize === 0) {
@@ -247,7 +238,7 @@ class TileableProcessStep implements PipelineStep {
 /**
  * 步骤 4: 输出转换
  */
-class OutputConversionStep implements PipelineStep {
+class OutputConversionStep implements ImageProcessPipelineStep {
   async execute(data: PipelineData, options: PipelineOptions): Promise<PipelineData> {
     // 这个步骤不修改数据，只是标记管线结束
     // 实际的转换工作在 processImageToTileable 函数中完成
