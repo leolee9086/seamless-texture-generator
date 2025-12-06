@@ -573,5 +573,5 @@ export async function generateWoodTexture(params: WoodParams, width: number, hei
     const result = await generateWoodTexturePipeline(params, width, height, { includePBR: false });
 
     // 只导出albedo通道为Base64
-    return textureToDataURL(device, result.albedo.buffer as unknown as GPUTexture, width, height);
+    return textureToDataURL(device, result.albedo.buffer as GPUTexture, width, height);
 }
