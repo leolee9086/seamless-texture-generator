@@ -49,6 +49,14 @@ fn hash22(p: vec2<f32>) -> vec2<f32> {
     return fract((p3.xx+p3.yz)*p3.zy);
 }
 
+// 周期性哈希函数 - 确保在周期边界处无缝衔接
+fn hash22Periodic(p: vec2<f32>, period: vec2<f32>) -> vec2<f32> {
+    let wrapped = ((p % period) + period) % period;
+    var p3 = fract(vec3<f32>(wrapped.xyx) * vec3<f32>(.1031, .1030, .0973));
+    p3 = p3 + dot(p3, p3.yzx + 33.33);
+    return fract((p3.xx+p3.yz)*p3.zy);
+}
+
 fn gradientNoise(p: vec2<f32>, scale: f32) -> f32 {
     let i = floor(p * scale);
     let f = fract(p * scale);
@@ -66,6 +74,33 @@ fn gradientNoise(p: vec2<f32>, scale: f32) -> f32 {
     return 0.5 + 0.5 * val;
 }
 
+// 周期性梯度噪声 - 在指定周期内无缝平铺
+fn periodicGradientNoise(p: vec2<f32>, scale: f32, period: vec2<f32>) -> f32 {
+    let scaledP = p * scale;
+    let i = floor(scaledP);
+    let f = fract(scaledP);
+    let u = f * f * (3.0 - 2.0 * f);
+    
+    // 计算周期性网格坐标
+    let periodScaled = period * scale;
+    
+    let i00 = ((i + vec2<f32>(0.0,0.0)) % periodScaled + periodScaled) % periodScaled;
+    let i10 = ((i + vec2<f32>(1.0,0.0)) % periodScaled + periodScaled) % periodScaled;
+    let i01 = ((i + vec2<f32>(0.0,1.0)) % periodScaled + periodScaled) % periodScaled;
+    let i11 = ((i + vec2<f32>(1.0,1.0)) % periodScaled + periodScaled) % periodScaled;
+    
+    let g00 = hash22Periodic(i00, periodScaled) * 2.0 - 1.0;
+    let g10 = hash22Periodic(i10, periodScaled) * 2.0 - 1.0;
+    let g01 = hash22Periodic(i01, periodScaled) * 2.0 - 1.0;
+    let g11 = hash22Periodic(i11, periodScaled) * 2.0 - 1.0;
+    
+    let val = mix(
+        mix(dot(g00, f - vec2<f32>(0.0,0.0)), dot(g10, f - vec2<f32>(1.0,0.0)), u.x),
+        mix(dot(g01, f - vec2<f32>(0.0,1.0)), dot(g11, f - vec2<f32>(1.0,1.0)), u.x),
+        u.y);
+    return 0.5 + 0.5 * val;
+}
+
 fn voronoi(uv: vec2<f32>, density: f32) -> f32 {
     let p = uv * density;
     let i = floor(p);
@@ -75,6 +110,26 @@ fn voronoi(uv: vec2<f32>, density: f32) -> f32 {
         for(var x=-1; x<=1; x++) {
             let neighbor = vec2<f32>(f32(x), f32(y));
             let point = hash22(i + neighbor);
+            let diff = neighbor + point - f;
+            let dist = length(diff);
+            minDist = min(minDist, dist);
+        }
+    }
+    return smoothstep(0.0, 0.4, minDist);
+}
+
+// 周期性 Voronoi - 用于无缝平铺的毛孔纹理
+fn periodicVoronoi(uv: vec2<f32>, density: f32, period: vec2<f32>) -> f32 {
+    let p = uv * density;
+    let periodScaled = period * density;
+    let i = floor(p);
+    let f = fract(p);
+    var minDist = 1.0;
+    for(var y=-1; y<=1; y++) {
+        for(var x=-1; x<=1; x++) {
+            let neighbor = vec2<f32>(f32(x), f32(y));
+            let cellIndex = ((i + neighbor) % periodScaled + periodScaled) % periodScaled;
+            let point = hash22Periodic(cellIndex, periodScaled);
             let diff = neighbor + point - f;
             let dist = length(diff);
             minDist = min(minDist, dist);
@@ -140,10 +195,13 @@ fn init_main(@builtin(global_invocation_id) id : vec3<u32>) {
     let coords = vec2<i32>(id.xy);
     if (coords.x >= i32(dims.x) || coords.y >= i32(dims.y)) { return; }
     
-    // Seed with noise centered around 0.5
+    // 使用周期性噪声确保边界无缝衔接
     let uv = vec2<f32>(coords) / vec2<f32>(dims);
-    let n1 = gradientNoise(uv + vec2<f32>(sim.seed), 8.0);
-    let n2 = gradientNoise(uv + vec2<f32>(sim.seed * 1.7), 16.0);
+    let period = vec2<f32>(1.0, 1.0); // 周期为1.0（整个UV空间）
+    
+    // 使用周期性噪声替代普通噪声
+    let n1 = periodicGradientNoise(uv + vec2<f32>(sim.seed), 8.0, period);
+    let n2 = periodicGradientNoise(uv + vec2<f32>(sim.seed * 1.7), 16.0, period);
     let n = n1 * 0.6 + n2 * 0.4;
     // 保持初始值在0.3-0.7之间,避免极端值
     let centered = 0.5 + (n - 0.5) * 0.4;
@@ -182,8 +240,9 @@ fn cs_main(@builtin(global_invocation_id) id : vec3<u32>) {
     let current = textureLoad(inputTex, coords, 0).r;
     let uv = vec2<f32>(coords) / vec2<f32>(dims);
 
-    // 局部参数变异
-    let noiseVar = gradientNoise(uv, sim.varScale);
+    // 局部参数变异 - 使用周期性噪声
+    let period = vec2<f32>(1.0, 1.0);
+    let noiseVar = periodicGradientNoise(uv, sim.varScale, period);
     let localActR = sim.actRadius * (1.0 + (noiseVar - 0.5) * sim.varStr);
     let localInhR = sim.inhRadius * (1.0 - (noiseVar - 0.5) * sim.varStr);
 
@@ -365,9 +424,10 @@ fn getSurfaceHeight(uv: vec2<f32>) -> vec3<f32> {
     let grayValue = textureLoad(grayTex, wrappedCoords, 0).r;
     let patternMask = grayValue;
     
-    // 添加微观细节
-    let wrinkles = gradientNoise(macroUV, u.wrinkleScale);
-    let pores = voronoi(macroUV, u.poreDensity);
+    // 添加微观细节 - 使用周期性噪声确保边界无缝
+    let period = vec2<f32>(u.tileSize, u.tileSize);
+    let wrinkles = periodicGradientNoise(macroUV, u.wrinkleScale, period);
+    let pores = periodicVoronoi(macroUV, u.poreDensity, period);
     
     let microHeight = (wrinkles - 0.5) * u.wrinkleStr - (1.0 - pores) * u.poreDepth;
     
