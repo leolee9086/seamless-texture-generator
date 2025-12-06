@@ -2,7 +2,7 @@
  * 管线数据接口 - 统一使用 GPUBuffer 作为数据载体
  */
 export interface PipelineData {
-    buffer: GPUBuffer;
+    buffer: GPUBuffer | GPUTexture;
     width: number;
     height: number;
 }

@@ -527,17 +527,17 @@ export async function generateWoodTexturePipeline(
 
     const result: PipelineDataMultiRecord = {
         grayscale: {
-            buffer: grayscale as unknown as GPUBuffer, // 临时类型转换
+            buffer: grayscale, // 临时类型转换
             width,
             height,
         },
         structure: {
-            buffer: structure as unknown as GPUBuffer,
+            buffer: structure,
             width,
             height,
         },
         albedo: {
-            buffer: albedo as unknown as GPUBuffer,
+            buffer: albedo,
             width,
             height,
         },
@@ -547,12 +547,12 @@ export async function generateWoodTexturePipeline(
     if (options.includePBR) {
         const { normal, roughness } = await generateWoodPBR(device, params, grayscale, structure, width, height);
         result.normal = {
-            buffer: normal as unknown as GPUBuffer,
+            buffer: normal,
             width,
             height,
         };
         result.roughness = {
-            buffer: roughness as unknown as GPUBuffer,
+            buffer: roughness,
             width,
             height,
         };
