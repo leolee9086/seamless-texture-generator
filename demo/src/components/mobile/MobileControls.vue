@@ -15,7 +15,7 @@
         <!-- Inputs Panel -->
         <InputsPanel v-else-if="activeGroup === 'inputs'" is-mobile :is-processing="isProcessing"
           :original-image="originalImage" :input-slider-items="inputSliderItems" @load-sample="loadSampleImage"
-          @image-upload="handleImageUpload" @slider-update="handleSliderUpdate" />
+          @image-upload="handleImageUpload" @slider-update="handleSliderUpdate" @set-image="setImage" />
 
         <!-- Crop Panel -->
         <CropPanel v-else-if="activeGroup === 'crop'" is-mobile :original-image="originalImage"
@@ -159,7 +159,8 @@ const {
   toggleLUT,
   handleLUTFileChange,
   clearLUT,
-  handleMaskUpdate
+  handleMaskUpdate,
+  setImage
 } = useControlsLogic(props, emit)
 
 const navContainer = ref<HTMLElement>()
