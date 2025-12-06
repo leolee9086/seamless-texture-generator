@@ -399,7 +399,7 @@ async function applyColor(
 // 管线步骤 3: PBR材质生成（可选）
 // ============================================================
 
-async function generatePBR(
+async function generateWoodPBR(
     device: GPUDevice,
     params: WoodParams,
     grayscaleTexture: GPUTexture,
@@ -545,7 +545,7 @@ export async function generateWoodTexturePipeline(
 
     // Step 3 (可选): 生成PBR材质
     if (options.includePBR) {
-        const { normal, roughness } = await generatePBR(device, params, grayscale, structure, width, height);
+        const { normal, roughness } = await generateWoodPBR(device, params, grayscale, structure, width, height);
         result.normal = {
             buffer: normal as unknown as GPUBuffer,
             width,

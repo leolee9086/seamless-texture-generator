@@ -112,7 +112,7 @@
 import { computed, ref, reactive, watch } from 'vue'
 import { Slider } from '@leolee9086/slider-component'
 import GradientEditor from '../gradient/GradientEditor.vue'
-import { generateWoodTexture, defaultWoodParams, type WoodParams } from '../../proceduralTexturing/wood/woodGenerator'
+import { generateWoodTexture, defaultWoodParams, type WoodParams } from '../../proceduralTexturing/wood/woodGeneratorPipeline'
 
 const props = defineProps<{
     isGenerating: boolean
@@ -419,7 +419,7 @@ const woodPresets = {
         poreThresholdEarly: 0.6,
         poreThresholdLate: 0.75,
         poreThresholdRange: 0.2,
-        poreStrength: 0.3,
+        poreStrength: 0.12,
     },
     'White Oak': {
         tileSize: 1.0,
@@ -449,7 +449,7 @@ const woodPresets = {
         poreThresholdEarly: 0.55,
         poreThresholdLate: 0.7,
         poreThresholdRange: 0.2,
-        poreStrength: 0.4,
+        poreStrength: 0.16,
     },
     'Walnut': {
         tileSize: 1.0,
@@ -479,7 +479,7 @@ const woodPresets = {
         poreThresholdEarly: 0.65,
         poreThresholdLate: 0.75,
         poreThresholdRange: 0.15,
-        poreStrength: 0.25,
+        poreStrength: 0.10,
     }
 }
 
