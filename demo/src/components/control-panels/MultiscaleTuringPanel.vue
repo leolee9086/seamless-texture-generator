@@ -137,7 +137,7 @@
 <script setup lang="ts">
 import { computed, ref, reactive, watch } from 'vue'
 import { Slider } from '@leolee9086/slider-component'
-import { generateFilmGradeTexture, defaultFilmParams, type FilmGradeTuringParams } from '../../proceduralTexturing/other/turing/turingGenerator'
+import { generateFilmGradeTexture, defaultFilmParams, type FilmGradeTuringParams } from '../../proceduralTexturing/other/MultiscaleTuring/turingGenerator'
 
 const props = defineProps<{
     isGenerating: boolean

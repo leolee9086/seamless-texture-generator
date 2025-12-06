@@ -103,7 +103,7 @@ import PlainWeavePanel from './PlainWeavePanel.vue'
 import LeatherPanel from './LeatherPanel.vue'
 import TwillWeavePanel from './TwillWeavePanel.vue'
 import VelvetPanel from './VelvetPanel.vue'
-import TuringPanel from './TuringPanel.vue'
+import TuringPanel from './MultiscaleTuringPanel.vue'
 
 const props = defineProps<{
     isMobile?: boolean
