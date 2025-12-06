@@ -105,7 +105,7 @@
                     </div>
                 </div>
 
-                <!-- Opacity & Invert -->
+                <!-- Opacity -->
                 <div v-for="param in blendSliderItems" :key="param.id">
                     <Slider :items="[param]" @updateValue="handleParamUpdate" />
                 </div>
@@ -159,7 +159,7 @@ import { Slider } from '@leolee9086/slider-component'
 import {
     compositeWithMask,
     defaultCompositorParams,
-    compositorPresets as presets,
+    compositorPresets,
     type GrayscaleCompositorParams
 } from '../../proceduralTexturing/other/GrayscaleCompositor/compositorGenerator'
 import { generateFilmGradeTexture, defaultFilmParams } from '../../proceduralTexturing/other/GrayScottTuring/turingGenerator'
@@ -173,8 +173,8 @@ const emit = defineEmits<{
 }>()
 
 // UI State
-const showMaskParams = ref(true)
-const showBlendParams = ref(false)
+const showMaskParams = ref(false)
+const showBlendParams = ref(true)
 const showPresets = ref(false)
 
 // Image Sources

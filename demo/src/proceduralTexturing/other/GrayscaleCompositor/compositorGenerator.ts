@@ -231,10 +231,10 @@ export async function compositeWithMask(
         for (let x = 0; x < width; x++) {
             const s = sourceOffset + x * 4
             const d = destOffset + x * 4
-            // BGRA to RGBA
-            imageData.data[d] = rawData[s + 2]     // R
+            // RGBA (直接复制，无需转换)
+            imageData.data[d] = rawData[s]         // R
             imageData.data[d + 1] = rawData[s + 1] // G
-            imageData.data[d + 2] = rawData[s]     // B
+            imageData.data[d + 2] = rawData[s + 2] // B
             imageData.data[d + 3] = rawData[s + 3] // A
         }
     }
