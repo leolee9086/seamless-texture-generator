@@ -83,7 +83,12 @@
                 @set-image="$emit('set-image', $event)" />
 
             <!-- Turing Panel -->
+            <!-- Turing Panel -->
             <TuringPanel v-if="proceduralType === 'Turing'" :is-generating="isGenerating"
+                @set-image="$emit('set-image', $event)" />
+
+            <!-- Gray-Scott Turing Panel -->
+            <GrayScottTuringPanel v-if="proceduralType === 'Gray-Scott'" :is-generating="isGenerating"
                 @set-image="$emit('set-image', $event)" />
         </div>
 
@@ -104,6 +109,7 @@ import LeatherPanel from './LeatherPanel.vue'
 import TwillWeavePanel from './TwillWeavePanel.vue'
 import VelvetPanel from './VelvetPanel.vue'
 import TuringPanel from './MultiscaleTuringPanel.vue'
+import GrayScottTuringPanel from './GrayScottTuringPanel.vue'
 
 const props = defineProps<{
     isMobile?: boolean
@@ -120,7 +126,7 @@ const emit = defineEmits<{
 }>()
 
 const activeTab = ref('Upload')
-const textureTypes = ['Wood', 'Plain Weave', 'Leather', 'Twill Weave', 'Velvet', 'Turing'] as const
+const textureTypes = ['Wood', 'Plain Weave', 'Leather', 'Twill Weave', 'Velvet', 'Turing', 'Gray-Scott'] as const
 const proceduralType = ref<typeof textureTypes[number]>('Wood')
 const isGenerating = ref(false)
 

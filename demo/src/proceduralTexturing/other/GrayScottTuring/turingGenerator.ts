@@ -77,7 +77,7 @@ export async function generateFilmGradeTexture(params: FilmGradeTuringParams, wi
             initData[idx] = 1.0;
             // B = random sparse seeds (10% probability for faster startup)
             // Use Math.random() directly to avoid hash artifacts
-            initData[idx + 1] = (Math.random() > 0.90) ? 1.0 : 0.0;
+            initData[idx + 1] = (Math.random() > 0.50) ? 1.0 : 0.0;
             initData[idx + 2] = 0.0;
             initData[idx + 3] = 1.0;
         }

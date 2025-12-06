@@ -298,16 +298,16 @@ fn fs_main(in : VertexOutput) -> @location(0) vec4<f32> {
     let dims = vec2<f32>(textureDimensions(simTex));
     let coords = vec2<i32>(in.uv * dims);
     let simData = textureLoad(simTex, coords, 0);
-    let rawVal = simData.r;
     
-    // Read Min/Max
-    let minVal = f32(minMaxBuf[0]) / 1000000.0;
-    let maxVal = f32(minMaxBuf[1]) / 1000000.0;
-    let range = max(maxVal - minVal, 0.00001);
-
-    // DIRECT DEBUG OUTPUT: Raw Simulation Value
-    // Output sim val to gray texture (clamped 0-1)
-    return vec4<f32>(rawVal, rawVal, rawVal, 1.0);
+    // 调试：输出模拟的变化量 (G通道存储的是 abs(variation) * 10.0)
+    // 如果这个也是纯色，说明模拟算法本身有问题
+    let variation = simData.g;
+    
+    // 同时也输出 R 通道（实际的图灵斑纹）
+    let pattern = simData.r;
+    
+    // 先输出 variation 来调试，如果看到变化，再切回 pattern
+    return vec4<f32>(variation, variation, variation, 1.0);
 }
 `;
 

@@ -310,13 +310,12 @@ fn getSurfaceHeight(uv: vec2<f32>) -> vec3<f32> {
 
 @fragment
 fn fs_main(in : VertexOutput) -> @location(0) vec4<f32> {
-    let macroUV = in.uv * u.tileSize;
+    let dims = vec2<f32>(textureDimensions(simTex));
+    let coords = vec2<i32>(in.uv * dims);
+    let simData = textureLoad(simTex, coords, 0);
     
-    // 直接采样模拟结果
-    let chem = sampleBilinear(simTex, macroUV);
-    
-    // 使用 G 通道 (色素浓度) 作为输出
-    let val = chem.g;
+    // 直接输出化学物质 B 的浓度 (G通道)
+    let val = simData.g;
     
     return vec4<f32>(val, val, val, 1.0);
 }
