@@ -5,6 +5,7 @@
 
 import { WebGPUHSLProcessor, processGlobalHSLImage } from './webgpu/hsl-processor'
 import { type HSLAdjustmentParams, type GlobalHSLAdjustmentParams } from './webgpu/hsl-shaders'
+import { type PipelineData } from '../types/PipelineData.type'
 
 /**
  * HSL调整层接口
@@ -18,15 +19,6 @@ export interface HSLAdjustmentLayer {
     lightness: number     // -100 到 100
     precision?: number    // 0-100, selective模式使用
     range?: number        // 0-100, selective模式使用
-}
-
-/**
- * 管线数据接口
- */
-interface PipelineData {
-    buffer: GPUBuffer
-    width: number
-    height: number
 }
 
 /**
@@ -60,6 +52,15 @@ export class HSLAdjustProcessStep {
             return data
         }
 
+        // 确保输入是GPUBuffer，如果是GPUTexture则需要先转换
+        let inputBuffer: GPUBuffer
+        if (data.buffer instanceof GPUBuffer) {
+            inputBuffer = data.buffer
+        } else {
+            // 如果是GPUTexture，需要先转换为GPUBuffer
+            throw new Error('HSL调整步骤需要GPUBuffer作为输入，不支持GPUTexture')
+        }
+
         // 分离全局调整层和选择性调整层
         const globalLayers = activeLayers.filter(layer => layer.type === 'global')
         const selectiveLayers = activeLayers.filter(layer => layer.type === 'selective')
@@ -78,20 +79,29 @@ export class HSLAdjustProcessStep {
         // 从GPUBuffer复制数据到纹理
         const commandEncoder1 = device.createCommandEncoder({ label: 'HSL Copy Input' })
 
-        // 创建临时buffer用于复制
+        // 计算对齐的bytesPerRow (必须是256的倍数)
+        const alignment = 256
+        const bytesPerRow = data.width * 4
+        const alignedBytesPerRow = Math.ceil(bytesPerRow / alignment) * alignment
+        
+        // 计算对齐后的总大小
+        const alignedBufferSize = alignedBytesPerRow * data.height
+
+        // 创建临时buffer用于复制（使用对齐后的大小）
         const tempBuffer = device.createBuffer({
-            size: data.width * data.height * 4,
+            size: alignedBufferSize,
             usage: GPUBufferUsage.COPY_SRC | GPUBufferUsage.COPY_DST,
             mappedAtCreation: false
         })
 
         // 复制数据: buffer -> tempBuffer -> texture
-        commandEncoder1.copyBufferToBuffer(data.buffer, 0, tempBuffer, 0, data.width * data.height * 4)
-
-        // 计算对齐的bytesPerRow (必须是256的倍数)
-        const alignment = 256
-        const bytesPerRow = data.width * 4
-        const alignedBytesPerRow = Math.ceil(bytesPerRow / alignment) * alignment
+        // 需要逐行复制以确保正确的对齐
+        const compactBytesPerRow = data.width * 4
+        for (let y = 0; y < data.height; y++) {
+            const srcOffset = y * compactBytesPerRow
+            const dstOffset = y * alignedBytesPerRow
+            commandEncoder1.copyBufferToBuffer(inputBuffer, srcOffset, tempBuffer, dstOffset, compactBytesPerRow)
+        }
 
         commandEncoder1.copyBufferToTexture(
             { buffer: tempBuffer, offset: 0, bytesPerRow: alignedBytesPerRow },
@@ -302,7 +312,7 @@ export class HSLAdjustProcessStep {
         }
 
         // 销毁旧的buffer
-        data.buffer.destroy()
+        inputBuffer.destroy()
 
         return {
             buffer: outputBuffer,
