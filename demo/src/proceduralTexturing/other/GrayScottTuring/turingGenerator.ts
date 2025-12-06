@@ -75,9 +75,9 @@ export async function generateFilmGradeTexture(params: FilmGradeTuringParams, wi
             const idx = (y * width + x) * 4;
             // A = 1.0 everywhere
             initData[idx] = 1.0;
-            // B = random sparse seeds (10% probability for faster startup)
-            // Use Math.random() directly to avoid hash artifacts
-            initData[idx + 1] = (Math.random() > 0.50) ? 1.0 : 0.0;
+            // B = 小的随机扰动 (避免极端值导致白色空洞)
+            // 使用 0-0.3 的随机值作为种子，而不是 0 或 1
+            initData[idx + 1] = Math.random() * 0.3;
             initData[idx + 2] = 0.0;
             initData[idx + 3] = 1.0;
         }
