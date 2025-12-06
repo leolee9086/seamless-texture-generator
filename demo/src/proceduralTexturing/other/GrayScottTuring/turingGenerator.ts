@@ -4,53 +4,23 @@ import { getWebGPUDevice } from '../../../utils/webgpu/webgpuDevice'
 export type { FilmGradeTuringParams }
 
 /**
- * 影视级预设：异星生物甲壳 (Alien Carapace)
- * 结合了有机的流动感和硬朗的细节
+ * Gray-Scott图灵斑图预设
  */
 export const defaultFilmParams: FilmGradeTuringParams = {
     tileSize: 1.0,
-    simulationSteps: 2000, // Restore steps for pattern formation
+    simulationSteps: 2000,
 
-    // 反应堆：强烈的各向异性，产生类似肌肉纤维或木纹的流动
-    feedRate: 0.058, // Classic Coral/Maze Pattern
+    // Gray-Scott核心参数 (Coral/Maze Pattern)
+    feedRate: 0.058,
     killRate: 0.062,
-    diffusionAnisotropy: 0.0, // Start isotropic for stability
-    flowDirection: 0.4,       // 倾斜角度
 
-    // 变异：大范围的自然过渡
-    patternScale: 1.0,
+    // 各向异性扩散 (默认关闭)
+    diffusionAnisotropy: 0.0,
+    flowDirection: 0.4,
+
+    // 空间变化
     variationScale: 1.5,
-    variationStrength: 0.3,
-
-    // 微观细节：清晰的毛孔和细纹
-    poreDensity: 30.0,
-    poreDepth: 0.05,
-    skinWrinkleScale: 12.0,
-    skinWrinkleStrength: 0.03,
-
-    // 材质：深邃的半透明质感
-    subsurfaceColor: '#8a1c0e', // 血红色真皮
-    epidermisColor: '#d6b6a0',  // 苍白表皮
-    pigmentColor: '#1a1a1a',    // 黑色素
-
-    // 光照
-    roughnessBase: 0.6,         // 皮肤较粗糙
-    roughnessPigment: 0.3,      // 黑色素区域光滑（像甲壳）
-    normalDetail: 1.5,          // 强烈的法线细节
-    heightDisplacement: 1.0
-}
-
-// Helper: Hex -> Linear RGB (Correct for PBR)
-function hexToLinear(hex: string): [number, number, number] {
-    const bigint = parseInt(hex.slice(1), 16);
-    let r = ((bigint >> 16) & 255) / 255;
-    let g = ((bigint >> 8) & 255) / 255;
-    let b = (bigint & 255) / 255;
-    // sRGB -> Linear approx
-    r = Math.pow(r, 2.2);
-    g = Math.pow(g, 2.2);
-    b = Math.pow(b, 2.2);
-    return [r, g, b];
+    variationStrength: 0.3
 }
 
 export async function generateFilmGradeTexture(params: FilmGradeTuringParams, width: number, height: number): Promise<string> {
@@ -69,7 +39,6 @@ export async function generateFilmGradeTexture(params: FilmGradeTuringParams, wi
 
     // 预初始化 texA (关键：避免每次迭代都触发shader初始化)
     const initData = new Float32Array(width * height * 4);
-    const seed = Math.random() * 1000.0;
     for (let y = 0; y < height; y++) {
         for (let x = 0; x < width; x++) {
             const idx = (y * width + x) * 4;
@@ -108,74 +77,19 @@ export async function generateFilmGradeTexture(params: FilmGradeTuringParams, wi
     });
     device.queue.writeBuffer(simBuffer, 0, simData);
 
-    // 3. Render Uniforms
-    // 需要仔细打包对齐 (std140 layout)
-    // vec3 需要 16 byte padding, float 需要 4 byte
-    const renderData = new Float32Array(32);
-
-    // Matrix (0-15) - Unused but padding
-    renderData[0] = 1; renderData[5] = 1;
-
-    // Colors (vec3 needs 16-byte align in struct if not carefully packed, 
-    // but here we pack manually into float array)
-    // Offset 16: SubColor (3 floats + 1 pad)
-    const cSub = hexToLinear(params.subsurfaceColor);
-    renderData[16] = cSub[0]; renderData[17] = cSub[1]; renderData[18] = cSub[2]; renderData[19] = 0;
-
-    // Offset 20: EpiColor
-    const cEpi = hexToLinear(params.epidermisColor);
-    renderData[20] = cEpi[0]; renderData[21] = cEpi[1]; renderData[22] = cEpi[2]; renderData[23] = 0;
-
-    // Offset 24: PigColor
-    const cPig = hexToLinear(params.pigmentColor);
-    renderData[24] = cPig[0]; renderData[25] = cPig[1]; renderData[26] = cPig[2]; renderData[27] = 0;
-
-    // Create separate buffer for scalar params to avoid alignment hell or append
-    // Let's create a secondary Float32Array for scalars starting at logical offset
-    // Actually, let's just use a second buffer or carefully map.
-    // Let's use a bigger buffer.
-    const renderParamsData = new Float32Array(20);
-    let k = 0;
-    renderParamsData[k++] = params.tileSize;
-    renderParamsData[k++] = params.poreDensity;
-    renderParamsData[k++] = params.poreDepth;
-    renderParamsData[k++] = params.skinWrinkleScale;
-    renderParamsData[k++] = params.skinWrinkleStrength;
-    renderParamsData[k++] = params.roughnessBase;
-    renderParamsData[k++] = params.roughnessPigment;
-    renderParamsData[k++] = params.normalDetail;
-    renderParamsData[k++] = params.heightDisplacement;
-
-    // We need to merge these or bind appropriately.
-    // For simplicity, let's look at shader struct:
-    // struct RenderUniforms { mat4, vec3, vec3, vec3, float... }
-    // The floats start after the last vec3.
-    // Last vec3 ended at index 27 (including pad).
-    // WebGPU struct layout rules:
-    // vec3 is 16 bytes aligned.
-    // floats are 4 bytes.
-    // So index 28 starts the floats.
-    const fullRenderData = new Float32Array(64); // Safe size
-    fullRenderData.set(renderData.subarray(0, 28), 0);
-
-    // Copy scalars
-    let offset = 28;
-    fullRenderData[offset++] = params.tileSize;
-    fullRenderData[offset++] = params.poreDensity;
-    fullRenderData[offset++] = params.poreDepth;
-    fullRenderData[offset++] = params.skinWrinkleScale;
-    fullRenderData[offset++] = params.skinWrinkleStrength; // This aligns to 32 bytes boundary check? No floats are 4 bytes.
-
-    fullRenderData[offset++] = params.roughnessBase;
-    fullRenderData[offset++] = params.roughnessPigment;
-    fullRenderData[offset++] = params.normalDetail;
-    fullRenderData[offset++] = params.heightDisplacement;
+    // 3. 渲染Uniforms (简化版)
+    const renderData = new Float32Array(4);
+    renderData[0] = params.tileSize;
+    // padding
+    renderData[1] = 0;
+    renderData[2] = 0;
+    renderData[3] = 0;
 
     const renderBuffer = device.createBuffer({
-        size: fullRenderData.byteLength,
+        size: renderData.byteLength,
         usage: GPUBufferUsage.UNIFORM | GPUBufferUsage.COPY_DST
     });
-    device.queue.writeBuffer(renderBuffer, 0, fullRenderData);
+    device.queue.writeBuffer(renderBuffer, 0, renderData);
 
 
     // 4. Pipelines
