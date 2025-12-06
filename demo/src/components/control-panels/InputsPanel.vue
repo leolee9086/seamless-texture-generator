@@ -2,15 +2,15 @@
     <div class="flex flex-col" :class="isMobile ? 'gap-6' : 'gap-6'">
         <!-- Tabs -->
         <div class="flex p-1 bg-white/5 rounded-xl">
-            <button v-for="tab in ['Upload', 'Procedural']" :key="tab" @click="activeTab = tab"
+            <button v-for="tab in ['Upload', 'Procedural']" :key="tab" @click="state.activeTab = tab as 'Upload' | 'Procedural'"
                 class="glass-btn flex-1 py-1.5 text-xs font-medium rounded-lg transition-all duration-300"
-                :class="activeTab === tab ? 'bg-white/10 text-white shadow-sm' : 'text-white/40 hover:text-white/60'">
+                :class="state.activeTab === tab ? 'bg-white/10 text-white shadow-sm' : 'text-white/40 hover:text-white/60'">
                 {{ tab }}
             </button>
         </div>
 
         <!-- Upload Tab Content -->
-        <div v-if="activeTab === 'Upload'" class="flex flex-col gap-4">
+        <div v-if="state.activeTab === 'Upload'" class="flex flex-col gap-4">
             <div class="flex items-center justify-between">
                 <span :class="headerClass">Source</span>
                 <div class="flex gap-2">
@@ -54,45 +54,45 @@
             <div class="flex flex-col gap-2">
                 <span class="text-xs font-medium text-white/60">Type</span>
                 <div class="flex gap-2 overflow-x-auto custom-scrollbar pb-2" @wheel="horizontalScroll">
-                    <button v-for="type in textureTypes" :key="type" @click="proceduralType = type"
+                    <button v-for="type in textureTypes" :key="type" @click="state.proceduralType = type"
                         class="glass-btn py-2 px-4 text-xs font-medium rounded-lg transition-all duration-300 whitespace-nowrap flex-shrink-0"
-                        :class="proceduralType === type ? 'bg-white/10 text-white shadow-sm' : 'text-white/40 hover:text-white/60'">
+                        :class="state.proceduralType === type ? 'bg-white/10 text-white shadow-sm' : 'text-white/40 hover:text-white/60'">
                         {{ type }}
                     </button>
                 </div>
             </div>
 
             <!-- Wood Panel -->
-            <WoodPanel v-if="proceduralType === 'Wood'" :is-generating="isGenerating"
+            <WoodPanel v-if="state.proceduralType === 'Wood'" :is-generating="isGenerating"
                 @set-image="$emit('set-image', $event)" />
 
             <!-- Plain Weave Panel -->
-            <PlainWeavePanel v-if="proceduralType === 'Plain Weave'" :is-generating="isGenerating"
+            <PlainWeavePanel v-if="state.proceduralType === 'Plain Weave'" :is-generating="isGenerating"
                 @set-image="$emit('set-image', $event)" />
 
             <!-- Leather Panel -->
-            <LeatherPanel v-if="proceduralType === 'Leather'" :is-generating="isGenerating"
+            <LeatherPanel v-if="state.proceduralType === 'Leather'" :is-generating="isGenerating"
                 @set-image="$emit('set-image', $event)" />
 
             <!-- Twill Weave Panel -->
-            <TwillWeavePanel v-if="proceduralType === 'Twill Weave'" :is-generating="isGenerating"
+            <TwillWeavePanel v-if="state.proceduralType === 'Twill Weave'" :is-generating="isGenerating"
                 @set-image="$emit('set-image', $event)" />
 
             <!-- Velvet Panel -->
-            <VelvetPanel v-if="proceduralType === 'Velvet'" :is-generating="isGenerating"
+            <VelvetPanel v-if="state.proceduralType === 'Velvet'" :is-generating="isGenerating"
                 @set-image="$emit('set-image', $event)" />
 
             <!-- Turing Panel -->
             <!-- Turing Panel -->
-            <TuringPanel v-if="proceduralType === 'Turing'" :is-generating="isGenerating"
+            <TuringPanel v-if="state.proceduralType === 'Turing'" :is-generating="isGenerating"
                 @set-image="$emit('set-image', $event)" />
 
             <!-- Gray-Scott Turing Panel -->
-            <GrayScottTuringPanel v-if="proceduralType === 'Gray-Scott'" :is-generating="isGenerating"
+            <GrayScottTuringPanel v-if="state.proceduralType === 'Gray-Scott'" :is-generating="isGenerating"
                 @set-image="$emit('set-image', $event)" />
 
             <!-- Grayscale Compositor Panel -->
-            <GrayscaleCompositorPanel v-if="proceduralType === 'Compositor'" :is-generating="isGenerating"
+            <GrayscaleCompositorPanel v-if="state.proceduralType === 'Compositor'" :is-generating="isGenerating"
                 @set-image="$emit('set-image', $event)" />
         </div>
 
@@ -107,6 +107,7 @@
 import { computed, ref } from 'vue'
 import { Slider } from '@leolee9086/slider-component'
 import { horizontalScroll } from '../../utils/scroll'
+import { useProceduralTextureState } from '../../composables/useProceduralTextureState'
 import WoodPanel from './WoodPanel.vue'
 import PlainWeavePanel from './PlainWeavePanel.vue'
 import LeatherPanel from './LeatherPanel.vue'
@@ -130,9 +131,9 @@ const emit = defineEmits<{
     'set-image': [imageData: string]
 }>()
 
-const activeTab = ref('Upload')
+// 使用持久化状态管理
+const { state } = useProceduralTextureState()
 const textureTypes = ['Wood', 'Plain Weave', 'Leather', 'Twill Weave', 'Velvet', 'Turing', 'Gray-Scott', 'Compositor'] as const
-const proceduralType = ref<typeof textureTypes[number]>('Wood')
 const isGenerating = ref(false)
 
 const headerClass = computed(() =>

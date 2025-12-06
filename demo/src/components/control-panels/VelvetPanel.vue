@@ -4,30 +4,13 @@
         <div class="flex flex-col gap-3">
             <div class="flex items-center justify-between">
                 <span class="text-xs font-medium text-white/60">Colors</span>
-                <button @click="showColors = !showColors" class="text-white/40 hover:text-white/60 transition-colors">
+                <button @click="state.uiState.velvetPanel.showColors = !state.uiState.velvetPanel.showColors" class="text-white/40 hover:text-white/60 transition-colors">
                     <div class="i-carbon-chevron-down text-sm transition-transform"
-                        :class="{ 'rotate-180': showColors }"></div>
+                        :class="{ 'rotate-180': state.uiState.velvetPanel.showColors }"></div>
                 </button>
             </div>
-            <div v-show="showColors" class="flex flex-col gap-3">
-                <div class="flex flex-col gap-2">
-                    <label class="text-xs text-white/40">Base Color</label>
-                    <div class="flex items-center gap-2">
-                        <input type="color" v-model="velvetParams.baseColor" 
-                            class="w-8 h-8 rounded border border-white/10 bg-transparent cursor-pointer">
-                        <input type="text" v-model="velvetParams.baseColor" 
-                            class="flex-1 glass-btn px-3 py-1.5 rounded-lg text-xs text-white/60 bg-white/5 border border-white/5">
-                    </div>
-                </div>
-                <div class="flex flex-col gap-2">
-                    <label class="text-xs text-white/40">Sheen Color</label>
-                    <div class="flex items-center gap-2">
-                        <input type="color" v-model="velvetParams.sheenColor" 
-                            class="w-8 h-8 rounded border border-white/10 bg-transparent cursor-pointer">
-                        <input type="text" v-model="velvetParams.sheenColor" 
-                            class="flex-1 glass-btn px-3 py-1.5 rounded-lg text-xs text-white/60 bg-white/5 border border-white/5">
-                    </div>
-                </div>
+            <div v-show="state.uiState.velvetPanel.showColors" class="flex flex-col gap-3">
+                <GradientEditor v-model="state.velvetParams.gradientStops" />
             </div>
         </div>
 
@@ -35,13 +18,13 @@
         <div class="flex flex-col gap-3">
             <div class="flex items-center justify-between">
                 <span class="text-xs font-medium text-white/60">Basic Parameters</span>
-                <button @click="showBasicParams = !showBasicParams"
+                <button @click="state.uiState.velvetPanel.showBasicParams = !state.uiState.velvetPanel.showBasicParams"
                     class="text-white/40 hover:text-white/60 transition-colors">
                     <div class="i-carbon-chevron-down text-sm transition-transform"
-                        :class="{ 'rotate-180': showBasicParams }"></div>
+                        :class="{ 'rotate-180': state.uiState.velvetPanel.showBasicParams }"></div>
                 </button>
             </div>
-            <div v-show="showBasicParams" class="flex flex-col gap-3">
+            <div v-show="state.uiState.velvetPanel.showBasicParams" class="flex flex-col gap-3">
                 <div v-for="param in basicSliderItems" :key="param.id">
                     <Slider :items="[param]" @updateValue="handleParamUpdate" />
                 </div>
@@ -52,14 +35,14 @@
         <div class="flex flex-col gap-3">
             <div class="flex items-center justify-between">
                 <span class="text-xs font-medium text-white/60">Pile Structure</span>
-                <button @click="showPileParams = !showPileParams"
+                <button @click="state.uiState.velvetPanel.showPileParams = !state.uiState.velvetPanel.showPileParams"
                     class="text-white/40 hover:text-white/60 transition-colors">
                     <div class="i-carbon-chevron-down text-sm transition-transform"
-                        :class="{ 'rotate-180': showPileParams }"></div>
+                        :class="{ 'rotate-180': state.uiState.velvetPanel.showPileParams }"></div>
                 </button>
             </div>
-            <div v-show="showPileParams" class="flex flex-col gap-3">
-                <div v-for="param in pileSliderItems" :key="param.id">
+            <div v-show="state.uiState.velvetPanel.showPileParams" class="flex flex-col gap-3">
+                <div v-for="param in fiberSliderItems" :key="param.id">
                     <Slider :items="[param]" @updateValue="handleParamUpdate" />
                 </div>
             </div>
@@ -69,14 +52,14 @@
         <div class="flex flex-col gap-3">
             <div class="flex items-center justify-between">
                 <span class="text-xs font-medium text-white/60">Crush Effect</span>
-                <button @click="showCrushParams = !showCrushParams"
+                <button @click="state.uiState.velvetPanel.showFiberParams = !state.uiState.velvetPanel.showFiberParams"
                     class="text-white/40 hover:text-white/60 transition-colors">
                     <div class="i-carbon-chevron-down text-sm transition-transform"
-                        :class="{ 'rotate-180': showCrushParams }"></div>
+                        :class="{ 'rotate-180': state.uiState.velvetPanel.showFiberParams }"></div>
                 </button>
             </div>
-            <div v-show="showCrushParams" class="flex flex-col gap-3">
-                <div v-for="param in crushSliderItems" :key="param.id">
+            <div v-show="state.uiState.velvetPanel.showFiberParams" class="flex flex-col gap-3">
+                <div v-for="param in fiberSliderItems" :key="param.id">
                     <Slider :items="[param]" @updateValue="handleParamUpdate" />
                 </div>
             </div>
@@ -86,14 +69,14 @@
         <div class="flex flex-col gap-3">
             <div class="flex items-center justify-between">
                 <span class="text-xs font-medium text-white/60">Surface Details</span>
-                <button @click="showSurfaceParams = !showSurfaceParams"
+                <button @click="state.uiState.velvetPanel.showAdvancedParams = !state.uiState.velvetPanel.showAdvancedParams"
                     class="text-white/40 hover:text-white/60 transition-colors">
                     <div class="i-carbon-chevron-down text-sm transition-transform"
-                        :class="{ 'rotate-180': showSurfaceParams }"></div>
+                        :class="{ 'rotate-180': state.uiState.velvetPanel.showAdvancedParams }"></div>
                 </button>
             </div>
-            <div v-show="showSurfaceParams" class="flex flex-col gap-3">
-                <div v-for="param in surfaceSliderItems" :key="param.id">
+            <div v-show="state.uiState.velvetPanel.showAdvancedParams" class="flex flex-col gap-3">
+                <div v-for="param in advancedSliderItems" :key="param.id">
                     <Slider :items="[param]" @updateValue="handleParamUpdate" />
                 </div>
             </div>
@@ -102,15 +85,15 @@
         <!-- Lighting -->
         <div class="flex flex-col gap-3">
             <div class="flex items-center justify-between">
-                <span class="text-xs font-medium text-white/60">Lighting</span>
-                <button @click="showLightingParams = !showLightingParams"
+                <span class="text-xs font-medium text-white/60">Material Properties</span>
+                <button @click="state.uiState.velvetPanel.showMaterialParams = !state.uiState.velvetPanel.showMaterialParams"
                     class="text-white/40 hover:text-white/60 transition-colors">
                     <div class="i-carbon-chevron-down text-sm transition-transform"
-                        :class="{ 'rotate-180': showLightingParams }"></div>
+                        :class="{ 'rotate-180': state.uiState.velvetPanel.showMaterialParams }"></div>
                 </button>
             </div>
-            <div v-show="showLightingParams" class="flex flex-col gap-3">
-                <div v-for="param in lightingSliderItems" :key="param.id">
+            <div v-show="state.uiState.velvetPanel.showMaterialParams" class="flex flex-col gap-3">
+                <div v-for="param in materialSliderItems" :key="param.id">
                     <Slider :items="[param]" @updateValue="handleParamUpdate" />
                 </div>
             </div>
@@ -120,12 +103,12 @@
         <div class="flex flex-col gap-3">
             <div class="flex items-center justify-between">
                 <span class="text-xs font-medium text-white/60">Presets</span>
-                <button @click="showPresets = !showPresets" class="text-white/40 hover:text-white/60 transition-colors">
+                <button @click="state.uiState.velvetPanel.showPresets = !state.uiState.velvetPanel.showPresets" class="text-white/40 hover:text-white/60 transition-colors">
                     <div class="i-carbon-chevron-down text-sm transition-transform"
-                        :class="{ 'rotate-180': showPresets }"></div>
+                        :class="{ 'rotate-180': state.uiState.velvetPanel.showPresets }"></div>
                 </button>
             </div>
-            <div v-show="showPresets" class="grid grid-cols-2 gap-2">
+            <div v-show="state.uiState.velvetPanel.showPresets" class="grid grid-cols-2 gap-2">
                 <button v-for="(preset, name) in velvetPresets" :key="name" @click="applyPreset(preset)"
                     class="glass-btn text-xs py-2 px-2 rounded bg-white/5 text-white/60 hover:bg-white/10 hover:text-white/90 transition-colors">
                     {{ name }}
@@ -143,10 +126,11 @@
 </template>
 
 <script setup lang="ts">
-import { computed, ref, reactive, watch } from 'vue'
+import { computed, ref, watch } from 'vue'
 import { Slider } from '@leolee9086/slider-component'
-import { generateVelvetTexture, defaultVelvetParams } from '../../proceduralTexturing/fabrics/velvet/velvetGenerator'
-import type { VelvetParams } from '../../proceduralTexturing/fabrics/velvet/velvet'
+import GradientEditor from '../gradient/GradientEditor.vue'
+import { generateVelvetTexture } from '../../proceduralTexturing/fabrics/velvet/velvetGenerator'
+import { useProceduralTextureState } from '../../composables/useProceduralTextureState'
 
 const props = defineProps<{
     isGenerating: boolean
@@ -156,38 +140,59 @@ const emit = defineEmits<{
     'set-image': [imageData: string]
 }>()
 
-// UI State
-const showColors = ref(true)
-const showBasicParams = ref(true)
-const showPileParams = ref(true)
-const showCrushParams = ref(false)
-const showSurfaceParams = ref(false)
-const showLightingParams = ref(false)
-const showPresets = ref(false)
-
-// Velvet Parameters State
-const velvetParams = reactive<VelvetParams>({ ...defaultVelvetParams })
+// 使用持久化状态管理
+const { state } = useProceduralTextureState()
 
 // Basic Parameters
 const basicSliderItems = computed(() => [
     {
-        id: 'tileSize',
-        label: 'Tile Size',
-        value: velvetParams.tileSize,
+        id: 'fiberDensity',
+        label: 'Fiber Density',
+        value: state.velvetParams.fiberDensity,
+        min: 10.0,
+        max: 50.0,
+        step: 1.0,
+        valuePosition: 'after' as const,
+        showRuler: false
+    },
+    {
+        id: 'fiberLength',
+        label: 'Fiber Length',
+        value: state.velvetParams.fiberLength,
         min: 0.1,
-        max: 5.0,
+        max: 2.0,
         step: 0.1,
+        valuePosition: 'after' as const,
+        showRuler: false
+    },
+    {
+        id: 'fiberThickness',
+        label: 'Fiber Thickness',
+        value: state.velvetParams.fiberThickness,
+        min: 0.05,
+        max: 0.5,
+        step: 0.05,
+        valuePosition: 'after' as const,
+        showRuler: false
+    },
+    {
+        id: 'fiberStiffness',
+        label: 'Fiber Stiffness',
+        value: state.velvetParams.fiberStiffness,
+        min: 0.0,
+        max: 1.0,
+        step: 0.05,
         valuePosition: 'after' as const,
         showRuler: false
     }
 ])
 
-// Pile Structure Parameters
-const pileSliderItems = computed(() => [
+// Fiber Structure Parameters
+const fiberSliderItems = computed(() => [
     {
         id: 'pileHeight',
         label: 'Pile Height',
-        value: velvetParams.pileHeight,
+        value: state.velvetParams.pileHeight,
         min: 0.0,
         max: 1.0,
         step: 0.05,
@@ -195,29 +200,9 @@ const pileSliderItems = computed(() => [
         showRuler: false
     },
     {
-        id: 'pileDensity',
-        label: 'Pile Density',
-        value: velvetParams.pileDensity,
-        min: 0.0,
-        max: 1.0,
-        step: 0.05,
-        valuePosition: 'after' as const,
-        showRuler: false
-    },
-    {
-        id: 'pileSlant',
-        label: 'Pile Slant',
-        value: velvetParams.pileSlant,
-        min: 0.0,
-        max: 1.0,
-        step: 0.05,
-        valuePosition: 'after' as const,
-        showRuler: false
-    },
-    {
-        id: 'slantDirection',
-        label: 'Slant Direction',
-        value: velvetParams.slantDirection,
+        id: 'pileDirection',
+        label: 'Pile Direction',
+        value: state.velvetParams.pileDirection,
         min: 0.0,
         max: 360.0,
         step: 5.0,
@@ -226,100 +211,12 @@ const pileSliderItems = computed(() => [
     }
 ])
 
-// Crush Effect Parameters
-const crushSliderItems = computed(() => [
-    {
-        id: 'crushStrength',
-        label: 'Crush Strength',
-        value: velvetParams.crushStrength,
-        min: 0.0,
-        max: 1.0,
-        step: 0.05,
-        valuePosition: 'after' as const,
-        showRuler: false
-    },
-    {
-        id: 'crushScale',
-        label: 'Crush Scale',
-        value: velvetParams.crushScale,
-        min: 0.1,
-        max: 2.0,
-        step: 0.1,
-        valuePosition: 'after' as const,
-        showRuler: false
-    },
-    {
-        id: 'crushDetail',
-        label: 'Crush Detail',
-        value: velvetParams.crushDetail,
-        min: 0.0,
-        max: 1.0,
-        step: 0.05,
-        valuePosition: 'after' as const,
-        showRuler: false
-    }
-])
-
-// Surface Details Parameters
-const surfaceSliderItems = computed(() => [
-    {
-        id: 'fiberGrain',
-        label: 'Fiber Grain',
-        value: velvetParams.fiberGrain,
-        min: 0.0,
-        max: 1.0,
-        step: 0.05,
-        valuePosition: 'after' as const,
-        showRuler: false
-    },
-    {
-        id: 'stripes',
-        label: 'Stripes',
-        value: velvetParams.stripes,
-        min: 0.0,
-        max: 1.0,
-        step: 0.05,
-        valuePosition: 'after' as const,
-        showRuler: false
-    },
-    {
-        id: 'stripeFrequency',
-        label: 'Stripe Frequency',
-        value: velvetParams.stripeFrequency,
-        min: 1.0,
-        max: 20.0,
-        step: 0.5,
-        valuePosition: 'after' as const,
-        showRuler: false
-    },
-    {
-        id: 'fbmOctaves',
-        label: 'FBM Octaves',
-        value: velvetParams.fbmOctaves,
-        min: 1,
-        max: 5,
-        step: 1,
-        valuePosition: 'after' as const,
-        showRuler: false
-    },
-    {
-        id: 'noiseRoughness',
-        label: 'Noise Roughness',
-        value: velvetParams.noiseRoughness,
-        min: 0.0,
-        max: 1.0,
-        step: 0.05,
-        valuePosition: 'after' as const,
-        showRuler: false
-    }
-])
-
-// Lighting Parameters
-const lightingSliderItems = computed(() => [
+// Advanced Parameters
+const advancedSliderItems = computed(() => [
     {
         id: 'sheenIntensity',
         label: 'Sheen Intensity',
-        value: velvetParams.sheenIntensity,
+        value: state.velvetParams.sheenIntensity,
         min: 0.0,
         max: 1.0,
         step: 0.05,
@@ -327,52 +224,56 @@ const lightingSliderItems = computed(() => [
         showRuler: false
     },
     {
-        id: 'sheenFalloff',
-        label: 'Sheen Falloff',
-        value: velvetParams.sheenFalloff,
-        min: 0.5,
-        max: 5.0,
-        step: 0.1,
-        valuePosition: 'after' as const,
-        showRuler: false
-    },
-    {
-        id: 'ambientOcclusion',
-        label: 'Ambient Occlusion',
-        value: velvetParams.ambientOcclusion,
+        id: 'sheenDirection',
+        label: 'Sheen Direction',
+        value: state.velvetParams.sheenDirection,
         min: 0.0,
-        max: 1.0,
-        step: 0.05,
+        max: 360.0,
+        step: 5.0,
         valuePosition: 'after' as const,
         showRuler: false
     },
     {
         id: 'colorVariation',
         label: 'Color Variation',
-        value: velvetParams.colorVariation,
+        value: state.velvetParams.colorVariation,
         min: 0.0,
         max: 0.3,
         step: 0.01,
         valuePosition: 'after' as const,
         showRuler: false
-    },
+    }
+])
+
+// Material Parameters
+const materialSliderItems = computed(() => [
     {
-        id: 'lightSourceX',
-        label: 'Light Source X',
-        value: velvetParams.lightSourceX,
-        min: -1.0,
-        max: 1.0,
-        step: 0.1,
+        id: 'roughnessMin',
+        label: 'Min Roughness',
+        value: state.velvetParams.roughnessMin,
+        min: 0.1,
+        max: 0.5,
+        step: 0.05,
         valuePosition: 'after' as const,
         showRuler: false
     },
     {
-        id: 'lightSourceY',
-        label: 'Light Source Y',
-        value: velvetParams.lightSourceY,
-        min: -1.0,
+        id: 'roughnessMax',
+        label: 'Max Roughness',
+        value: state.velvetParams.roughnessMax,
+        min: 0.5,
         max: 1.0,
-        step: 0.1,
+        step: 0.05,
+        valuePosition: 'after' as const,
+        showRuler: false
+    },
+    {
+        id: 'normalStrength',
+        label: 'Normal Strength',
+        value: state.velvetParams.normalStrength,
+        min: 1.0,
+        max: 20.0,
+        step: 0.5,
         valuePosition: 'after' as const,
         showRuler: false
     }
@@ -515,13 +416,13 @@ const velvetPresets = {
 }
 
 const handleParamUpdate = (data: { id: string; value: number }) => {
-    if (data.id in velvetParams) {
-        (velvetParams as any)[data.id] = data.value
+    if (data.id in state.velvetParams) {
+        (state.velvetParams as any)[data.id] = data.value
     }
 }
 
-const applyPreset = (preset: Partial<VelvetParams>) => {
-    Object.assign(velvetParams, preset)
+const applyPreset = (preset: Partial<any>) => {
+    Object.assign(state.velvetParams, preset)
 }
 
 const pendingGeneration = ref(false)
@@ -538,7 +439,7 @@ const generateVelvet = async () => {
     try {
         do {
             pendingGeneration.value = false
-            const imageData = await generateVelvetTexture(velvetParams, 1024, 1024)
+            const imageData = await generateVelvetTexture(state.velvetParams, 1024, 1024)
             emit('set-image', imageData)
         } while (pendingGeneration.value)
     } catch (error) {
@@ -556,7 +457,7 @@ const debouncedGenerateVelvet = () => {
     }, 50) as unknown as number
 }
 
-watch(velvetParams, () => {
+watch(state.velvetParams, () => {
     debouncedGenerateVelvet()
 }, { deep: true })
 </script>

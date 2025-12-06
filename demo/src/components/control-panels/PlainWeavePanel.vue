@@ -4,13 +4,13 @@
         <div class="flex flex-col gap-3">
             <div class="flex items-center justify-between">
                 <span class="text-xs font-medium text-white/60">Colors (Gradient)</span>
-                <button @click="showColors = !showColors" class="text-white/40 hover:text-white/60 transition-colors">
+                <button @click="state.uiState.plainWeavePanel.showColors = !state.uiState.plainWeavePanel.showColors" class="text-white/40 hover:text-white/60 transition-colors">
                     <div class="i-carbon-chevron-down text-sm transition-transform"
-                        :class="{ 'rotate-180': showColors }"></div>
+                        :class="{ 'rotate-180': state.uiState.plainWeavePanel.showColors }"></div>
                 </button>
             </div>
-            <div v-show="showColors" class="flex flex-col gap-3">
-                <GradientEditor v-model="weaveParams.gradientStops" />
+            <div v-show="state.uiState.plainWeavePanel.showColors" class="flex flex-col gap-3">
+                <GradientEditor v-model="state.plainWeaveParams.gradientStops" />
             </div>
         </div>
 
@@ -18,13 +18,13 @@
         <div class="flex flex-col gap-3">
             <div class="flex items-center justify-between">
                 <span class="text-xs font-medium text-white/60">Basic Parameters</span>
-                <button @click="showBasicParams = !showBasicParams"
+                <button @click="state.uiState.plainWeavePanel.showBasicParams = !state.uiState.plainWeavePanel.showBasicParams"
                     class="text-white/40 hover:text-white/60 transition-colors">
                     <div class="i-carbon-chevron-down text-sm transition-transform"
-                        :class="{ 'rotate-180': showBasicParams }"></div>
+                        :class="{ 'rotate-180': state.uiState.plainWeavePanel.showBasicParams }"></div>
                 </button>
             </div>
-            <div v-show="showBasicParams" class="flex flex-col gap-3">
+            <div v-show="state.uiState.plainWeavePanel.showBasicParams" class="flex flex-col gap-3">
                 <div v-for="param in basicWeaveSliderItems" :key="param.id">
                     <Slider :items="[param]" @updateValue="handleWeaveParamUpdate" />
                 </div>
@@ -35,13 +35,13 @@
         <div class="flex flex-col gap-3">
             <div class="flex items-center justify-between">
                 <span class="text-xs font-medium text-white/60">Thread Structure</span>
-                <button @click="showThreadParams = !showThreadParams"
+                <button @click="state.uiState.plainWeavePanel.showThreadParams = !state.uiState.plainWeavePanel.showThreadParams"
                     class="text-white/40 hover:text-white/60 transition-colors">
                     <div class="i-carbon-chevron-down text-sm transition-transform"
-                        :class="{ 'rotate-180': showThreadParams }"></div>
+                        :class="{ 'rotate-180': state.uiState.plainWeavePanel.showThreadParams }"></div>
                 </button>
             </div>
-            <div v-show="showThreadParams" class="flex flex-col gap-3">
+            <div v-show="state.uiState.plainWeavePanel.showThreadParams" class="flex flex-col gap-3">
                 <div v-for="param in threadWeaveSliderItems" :key="param.id">
                     <Slider :items="[param]" @updateValue="handleWeaveParamUpdate" />
                 </div>
@@ -52,13 +52,13 @@
         <div class="flex flex-col gap-3">
             <div class="flex items-center justify-between">
                 <span class="text-xs font-medium text-white/60">Advanced Parameters</span>
-                <button @click="showAdvancedParams = !showAdvancedParams"
+                <button @click="state.uiState.plainWeavePanel.showAdvancedParams = !state.uiState.plainWeavePanel.showAdvancedParams"
                     class="text-white/40 hover:text-white/60 transition-colors">
                     <div class="i-carbon-chevron-down text-sm transition-transform"
-                        :class="{ 'rotate-180': showAdvancedParams }"></div>
+                        :class="{ 'rotate-180': state.uiState.plainWeavePanel.showAdvancedParams }"></div>
                 </button>
             </div>
-            <div v-show="showAdvancedParams" class="flex flex-col gap-3">
+            <div v-show="state.uiState.plainWeavePanel.showAdvancedParams" class="flex flex-col gap-3">
                 <div v-for="param in advancedWeaveSliderItems" :key="param.id">
                     <Slider :items="[param]" @updateValue="handleWeaveParamUpdate" />
                 </div>
@@ -69,13 +69,13 @@
         <div class="flex flex-col gap-3">
             <div class="flex items-center justify-between">
                 <span class="text-xs font-medium text-white/60">Material Properties</span>
-                <button @click="showMaterialParams = !showMaterialParams"
+                <button @click="state.uiState.plainWeavePanel.showMaterialParams = !state.uiState.plainWeavePanel.showMaterialParams"
                     class="text-white/40 hover:text-white/60 transition-colors">
                     <div class="i-carbon-chevron-down text-sm transition-transform"
-                        :class="{ 'rotate-180': showMaterialParams }"></div>
+                        :class="{ 'rotate-180': state.uiState.plainWeavePanel.showMaterialParams }"></div>
                 </button>
             </div>
-            <div v-show="showMaterialParams" class="flex flex-col gap-3">
+            <div v-show="state.uiState.plainWeavePanel.showMaterialParams" class="flex flex-col gap-3">
                 <div v-for="param in materialWeaveSliderItems" :key="param.id">
                     <Slider :items="[param]" @updateValue="handleWeaveParamUpdate" />
                 </div>
@@ -86,12 +86,12 @@
         <div class="flex flex-col gap-3">
             <div class="flex items-center justify-between">
                 <span class="text-xs font-medium text-white/60">Presets</span>
-                <button @click="showPresets = !showPresets" class="text-white/40 hover:text-white/60 transition-colors">
+                <button @click="state.uiState.plainWeavePanel.showPresets = !state.uiState.plainWeavePanel.showPresets" class="text-white/40 hover:text-white/60 transition-colors">
                     <div class="i-carbon-chevron-down text-sm transition-transform"
-                        :class="{ 'rotate-180': showPresets }"></div>
+                        :class="{ 'rotate-180': state.uiState.plainWeavePanel.showPresets }"></div>
                 </button>
             </div>
-            <div v-show="showPresets" class="grid grid-cols-2 gap-2">
+            <div v-show="state.uiState.plainWeavePanel.showPresets" class="grid grid-cols-2 gap-2">
                 <button v-for="(preset, name) in weavePresets" :key="name" @click="applyPreset(preset)"
                     class="glass-btn text-xs py-2 px-2 rounded bg-white/5 text-white/60 hover:bg-white/10 hover:text-white/90 transition-colors">
                     {{ name }}
@@ -109,10 +109,11 @@
 </template>
 
 <script setup lang="ts">
-import { computed, ref, reactive, watch } from 'vue'
+import { computed, ref, watch } from 'vue'
 import { Slider } from '@leolee9086/slider-component'
 import GradientEditor from '../gradient/GradientEditor.vue'
-import { generatePlainWeaveTexture, defaultPlainWeaveParams, type PlainWeaveParams } from '../../proceduralTexturing/fabrics/plainWeave/plainWeaveGenerator'
+import { generatePlainWeaveTexture } from '../../proceduralTexturing/fabrics/plainWeave/plainWeaveGenerator'
+import { useProceduralTextureState } from '../../composables/useProceduralTextureState'
 
 const props = defineProps<{
     isGenerating: boolean
@@ -122,23 +123,15 @@ const emit = defineEmits<{
     'set-image': [imageData: string]
 }>()
 
-// UI State
-const showColors = ref(true)
-const showBasicParams = ref(true)
-const showThreadParams = ref(false)
-const showAdvancedParams = ref(false)
-const showMaterialParams = ref(false)
-const showPresets = ref(false)
-
-// Plain Weave Parameters State
-const weaveParams = reactive<PlainWeaveParams>({ ...defaultPlainWeaveParams })
+// 使用持久化状态管理
+const { state } = useProceduralTextureState()
 
 // Basic Weave Parameters
 const basicWeaveSliderItems = computed(() => [
     {
         id: 'tileSize',
         label: 'Tile Size',
-        value: weaveParams.tileSize,
+        value: state.plainWeaveParams.tileSize,
         min: 0.1,
         max: 5.0,
         step: 0.1,
@@ -148,7 +141,7 @@ const basicWeaveSliderItems = computed(() => [
     {
         id: 'threadDensity',
         label: 'Thread Density',
-        value: weaveParams.threadDensity,
+        value: state.plainWeaveParams.threadDensity,
         min: 5.0,
         max: 50.0,
         step: 1.0,
@@ -158,7 +151,7 @@ const basicWeaveSliderItems = computed(() => [
     {
         id: 'threadThickness',
         label: 'Thread Thickness',
-        value: weaveParams.threadThickness,
+        value: state.plainWeaveParams.threadThickness,
         min: 0.1,
         max: 1.0,
         step: 0.05,
@@ -168,7 +161,7 @@ const basicWeaveSliderItems = computed(() => [
     {
         id: 'warpWeftRatio',
         label: 'Warp/Weft Ratio',
-        value: weaveParams.warpWeftRatio,
+        value: state.plainWeaveParams.warpWeftRatio,
         min: 0.5,
         max: 2.0,
         step: 0.1,
@@ -182,7 +175,7 @@ const threadWeaveSliderItems = computed(() => [
     {
         id: 'threadTwist',
         label: 'Thread Twist',
-        value: weaveParams.threadTwist,
+        value: state.plainWeaveParams.threadTwist,
         min: 0.0,
         max: 1.0,
         step: 0.05,
@@ -192,7 +185,7 @@ const threadWeaveSliderItems = computed(() => [
     {
         id: 'fiberDetail',
         label: 'Fiber Detail',
-        value: weaveParams.fiberDetail,
+        value: state.plainWeaveParams.fiberDetail,
         min: 0.0,
         max: 1.0,
         step: 0.05,
@@ -202,7 +195,7 @@ const threadWeaveSliderItems = computed(() => [
     {
         id: 'fuzziness',
         label: 'Fuzziness',
-        value: weaveParams.fuzziness,
+        value: state.plainWeaveParams.fuzziness,
         min: 0.0,
         max: 1.0,
         step: 0.05,
@@ -212,7 +205,7 @@ const threadWeaveSliderItems = computed(() => [
     {
         id: 'weaveTightness',
         label: 'Weave Tightness',
-        value: weaveParams.weaveTightness,
+        value: state.plainWeaveParams.weaveTightness,
         min: 0.0,
         max: 1.0,
         step: 0.05,
@@ -222,7 +215,7 @@ const threadWeaveSliderItems = computed(() => [
     {
         id: 'threadUnevenness',
         label: 'Thread Unevenness',
-        value: weaveParams.threadUnevenness,
+        value: state.plainWeaveParams.threadUnevenness,
         min: 0.0,
         max: 1.0,
         step: 0.05,
@@ -232,7 +225,7 @@ const threadWeaveSliderItems = computed(() => [
     {
         id: 'weaveImperfection',
         label: 'Weave Imperfection',
-        value: weaveParams.weaveImperfection,
+        value: state.plainWeaveParams.weaveImperfection,
         min: 0.0,
         max: 1.0,
         step: 0.05,
@@ -246,7 +239,7 @@ const advancedWeaveSliderItems = computed(() => [
     {
         id: 'fbmOctaves',
         label: 'FBM Octaves',
-        value: weaveParams.fbmOctaves,
+        value: state.plainWeaveParams.fbmOctaves,
         min: 1,
         max: 5,
         step: 1,
@@ -256,7 +249,7 @@ const advancedWeaveSliderItems = computed(() => [
     {
         id: 'fbmAmplitude',
         label: 'FBM Amplitude',
-        value: weaveParams.fbmAmplitude,
+        value: state.plainWeaveParams.fbmAmplitude,
         min: 0.1,
         max: 1.0,
         step: 0.05,
@@ -266,7 +259,7 @@ const advancedWeaveSliderItems = computed(() => [
     {
         id: 'noiseFrequency',
         label: 'Noise Frequency',
-        value: weaveParams.noiseFrequency,
+        value: state.plainWeaveParams.noiseFrequency,
         min: 1.0,
         max: 10.0,
         step: 0.5,
@@ -276,7 +269,7 @@ const advancedWeaveSliderItems = computed(() => [
     {
         id: 'colorVariation',
         label: 'Color Variation',
-        value: weaveParams.colorVariation,
+        value: state.plainWeaveParams.colorVariation,
         min: 0.0,
         max: 0.2,
         step: 0.01,
@@ -286,7 +279,7 @@ const advancedWeaveSliderItems = computed(() => [
     {
         id: 'threadHeightScale',
         label: 'Thread Height Scale',
-        value: weaveParams.threadHeightScale,
+        value: state.plainWeaveParams.threadHeightScale,
         min: 0.5,
         max: 2.0,
         step: 0.1,
@@ -296,7 +289,7 @@ const advancedWeaveSliderItems = computed(() => [
     {
         id: 'threadShadowStrength',
         label: 'Thread Shadow',
-        value: weaveParams.threadShadowStrength,
+        value: state.plainWeaveParams.threadShadowStrength,
         min: 0.0,
         max: 1.0,
         step: 0.05,
@@ -310,7 +303,7 @@ const materialWeaveSliderItems = computed(() => [
     {
         id: 'warpSheen',
         label: 'Warp Sheen',
-        value: weaveParams.warpSheen,
+        value: state.plainWeaveParams.warpSheen,
         min: 0.0,
         max: 1.0,
         step: 0.05,
@@ -320,7 +313,7 @@ const materialWeaveSliderItems = computed(() => [
     {
         id: 'weftSheen',
         label: 'Weft Sheen',
-        value: weaveParams.weftSheen,
+        value: state.plainWeaveParams.weftSheen,
         min: 0.0,
         max: 1.0,
         step: 0.05,
@@ -330,7 +323,7 @@ const materialWeaveSliderItems = computed(() => [
     {
         id: 'normalStrength',
         label: 'Normal Strength',
-        value: weaveParams.normalStrength,
+        value: state.plainWeaveParams.normalStrength,
         min: 1.0,
         max: 20.0,
         step: 0.5,
@@ -340,7 +333,7 @@ const materialWeaveSliderItems = computed(() => [
     {
         id: 'roughnessMin',
         label: 'Min Roughness',
-        value: weaveParams.roughnessMin,
+        value: state.plainWeaveParams.roughnessMin,
         min: 0.3,
         max: 0.7,
         step: 0.05,
@@ -350,7 +343,7 @@ const materialWeaveSliderItems = computed(() => [
     {
         id: 'roughnessMax',
         label: 'Max Roughness',
-        value: weaveParams.roughnessMax,
+        value: state.plainWeaveParams.roughnessMax,
         min: 0.7,
         max: 1.0,
         step: 0.05,
@@ -431,13 +424,13 @@ const weavePresets = {
 }
 
 const handleWeaveParamUpdate = (data: { id: string; value: number }) => {
-    if (data.id in weaveParams) {
-        (weaveParams as any)[data.id] = data.value
+    if (data.id in state.plainWeaveParams) {
+        (state.plainWeaveParams as any)[data.id] = data.value
     }
 }
 
-const applyPreset = (preset: Partial<PlainWeaveParams>) => {
-    Object.assign(weaveParams, preset)
+const applyPreset = (preset: Partial<any>) => {
+    Object.assign(state.plainWeaveParams, preset)
 }
 
 const pendingGeneration = ref(false)
@@ -454,7 +447,7 @@ const generateWeave = async () => {
     try {
         do {
             pendingGeneration.value = false
-            const imageData = await generatePlainWeaveTexture(weaveParams, 1024, 1024)
+            const imageData = await generatePlainWeaveTexture(state.plainWeaveParams, 1024, 1024)
             emit('set-image', imageData)
         } while (pendingGeneration.value)
     } catch (error) {
@@ -472,7 +465,7 @@ const debouncedGenerateWeave = () => {
     }, 50) as unknown as number
 }
 
-watch(weaveParams, () => {
+watch(state.plainWeaveParams, () => {
     debouncedGenerateWeave()
 }, { deep: true })
 </script>
