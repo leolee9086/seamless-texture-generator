@@ -1,44 +1,27 @@
 /**
- * FilmGradeTuringParams
- * 影视级生物纹理生成参数 (Multiscale Activator-Inhibitor)
+ * MultiscaleTuringParams
+ * 多尺度激活-抑制图灵斑图参数
  */
 export interface FilmGradeTuringParams {
     tileSize: number;
-    simulationSteps: number;    // 建议 50-200 即可稳定
+    simulationSteps: number;    // 迭代次数,建议 50-200
 
-    // --- 1. 图灵反应堆 (Flux Core) ---
-    // 基于多尺度激活-抑制模型 (McCabe style)
+    // --- 多尺度激活-抑制模型核心参数 ---
     activatorRadius: number;    // 激活剂半径 (决定纹理主要宽度)
     inhibitorRadius: number;    // 抑制剂半径 (决定纹理间距)
     curvature: number;          // 曲率/变异性 (影响纹理的弯曲程度)
 
+    // --- 各向异性扩散 (可选) ---
     diffusionAnisotropy: number;// 0.0 = 各向同性, 1.0 = 强拉伸
-    flowDirection: number;      // 0 - 2PI, 扩散流动的角度
+    flowDirection: number;      // 0 - 2π, 扩散流动方向
 
-    // --- 2. 混沌与变异 (Chaos & Mutation) ---
-    patternScale: number;       // 花纹整体大小 (通过UV缩放实现)
+    // --- 空间变化 ---
     variationScale: number;     // 变异噪声频率
     variationStrength: number;  // 变异强度 (局部扰动半径)
 
-    // --- 3. 皮肤微观结构 (Micro-Dermis) ---
-    poreDensity: number;        // 毛孔密度
-    poreDepth: number;          // 毛孔深度
-    skinWrinkleScale: number;   // 皮纹缩放
-    skinWrinkleStrength: number;// 皮纹强度
-
-    // --- 4. 多层色素材质 (Layered Material) ---
-    subsurfaceColor: string;    // 真皮层颜色
-    epidermisColor: string;     // 表皮层底色
-    pigmentColor: string;       // 色素层颜色
-
-    // --- 5. 光照响应 (Light Response) ---
-    roughnessBase: number;
-    roughnessPigment: number;
-    normalDetail: number;
-    heightDisplacement: number;
-
-    contrast: number; // Used for extra boost after normalization
-    bias: number;
+    // --- 对比度调整 ---
+    contrast: number;           // 对比度增强
+    bias: number;               // 亮度偏移
 }
 
 // Common Utilities (Needed in both)
@@ -118,25 +101,6 @@ fn voronoi(uv: vec2<f32>, density: f32) -> f32 {
     return smoothstep(0.0, 0.4, minDist);
 }
 
-// 周期性 Voronoi - 用于无缝平铺的毛孔纹理
-fn periodicVoronoi(uv: vec2<f32>, density: f32, period: vec2<f32>) -> f32 {
-    let p = uv * density;
-    let periodScaled = period * density;
-    let i = floor(p);
-    let f = fract(p);
-    var minDist = 1.0;
-    for(var y=-1; y<=1; y++) {
-        for(var x=-1; x<=1; x++) {
-            let neighbor = vec2<f32>(f32(x), f32(y));
-            let cellIndex = ((i + neighbor) % periodScaled + periodScaled) % periodScaled;
-            let point = hash22Periodic(cellIndex, periodScaled);
-            let diff = neighbor + point - f;
-            let dist = length(diff);
-            minDist = min(minDist, dist);
-        }
-    }
-    return smoothstep(0.0, 0.4, minDist);
-}
 
 fn sampleBilinear(tex: texture_2d<f32>, uv: vec2<f32>) -> vec4<f32> {
     let dims = vec2<f32>(textureDimensions(tex));
@@ -313,24 +277,10 @@ fn main(@builtin(global_invocation_id) id : vec3<u32>) {
 
 export const turingRenderWGSL = commonUtils + /* wgsl */`
 struct RenderUniforms {
-    viewMatrix : mat4x4<f32>, // Unused
-    
-    colorSub : vec3<f32>,
-    colorEpi : vec3<f32>,
-    colorPig : vec3<f32>,
-    
     tileSize : f32,
-    poreDensity : f32,
-    poreDepth : f32,
-    wrinkleScale : f32,
-    wrinkleStr : f32,
-    
-    roughBase : f32,
-    roughPig : f32,
-    normDetail : f32,
-    dispStr : f32,
-    
-    contrast: f32, bias: f32 
+    contrast: f32, 
+    bias: f32,
+    padding1: f32
 };
 
 @group(0) @binding(0) var<uniform> u : RenderUniforms;
@@ -372,24 +322,10 @@ fn fs_main(in : VertexOutput) -> @location(0) vec4<f32> {
 
 export const turingMaterialWGSL = commonUtils + /* wgsl */`
 struct MaterialUniforms {
-    viewMatrix : mat4x4<f32>, // Unused
-    
-    colorSub : vec3<f32>,
-    colorEpi : vec3<f32>,
-    colorPig : vec3<f32>,
-    
     tileSize : f32,
-    poreDensity : f32,
-    poreDepth : f32,
-    wrinkleScale : f32,
-    wrinkleStr : f32,
-    
-    roughBase : f32,
-    roughPig : f32,
-    normDetail : f32,
-    dispStr : f32,
-    
-    contrast: f32, bias: f32 
+    contrast: f32, 
+    bias: f32,
+    padding1: f32
 };
 
 @group(0) @binding(0) var<uniform> u : MaterialUniforms;
@@ -408,34 +344,6 @@ fn vs_main(@location(0) pos : vec3<f32>, @location(1) uv : vec2<f32>) -> VertexO
     out.Pos = vec4<f32>(pos, 1.0);
     out.uv = uv;
     return out;
-}
-
-// 从灰度图计算复合高度场
-fn getSurfaceHeight(uv: vec2<f32>) -> vec3<f32> {
-    let macroUV = uv * u.tileSize;
-    
-    // 读取灰度pattern(已经过对比度增强)
-    let dims = vec2<f32>(textureDimensions(grayTex));
-    let st = macroUV * dims;
-    let coords = vec2<i32>(st);
-    let dimi = vec2<i32>(dims);
-    let wrappedCoords = ((coords % dimi) + dimi) % dimi;
-    
-    let grayValue = textureLoad(grayTex, wrappedCoords, 0).r;
-    let patternMask = grayValue;
-    
-    // 添加微观细节 - 使用周期性噪声确保边界无缝
-    let period = vec2<f32>(u.tileSize, u.tileSize);
-    let wrinkles = periodicGradientNoise(macroUV, u.wrinkleScale, period);
-    let pores = periodicVoronoi(macroUV, u.poreDensity, period);
-    
-    let microHeight = (wrinkles - 0.5) * u.wrinkleStr - (1.0 - pores) * u.poreDepth;
-    
-    let baseHeight = patternMask * u.dispStr;
-    
-    let totalHeight = clamp(baseHeight + microHeight, 0.0, 1.0);
-    
-    return vec3<f32>(totalHeight, patternMask, microHeight);
 }
 
 @fragment
