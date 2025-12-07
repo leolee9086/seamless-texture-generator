@@ -1,15 +1,13 @@
 import { HSLAdjustProcessStep, type HSLAdjustmentLayer } from '../utils/hslAdjustStep'
-import { adjustExposure, adjustExposureManual } from '../adjustments/exposureAdjustment'  // 新增导入
-import { applyDehazeAdjustment, DEFAULT_DEHAZE_PARAMS } from '../adjustments/dehaze/dehazeAdjustment'  // 新增导入
 import { type DehazeParams } from '@/adjustments/dehaze/types'
-import { processClarityAdjustment, type ClarityParams } from '../adjustments/clarityAdjustment'  // 新增导入
-import { applyLuminanceAdjustmentToImageData, type LuminanceAdjustmentParams } from '../adjustments/luminanceAdjustment'  // 新增导入
+import { type ClarityParams } from '../adjustments/clarityAdjustment'
+import { type LuminanceAdjustmentParams } from '../adjustments/luminanceAdjustment'
 import { baseOptions, GeneralSynthesisPipelineStep, PipelineData } from '../types/PipelineData.type'
-import { gpuBufferToImageData } from '../utils/webgpu/convert/gpuBufferToImageData'
 import { ImageLoadStep } from './ImageLoadStep'
 import { LUTProcessStep } from './LUTProcessStep'
 import { TileableProcessStep } from './TileableProcessStep'
 import { OutputConversionStep } from './OutputConversionStep'
+import { allMiddlewares, type MiddlewareContext } from './nodes'
 /**
  * 管线步骤选项
  */
@@ -132,133 +130,20 @@ export async function processImageToTileable(
       pipelineData = await hslAdjustStep.execute(pipelineData, options.hslLayers, device)
     }
 
-    // 步骤 2.6: 曝光调整（新增）
-    // 只有当曝光参数不为默认值(1.0)时才应用曝光调整
-    const hasExposureAdjustment = (options.exposureStrength && options.exposureStrength !== 1.0) ||
-      (options.exposureManual && (options.exposureManual.exposure !== 1.0 || options.exposureManual.contrast !== 1.0 || options.exposureManual.gamma !== 1.0))
-
-    if (hasExposureAdjustment) {
-      const device = await getGPUDevice()
-      const imageData = await gpuBufferToImageData(pipelineData.buffer, pipelineData.width, pipelineData.height, device)
-
-      let processedImageData: ImageData
-      if (options.exposureStrength && options.exposureStrength !== 1.0) {
-        // 自动曝光调整
-        processedImageData = await adjustExposure(imageData, options.exposureStrength)
-      } else if (options.exposureManual) {
-        // 手动曝光调整
-        processedImageData = adjustExposureManual(
-          imageData,
-          options.exposureManual.exposure,
-          options.exposureManual.contrast,
-          options.exposureManual.gamma
-        )
-      } else {
-        processedImageData = imageData
-      }
-
-      // 转换回 GPUBuffer
-      const processedBuffer = await imageDataToGPUBuffer(processedImageData, device)
-
-      // 销毁旧的 buffer
-      pipelineData.buffer.destroy()
-
-      pipelineData = {
-        buffer: processedBuffer,
-        width: processedImageData.width,
-        height: processedImageData.height
-      }
+    // 步骤 2.6-2.9: 应用中间件处理
+    const cache = new WeakMap()
+    const context: MiddlewareContext = {
+      options,
+      pipelineData,
+      cache
     }
 
-    // 步骤 2.7: 去雾调整（新增）
-    // 只有当去雾参数与默认值不同时才应用去雾
-    const isDehazeNotDefault = options.dehazeParams && JSON.stringify(options.dehazeParams) !== JSON.stringify(DEFAULT_DEHAZE_PARAMS)
-
-    if (isDehazeNotDefault) {
-      const device = await getGPUDevice()
-      const imageData = await gpuBufferToImageData(pipelineData.buffer, pipelineData.width, pipelineData.height, device)
-
-      try {
-        // 应用去雾调整
-        const processedImageData = await applyDehazeAdjustment(imageData, options.dehazeParams!)
-
-        // 转换回 GPUBuffer
-        const processedBuffer = await imageDataToGPUBuffer(processedImageData, device)
-
-        // 销毁旧的 buffer
-        pipelineData.buffer.destroy()
-
-        pipelineData = {
-          buffer: processedBuffer,
-          width: processedImageData.width,
-          height: processedImageData.height
-        }
-      } catch (error) {
-        console.warn('去雾处理失败，继续使用原始图像:', error)
-      }
-    }
-
-    // 步骤 2.8: 清晰度调整（新增）
-    // 只有当清晰度参数不为默认值时才应用清晰度调整
-    // enhancementStrength和macroEnhancement为关键参数
-    const hasClarityAdjustment = options.clarityParams &&
-      (options.clarityParams.enhancementStrength !== 1.0 || options.clarityParams.macroEnhancement !== 0.0)
-
-    if (hasClarityAdjustment) {
-      const device = await getGPUDevice()
-      const imageData = await gpuBufferToImageData(pipelineData.buffer, pipelineData.width, pipelineData.height, device)
-
-      try {
-        // 应用清晰度调整
-        const processedImageData = await processClarityAdjustment(device, imageData, options.clarityParams!)
-
-        // 转换回 GPUBuffer
-        const processedBuffer = await imageDataToGPUBuffer(processedImageData, device)
-
-        // 销毁旧的 buffer
-        pipelineData.buffer.destroy()
-
-        pipelineData = {
-          buffer: processedBuffer,
-          width: processedImageData.width,
-          height: processedImageData.height
-        }
-      } catch (error) {
-        console.warn('清晰度处理失败，继续使用原始图像:', error)
-      }
-    }
-
-    // 步骤 2.9: 亮度调整（新增）
-    // 只有当亮度参数不全为0时才应用亮度调整
-    const hasLuminanceAdjustment = options.luminanceParams && (
-      options.luminanceParams.shadows.brightness !== 0 || options.luminanceParams.shadows.contrast !== 0 ||
-      options.luminanceParams.shadows.saturation !== 0 || options.luminanceParams.midtones.brightness !== 0 ||
-      options.luminanceParams.midtones.contrast !== 0 || options.luminanceParams.midtones.saturation !== 0 ||
-      options.luminanceParams.highlights.brightness !== 0 || options.luminanceParams.highlights.contrast !== 0 ||
-      options.luminanceParams.highlights.saturation !== 0
-    )
-
-    if (hasLuminanceAdjustment) {
-      const device = await getGPUDevice()
-      const imageData = await gpuBufferToImageData(pipelineData.buffer, pipelineData.width, pipelineData.height, device)
-
-      try {
-        // 应用亮度调整
-        const processedImageData = await applyLuminanceAdjustmentToImageData(device, imageData, options.luminanceParams!)
-
-        // 转换回 GPUBuffer
-        const processedBuffer = await imageDataToGPUBuffer(processedImageData, device)
-
-        // 销毁旧的 buffer
-        pipelineData.buffer.destroy()
-
-        pipelineData = {
-          buffer: processedBuffer,
-          width: processedImageData.width,
-          height: processedImageData.height
-        }
-      } catch (error) {
-        console.warn('亮度调整处理失败，继续使用原始图像:', error)
+    // 按顺序应用所有中间件
+    for (const middleware of allMiddlewares) {
+      if (middleware.guard(options)) {
+        await middleware.process(context)
+        // 更新 pipelineData 为处理后的结果
+        pipelineData = context.pipelineData
       }
     }
 
