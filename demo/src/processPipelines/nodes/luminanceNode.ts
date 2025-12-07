@@ -2,7 +2,6 @@ import { PipelineData, baseOptions } from '../../types/PipelineData.type'
 import { NodeContext, Node } from './types'
 import { applyLuminanceAdjustmentToImageData } from '../../adjustments/luminanceAdjustment'
 import { gpuBufferToImageData } from '../../utils/webgpu/convert/gpuBufferToImageData'
-import { getWebGPUDevice } from '../../../../src/utils/webgpuDevice'
 
 /**
  * 亮度调整中间件
@@ -24,7 +23,7 @@ export const luminanceMiddleware: Node = {
     const { options, pipelineData } = context
     
     // 获取 GPU 设备
-    const device = await getWebGPUDevice()
+    const device = await context.getWebGPUDevice()
     
     // 将 GPUBuffer/GPUTexture 转换为 ImageData
     const imageData = await gpuBufferToImageData(pipelineData.buffer, pipelineData.width, pipelineData.height, device)

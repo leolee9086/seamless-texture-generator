@@ -121,7 +121,8 @@ export async function processImageToTileable(
     const context: MiddlewareContext = {
       options,
       pipelineData,
-      cache
+      cache,
+      getWebGPUDevice: () => getWebGPUDevice()
     }
 
     // 按顺序应用所有中间件

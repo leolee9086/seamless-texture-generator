@@ -7,6 +7,7 @@ export interface NodeContext<TOptions extends baseOptions = baseOptions> {
   options: TOptions
   pipelineData: PipelineData
   cache: WeakMap<any, any>
+  getWebGPUDevice: () => Promise<GPUDevice>
 }
 
 /**
