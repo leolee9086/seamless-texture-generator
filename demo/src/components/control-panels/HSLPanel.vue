@@ -39,7 +39,7 @@
                 <!-- Color Picker -->
                 <div v-if="showColorPicker" class="mb-3 p-3 bg-black/30 rounded-lg border border-white/10">
                     <div class="grid grid-cols-6 gap-2 mb-3">
-                        <button v-for="color in commonColors" :key="color"
+                        <button v-for="color in COMMON_COLORS" :key="color"
                             class="w-full aspect-square rounded-lg border-2 transition-all hover:scale-110"
                             :style="{ backgroundColor: color }"
                             :class="selectedColor === color ? 'border-white shadow-lg' : 'border-white/20'"
@@ -80,7 +80,7 @@
 
                         <!-- Layer Controls (Expanded) -->
                         <div v-if="activeLayerId === layer.id" class="px-2 pb-2 border-t border-white/10">
-                            <Slider :items="getLayerSliderItems(layer)"
+                            <Slider :items="getLayerSliderItems(layer).get()"
                                 @updateValue="(data) => handleLayerSliderUpdate(layer.id, data)" />
                         </div>
                     </div>
@@ -100,7 +100,7 @@ import { Slider } from '@leolee9086/slider-component'
 import type { HSLAdjustmentLayer } from '../../utils/hslAdjustStep'
 import { createUpdateDataEvent } from '../../types/controlEvents'
 import type { ControlEvent } from '../../types/controlEvents'
-
+import { getGlobalSliderItems, getLayerSliderItems, COMMON_COLORS, getLayerSchema, MetaSchema } from './hsl/params'
 const props = defineProps<{
     isMobile?: boolean
     originalImage: string | null
@@ -141,11 +141,6 @@ watch(() => props.hslLayers, (newHslLayers) => {
     }
 }, { deep: true })
 
-// 常用颜色
-const commonColors = [
-    '#FF0000', '#FF7F00', '#FFFF00', '#00FF00', '#00FFFF', '#0000FF',
-    '#FF00FF', '#8B4513', '#FFFFFF', '#808080', '#000000', '#FFB6C1'
-]
 
 // Computed
 const emptyStateClass = computed(() =>
@@ -164,44 +159,24 @@ const hasGlobalAdjustments = computed(() =>
     globalHSL.value.hue !== 0 || globalHSL.value.saturation !== 0 || globalHSL.value.lightness !== 0
 )
 
-const globalSliderItems = computed(() => [
+const globalSliderItems = computed(getGlobalSliderItems(
     {
-        id: 'global-hue',
-        label: '色相',
-        value: globalHSL.value.hue,
-        min: -180,
-        max: 180,
-        step: 1,
-        gradient: 'linear-gradient(90deg, #ff0000 0%, #ffff00 17%, #00ff00 33%, #00ffff 50%, #0000ff 67%, #ff00ff 83%, #ff0000 100%)',
-        showRuler: false
-    },
-    {
-        id: 'global-saturation',
-        label: '饱和度',
-        value: globalHSL.value.saturation,
-        min: -100,
-        max: 100,
-        step: 1,
-        gradient: 'linear-gradient(90deg, #888 0%, #ff0000 100%)',
-        showRuler: false
-    },
-    {
-        id: 'global-lightness',
-        label: '明度',
-        value: globalHSL.value.lightness,
-        min: -100,
-        max: 100,
-        step: 1,
-        gradient: 'linear-gradient(90deg, #000 0%, #888 50%, #fff 100%)',
-        showRuler: false
+        globalHSL
     }
-])
+))
 
 // Methods
-const handleGlobalSliderUpdate = (data: { id: string; value: number }) => {
-    if (data.id === 'global-hue') globalHSL.value.hue = data.value
-    else if (data.id === 'global-saturation') globalHSL.value.saturation = data.value
-    else if (data.id === 'global-lightness') globalHSL.value.lightness = data.value
+const handleGlobalSliderUpdate = (data: { id: string; value: number | string }) => {
+    // 强制转换为number,防止字符串导致NaN
+    const numericValue = typeof data.value === 'string' ? parseFloat(data.value) : data.value
+    if (isNaN(numericValue)) {
+        console.error(`[HSLPanel] Invalid value for ${data.id}: ${data.value}`)
+        return
+    }
+
+    if (data.id === 'global-hue') globalHSL.value.hue = numericValue
+    else if (data.id === 'global-saturation') globalHSL.value.saturation = numericValue
+    else if (data.id === 'global-lightness') globalHSL.value.lightness = numericValue
 
     // 创建全局HSL调整层
     const globalLayer: HSLAdjustmentLayer = {
@@ -217,7 +192,7 @@ const handleGlobalSliderUpdate = (data: { id: string; value: number }) => {
 
 const resetGlobalHSL = () => {
     globalHSL.value = { hue: 0, saturation: 0, lightness: 0 }
-    
+
     // 创建重置后的全局HSL调整层
     const globalLayer: HSLAdjustmentLayer = {
         id: 'global-hsl-layer',
@@ -226,11 +201,34 @@ const resetGlobalHSL = () => {
         saturation: 0,
         lightness: 0
     }
-    
+
     emit('controlEvent', createUpdateDataEvent('global-hsl-change', globalLayer))
 }
 
 const addColorLayer = (color: string) => {
+    // 从schema中获取默认值，避免硬编码
+    const tempLayer: HSLAdjustmentLayer = {
+        id: 'temp',
+        type: 'selective',
+        targetColor: color,
+        hue: 0,
+        saturation: 0,
+        lightness: 0
+    }
+
+    const schema = getLayerSchema(tempLayer)
+
+    // 使用MetaSchema验证并提取元数据
+    const precisionResult = MetaSchema.safeParse(schema.shape.precision.meta())
+    const rangeResult = MetaSchema.safeParse(schema.shape.range.meta())
+
+    const precisionDefaultValue = (precisionResult.success && precisionResult.data.defaultValue != null)
+        ? precisionResult.data.defaultValue
+        : 30
+    const rangeDefaultValue = (rangeResult.success && rangeResult.data.defaultValue != null)
+        ? rangeResult.data.defaultValue
+        : 50
+
     const newLayer: HSLAdjustmentLayer = {
         id: crypto.randomUUID(),
         type: 'selective',
@@ -238,8 +236,8 @@ const addColorLayer = (color: string) => {
         hue: 0,
         saturation: 0,
         lightness: 0,
-        precision: 30,
-        range: 50
+        precision: precisionDefaultValue,
+        range: rangeDefaultValue
     }
     hslLayers.value.push(newLayer)
     activeLayerId.value = newLayer.id
@@ -259,69 +257,48 @@ const toggleLayer = (id: string) => {
     activeLayerId.value = activeLayerId.value === id ? null : id
 }
 
-const getLayerSliderItems = (layer: HSLAdjustmentLayer) => [
-    {
-        id: 'hue',
-        label: '色相',
-        value: layer.hue,
-        min: -180,
-        max: 180,
-        step: 1,
-        gradient: 'linear-gradient(90deg, #ff0000 0%, #ffff00 17%, #00ff00 33%, #00ffff 50%, #0000ff 67%, #ff00ff 83%, #ff0000 100%)',
-        showRuler: false
-    },
-    {
-        id: 'saturation',
-        label: '饱和度',
-        value: layer.saturation,
-        min: -100,
-        max: 100,
-        step: 1,
-        gradient: `linear-gradient(90deg, #888 0%, ${layer.targetColor} 100%)`,
-        showRuler: false
-    },
-    {
-        id: 'lightness',
-        label: '明度',
-        value: layer.lightness,
-        min: -100,
-        max: 100,
-        step: 1,
-        gradient: `linear-gradient(90deg, #000 0%, ${layer.targetColor} 50%, #fff 100%)`,
-        showRuler: false
-    },
-    {
-        id: 'precision',
-        label: '精确度',
-        value: layer.precision || 30,
-        min: 0,
-        max: 100,
-        step: 1,
-        gradient: 'linear-gradient(90deg, #ff3b30 0%, #ffcc00 50%, #4cd964 100%)',
-        showRuler: true
-    },
-    {
-        id: 'range',
-        label: '羽化范围',
-        value: layer.range || 50,
-        min: 0,
-        max: 100,
-        step: 1,
-        gradient: 'linear-gradient(90deg, #007aff 0%, #5ac8fa 50%, #ffffff 100%)',
-        showRuler: true
-    }
-]
 
-const handleLayerSliderUpdate = (layerId: string, data: { id: string; value: number }) => {
+const handleLayerSliderUpdate = (layerId: string, data: { id: string; value: number | string }) => {
     const layer = hslLayers.value.find(l => l.id === layerId)
-    if (!layer) return
+    if (!layer) {
+        console.error(`[HSLPanel] Layer not found: ${layerId}`)
+        return
+    }
 
+    // 强制转换为number,防止字符串导致NaN
+    let numericValue: number
+    if (typeof data.value === 'string') {
+        numericValue = parseFloat(data.value)
+    } else if (typeof data.value === 'number') {
+        numericValue = data.value
+    } else {
+        console.error(`[HSLPanel] Invalid value type for ${data.id}: ${typeof data.value}`)
+        return
+    }
+
+    // 检查是否为有效数字
+    if (isNaN(numericValue) || !isFinite(numericValue)) {
+        console.error(`[HSLPanel] Invalid value for ${data.id}: ${data.value}`)
+        return
+    }
+
+    // 根据字段类型设置适当的默认值和范围
     const updates: Partial<HSLAdjustmentLayer> = {}
-    if (data.id === 'hue') updates.hue = data.value
-    else if (data.id === 'saturation') updates.saturation = data.value
-    else if (data.id === 'lightness') updates.lightness = data.value
-    else if (data.id === 'precision') updates.precision = data.value
-    else if (data.id === 'range') updates.range = data.value
+    
+    if (data.id === 'hue') {
+        updates.hue = Math.max(-180, Math.min(180, numericValue))
+    } else if (data.id === 'saturation') {
+        updates.saturation = Math.max(-100, Math.min(100, numericValue))
+    } else if (data.id === 'lightness') {
+        updates.lightness = Math.max(-100, Math.min(100, numericValue))
+    } else if (data.id === 'precision') {
+        updates.precision = Math.max(0, Math.min(100, numericValue))
+    } else if (data.id === 'range') {
+        updates.range = Math.max(0, Math.min(100, numericValue))
+    } else {
+        console.error(`[HSLPanel] Unknown field: ${data.id}`)
+        return
+    }
 
     Object.assign(layer, updates)
     emit('controlEvent', createUpdateDataEvent('update-hsl-layer', { id: layerId, updates }))
@@ -331,3 +308,4 @@ const handleLayerSliderUpdate = (layerId: string, data: { id: string; value: num
 <style scoped>
 /* Tailwind classes handled in template */
 </style>
+
