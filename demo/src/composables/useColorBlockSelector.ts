@@ -42,51 +42,6 @@ export interface ColorBlockSelectorCtx {
     layers: Ref<AdjustmentLayer[]>
     activeLayerId: Ref<string | null>
 }
-const generateColorBlocksWithCtx = async (
-    input: File | string,
-    quantizedColorBlocks: Ref<RGBColor[]>,
-    commonHslBlocks: Ref<HSLRange[]>,
-    maskManager: Ref<AdjustmentRangeMaskManager | null>
-) => {
-    try {
-        let url: string
-        if (input instanceof File) {
-            url = URL.createObjectURL(input)
-        } else {
-            url = input
-        }
-        // 创建图像元素获取图像数据
-        const img = await 从URL创建图片并等待加载完成(url)
-        // 创建canvas获取ImageData
-        const imageData = 获取imgeData(img)
-
-        // 生成量化色块（降采样到合理大小）
-        const maxDimension = 512
-        const scale = Math.min(1, maxDimension / Math.max(img.width, img.height))
-        const scaledWidth = Math.round(img.width * scale)
-        const scaledHeight = Math.round(img.height * scale)
-
-        if (scale < 1) {
-            const scaledCanvas = document.createElement('canvas')
-            const scaledCtx = scaledCanvas.getContext('2d')!
-            scaledCanvas.width = scaledWidth
-            scaledCanvas.height = scaledHeight
-            scaledCtx.drawImage(img, 0, 0, scaledWidth, scaledHeight)
-            const scaledImageData = scaledCtx.getImageData(0, 0, scaledWidth, scaledHeight)
-            quantizedColorBlocks.value = AdjustmentRangeMaskManager.generateQuantizedColorBlocks(scaledImageData, 8)
-        } else {
-            quantizedColorBlocks.value = AdjustmentRangeMaskManager.generateQuantizedColorBlocks(imageData, 8)
-        }
-
-        // 生成常用HSL色块
-        commonHslBlocks.value = AdjustmentRangeMaskManager.generateCommonHslBlocks()
-        maskManager.value = new AdjustmentRangeMaskManager()
-
-        // 初始化遮罩管理器
-    } catch (error) {
-        console.error('生成色块失败:', error)
-    }
-}
 
 /**
  * 色块选择相关的composable

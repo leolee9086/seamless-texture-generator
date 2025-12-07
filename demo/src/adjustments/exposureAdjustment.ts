@@ -189,7 +189,7 @@ async function initializeGPU(): Promise<GPUDevice> {
 }
 
 // 创建自动曝光GPU管线
-async function createAutoExposurePipeline(device: GPUDevice, width: number, height: number) {
+async function createAutoExposurePipeline(device: GPUDevice, _width: number, _height: number) {
     if (!device) {
         throw new Error('GPU设备未初始化')
     }
@@ -267,7 +267,6 @@ async function createInputTexture(device: GPUDevice, imageData: ImageData, width
     try {
         const bytesPerPixel = 4 // RGBA格式
         const minBytesPerRow = width * bytesPerPixel
-        const alignedBytesPerRow = Math.ceil(minBytesPerRow / 256) * 256
 
         // 创建纹理
         const texture = device.createTexture({
@@ -313,28 +312,6 @@ function createOutputTexture(device: GPUDevice, width: number, height: number): 
             GPUTextureUsage.TEXTURE_BINDING,
         dimension: '2d',
         label: 'output_texture'
-    })
-}
-
-// 创建绑定组
-function createBindGroup(
-    device: GPUDevice,
-    bindGroupLayout: GPUBindGroupLayout,
-    uniformBuffer: GPUBuffer,
-    inputTexture: GPUTexture,
-    outputTexture: GPUTexture,
-    histogramBuffer: GPUBuffer,
-    cdfBuffer: GPUBuffer
-): GPUBindGroup {
-    return device.createBindGroup({
-        layout: bindGroupLayout,
-        entries: [
-            { binding: 0, resource: { buffer: uniformBuffer } },
-            { binding: 1, resource: inputTexture.createView() },
-            { binding: 2, resource: outputTexture.createView() },
-            { binding: 3, resource: { buffer: histogramBuffer } },
-            { binding: 4, resource: { buffer: cdfBuffer } }
-        ]
     })
 }
 
@@ -732,7 +709,7 @@ export function adjustExposureManual(
 export function exposureToHSLAdjustment(
     exposure: number,
     contrast: number = 1.0,
-    gamma: number = 1.0
+    _gamma: number = 1.0
 ): HSLAdjustmentLayer {
     // 将曝光调整转换为HSL参数
     // 这是一个简化的转换，实际应用中可能需要更复杂的算法

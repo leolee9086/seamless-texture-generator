@@ -1,4 +1,4 @@
-import { ref, reactive, watch } from 'vue'
+import {  reactive, watch } from 'vue'
 import { defaultWoodParams, type WoodParams } from '../proceduralTexturing/wood/woodGeneratorPipeline'
 
 // 定义所有程序化纹理类型的参数接口
