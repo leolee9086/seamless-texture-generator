@@ -1,7 +1,8 @@
 import { PipelineData } from '@/types/PipelineData.type';
 import { gpuBufferToImageData } from '@/utils/webgpu/convert/gpuBufferToImageData';
 import { processLutData, processImageWithLUT } from '@leolee9086/use-lut';
-import { ImageProcessPipelineStep, PipelineOptions, getGPUDevice, imageDataToGPUBuffer } from './imageProcessor';
+import { ImageProcessPipelineStep, PipelineOptions, imageDataToGPUBuffer } from './imageProcessor';
+import { getWebGPUDevice } from '../../../src/utils/webgpuDevice';
 
 /**
  * 步骤 2: LUT 处理
@@ -13,7 +14,7 @@ export class LUTProcessStep implements ImageProcessPipelineStep {
       return data;
     }
 
-    const device = await getGPUDevice();
+    const device = await getWebGPUDevice();
 
     try {
       // 将 GPUBuffer 转换为 ImageData（内部处理需要）

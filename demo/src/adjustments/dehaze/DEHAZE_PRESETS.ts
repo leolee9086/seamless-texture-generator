@@ -1,7 +1,7 @@
 /**
  * 预设去雾配置
  */
-import { DehazeParams } from "./types";
+
 export const DEHAZE_PRESETS = {
   /** 轻度去雾 */
   light: {

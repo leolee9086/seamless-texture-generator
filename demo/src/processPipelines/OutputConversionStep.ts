@@ -1,6 +1,7 @@
 import { PipelineData } from '@/types/PipelineData.type';
 import { gpuBufferToImageData } from '@/utils/webgpu/convert/gpuBufferToImageData';
-import { ImageProcessPipelineStep, PipelineOptions, getGPUDevice } from './imageProcessor';
+import { ImageProcessPipelineStep, PipelineOptions } from './imageProcessor';
+import { getWebGPUDevice } from '../../../src/utils/webgpuDevice';
 
 /**
  * 步骤 4: 输出转换
@@ -16,7 +17,7 @@ export class OutputConversionStep implements ImageProcessPipelineStep {
    * 将 GPUBuffer 转换为 DataURL
    */
   async convertToDataURL(data: PipelineData): Promise<string> {
-    const device = await getGPUDevice();
+    const device = await getWebGPUDevice();
 
     // 将 GPUBuffer 转换为 ImageData
     const imageData = await gpuBufferToImageData(data.buffer, data.width, data.height, device);

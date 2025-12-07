@@ -2,6 +2,7 @@ import { PipelineData, baseOptions } from '../../types/PipelineData.type'
 import { NodeContext, Node } from './types'
 import { processClarityAdjustment } from '../../adjustments/clarityAdjustment'
 import { gpuBufferToImageData } from '../../utils/webgpu/convert/gpuBufferToImageData'
+import { getWebGPUDevice } from '../../../../src/utils/webgpuDevice'
 
 /**
  * 清晰度调整中间件
@@ -18,16 +19,7 @@ export const clarityMiddleware: Node = {
     const { options, pipelineData } = context
     
     // 获取 GPU 设备
-    if (!navigator.gpu) {
-      throw new Error('WebGPU 不支持')
-    }
-    
-    const adapter = await navigator.gpu.requestAdapter()
-    if (!adapter) {
-      throw new Error('无法获取 GPU 适配器')
-    }
-    
-    const device = await adapter.requestDevice()
+    const device = await getWebGPUDevice()
     
     // 将 GPUBuffer/GPUTexture 转换为 ImageData
     const imageData = await gpuBufferToImageData(pipelineData.buffer, pipelineData.width, pipelineData.height, device)

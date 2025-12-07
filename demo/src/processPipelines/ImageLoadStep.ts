@@ -1,7 +1,7 @@
 import { PipelineData } from '@/types/PipelineData.type';
 import { scaleImageToMaxResolution } from '@/utils/imageLoader';
-import { ImageProcessPipelineStep, PipelineOptions, getGPUDevice, imageDataToGPUBuffer } from './imageProcessor';
-
+import { ImageProcessPipelineStep, PipelineOptions,  imageDataToGPUBuffer } from './imageProcessor';
+import { getWebGPUDevice } from '../../../src/utils/webgpuDevice';
 /**
  * 步骤 1: 图像加载和缩放
  */
@@ -16,7 +16,7 @@ export class ImageLoadStep implements ImageProcessPipelineStep {
    * 从图像 URL 加载并缩放图像
    */
   async loadAndScale(originalImage: string, maxResolution: number): Promise<PipelineData> {
-    const device = await getGPUDevice();
+    const device = await getWebGPUDevice();
 
     // 创建图像元素
     const img = new Image();

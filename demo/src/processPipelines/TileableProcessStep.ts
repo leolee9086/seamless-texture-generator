@@ -1,7 +1,8 @@
 import { PipelineData } from '@/types/PipelineData.type';
 import { gpuBufferToImageData } from '@/utils/webgpu/convert/gpuBufferToImageData';
 import { makeTileable } from '../../../src/lib/HistogramPreservingBlendMakeTileable';
-import { ImageProcessPipelineStep, PipelineOptions, getGPUDevice, imageDataToGPUBuffer } from './imageProcessor';
+import { ImageProcessPipelineStep, PipelineOptions, imageDataToGPUBuffer } from './imageProcessor';
+import { getWebGPUDevice } from '../../../src/utils/webgpuDevice';
 
 /**
  * 步骤 3: 可平铺化处理
@@ -13,7 +14,7 @@ export class TileableProcessStep implements ImageProcessPipelineStep {
       return data;
     }
 
-    const device = await getGPUDevice();
+    const device = await getWebGPUDevice();
 
     // 将 GPUBuffer 转换为 ImageData（内部处理需要）
     const imageData = await gpuBufferToImageData(data.buffer, data.width, data.height, device);

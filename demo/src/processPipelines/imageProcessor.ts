@@ -48,23 +48,9 @@ export async function imageDataToGPUBuffer(imageData: ImageData, device: GPUDevi
 
 /**
  * 获取或初始化 WebGPU 设备
+ * 统一使用 webgpuDevice.ts 中的设备获取逻辑
  */
-let cachedDevice: GPUDevice | null = null
-export async function getGPUDevice(): Promise<GPUDevice> {
-  if (cachedDevice) return cachedDevice
-
-  if (!navigator.gpu) {
-    throw new Error('WebGPU 不支持')
-  }
-
-  const adapter = await navigator.gpu.requestAdapter()
-  if (!adapter) {
-    throw new Error('无法获取 GPU 适配器')
-  }
-
-  cachedDevice = await adapter.requestDevice()
-  return cachedDevice
-}
+import { getWebGPUDevice } from '../utils/webgpu/webgpuDevice'
 
 /**
  * 处理图像，使其可平铺
@@ -125,7 +111,7 @@ export async function processImageToTileable(
     pipelineData = await lutProcessStep.execute(pipelineData, options)
     // 步骤 2.5: HSL调整
     if (options.hslLayers && options.hslLayers.length > 0) {
-      const device = await getGPUDevice()
+      const device = await getWebGPUDevice()
       const hslAdjustStep = new HSLAdjustProcessStep()
       pipelineData = await hslAdjustStep.execute(pipelineData, options.hslLayers, device)
     }
