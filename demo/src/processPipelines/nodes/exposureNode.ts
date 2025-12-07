@@ -1,12 +1,12 @@
 import { PipelineData, baseOptions } from '../../types/PipelineData.type'
-import { MiddlewareContext, Middleware } from './types'
+import { NodeContext, Node } from './types'
 import { adjustExposure, adjustExposureManual } from '../../adjustments/exposureAdjustment'
 import { gpuBufferToImageData } from '../../utils/webgpu/convert/gpuBufferToImageData'
 
 /**
  * 曝光调整中间件
  */
-export const exposureMiddleware: Middleware = {
+export const exposureMiddleware: Node = {
     guard: (options: baseOptions) => {
         // 检查是否有曝光调整参数
         const hasExposureStrength = (options.exposureStrength && options.exposureStrength !== 1.0)
@@ -18,7 +18,7 @@ export const exposureMiddleware: Middleware = {
         return hasExposureStrength || hasExposureManual
     },
 
-    process: async (context: MiddlewareContext) => {
+    process: async (context: NodeContext) => {
         const { options, pipelineData } = context
 
         // 获取 GPU 设备

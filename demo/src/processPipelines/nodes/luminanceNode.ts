@@ -1,12 +1,12 @@
 import { PipelineData, baseOptions } from '../../types/PipelineData.type'
-import { MiddlewareContext, Middleware } from './types'
+import { NodeContext, Node } from './types'
 import { applyLuminanceAdjustmentToImageData } from '../../adjustments/luminanceAdjustment'
 import { gpuBufferToImageData } from '../../utils/webgpu/convert/gpuBufferToImageData'
 
 /**
  * 亮度调整中间件
  */
-export const luminanceMiddleware: Middleware = {
+export const luminanceMiddleware: Node = {
   guard: (options: baseOptions) => {
     // 检查是否有亮度调整参数
     // 只有当亮度参数不全为0时才应用亮度调整
@@ -19,7 +19,7 @@ export const luminanceMiddleware: Middleware = {
     )
   },
 
-  process: async (context: MiddlewareContext) => {
+  process: async (context: NodeContext) => {
     const { options, pipelineData } = context
     
     // 获取 GPU 设备

@@ -1,4 +1,4 @@
-export type { Middleware, MiddlewareContext } from './types'
+export type { Node as Middleware, NodeContext as MiddlewareContext } from './types'
 export type { MiddlewareProcessor } from './utils'
 import { exposureMiddleware } from './exposureNode'
 import { clarityMiddleware } from './clarityNode'

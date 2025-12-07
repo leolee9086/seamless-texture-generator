@@ -1,17 +1,17 @@
 import { PipelineData, baseOptions } from '../../types/PipelineData.type'
-import { MiddlewareContext, Middleware } from './types'
+import { NodeContext, Node } from './types'
 import { applyDehazeAdjustment, DEFAULT_DEHAZE_PARAMS } from '../../adjustments/dehaze/dehazeAdjustment'
 import { gpuBufferToImageData } from '../../utils/webgpu/convert/gpuBufferToImageData'
 
 /**
  * 去雾调整中间件
  */
-export const dehazeMiddleware: Middleware = {
+export const dehazeMiddleware: Node = {
   guard: (options: baseOptions) => {
     return options.dehazeParams && JSON.stringify(options.dehazeParams) !== JSON.stringify(DEFAULT_DEHAZE_PARAMS)
   },
 
-  process: async (context: MiddlewareContext) => {
+  process: async (context: NodeContext) => {
     const { options, pipelineData } = context
     
     // 获取 GPU 设备

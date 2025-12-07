@@ -1,12 +1,12 @@
 import { PipelineData, baseOptions } from '../../types/PipelineData.type'
-import { MiddlewareContext, Middleware } from './types'
+import { NodeContext, Node } from './types'
 import { processClarityAdjustment } from '../../adjustments/clarityAdjustment'
 import { gpuBufferToImageData } from '../../utils/webgpu/convert/gpuBufferToImageData'
 
 /**
  * 清晰度调整中间件
  */
-export const clarityMiddleware: Middleware = {
+export const clarityMiddleware: Node = {
   guard: (options: baseOptions) => {
     // 检查是否有清晰度调整参数
     // enhancementStrength和macroEnhancement为关键参数
@@ -14,8 +14,7 @@ export const clarityMiddleware: Middleware = {
       (options.clarityParams.enhancementStrength !== 1.0 || 
        options.clarityParams.macroEnhancement !== 0.0)
   },
-
-  process: async (context: MiddlewareContext) => {
+  process: async (context: NodeContext) => {
     const { options, pipelineData } = context
     
     // 获取 GPU 设备
