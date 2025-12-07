@@ -155,7 +155,7 @@ import LUTGallery from './LUTGallery.vue'
 import ColorBlockSelector from '../ColorBlockSelector.vue'
 import MaskPreviewPanel from '../../previews/MaskPreviewPanel.vue'
 import { lutDb, type LUTItem } from '../../../utils/lutDb'
-import { processImageToTileable } from '../../../utils/imageProcessor'
+import { processImageToTileable } from '../../../processPipelines/imageProcessor'
 import { useColorBlockSelector } from '../../../composables/useColorBlockSelector'
 import { getHslBlockColor } from '../../../utils/lut/getHslBlockColor'
 

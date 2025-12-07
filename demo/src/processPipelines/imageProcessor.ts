@@ -1,17 +1,19 @@
-import { makeTileable } from '../../../src/lib/HistogramPreservingBlendMakeTileable'
-import { scaleImageToMaxResolution } from './imageLoader'
-import { processImageWithLUT, processLutData } from '@leolee9086/use-lut'
-import { HSLAdjustProcessStep, type HSLAdjustmentLayer } from './hslAdjustStep'
+import { HSLAdjustProcessStep, type HSLAdjustmentLayer } from '../utils/hslAdjustStep'
 import { adjustExposure, adjustExposureManual } from '../adjustments/exposureAdjustment'  // 新增导入
 import { applyDehazeAdjustment, DEFAULT_DEHAZE_PARAMS } from '../adjustments/dehaze/dehazeAdjustment'  // 新增导入
 import { type DehazeParams } from '@/adjustments/dehaze/types'
 import { processClarityAdjustment, type ClarityParams } from '../adjustments/clarityAdjustment'  // 新增导入
 import { applyLuminanceAdjustmentToImageData, type LuminanceAdjustmentParams } from '../adjustments/luminanceAdjustment'  // 新增导入
 import { baseOptions, GeneralSynthesisPipelineStep, PipelineData } from '../types/PipelineData.type'
+import { gpuBufferToImageData } from '../utils/webgpu/convert/gpuBufferToImageData'
+import { ImageLoadStep } from './ImageLoadStep'
+import { LUTProcessStep } from './LUTProcessStep'
+import { TileableProcessStep } from './TileableProcessStep'
+import { OutputConversionStep } from './OutputConversionStep'
 /**
  * 管线步骤选项
  */
-interface PipelineOptions extends baseOptions {
+export interface PipelineOptions extends baseOptions {
   maxResolution?: number
   borderSize?: number
   lutFile?: File | null
@@ -28,14 +30,14 @@ interface PipelineOptions extends baseOptions {
 /**
  * 图片后处理管线步骤接口
  */
-interface ImageProcessPipelineStep extends GeneralSynthesisPipelineStep {
+export interface ImageProcessPipelineStep extends GeneralSynthesisPipelineStep {
   execute(data: PipelineData, options: PipelineOptions): Promise<PipelineData>
 }
 
 /**
  * 工具函数：ImageData 转 GPUBuffer
  */
-async function imageDataToGPUBuffer(imageData: ImageData, device: GPUDevice): Promise<GPUBuffer> {
+export async function imageDataToGPUBuffer(imageData: ImageData, device: GPUDevice): Promise<GPUBuffer> {
   const buffer = device.createBuffer({
     size: imageData.data.byteLength,
     usage: GPUBufferUsage.STORAGE | GPUBufferUsage.COPY_SRC | GPUBufferUsage.COPY_DST,
@@ -47,60 +49,10 @@ async function imageDataToGPUBuffer(imageData: ImageData, device: GPUDevice): Pr
 }
 
 /**
- * 工具函数：GPUBuffer | GPUTexture 转 ImageData
- */
-async function gpuBufferToImageData(buffer: GPUBuffer | GPUTexture, width: number, height: number, device: GPUDevice): Promise<ImageData> {
-  const size = width * height * 4
-  const stagingBuffer = device.createBuffer({
-    size,
-    usage: GPUBufferUsage.COPY_DST | GPUBufferUsage.MAP_READ
-  })
-
-  const commandEncoder = device.createCommandEncoder()
-  
-  if (buffer instanceof GPUBuffer) {
-    // 直接从GPUBuffer复制
-    commandEncoder.copyBufferToBuffer(buffer, 0, stagingBuffer, 0, size)
-  } else {
-    // 从GPUTexture复制，需要创建临时缓冲区来处理对齐
-    const alignment = 256
-    const bytesPerRow = width * 4
-    const alignedBytesPerRow = Math.ceil(bytesPerRow / alignment) * alignment
-    const alignedBufferSize = alignedBytesPerRow * height
-    
-    const tempBuffer = device.createBuffer({
-      size: alignedBufferSize,
-      usage: GPUBufferUsage.COPY_SRC | GPUBufferUsage.COPY_DST
-    })
-    
-    commandEncoder.copyTextureToBuffer(
-      { texture: buffer },
-      { buffer: tempBuffer, bytesPerRow: alignedBytesPerRow },
-      { width, height }
-    )
-    
-    // 从对齐的缓冲区复制到紧凑的缓冲区
-    commandEncoder.copyBufferToBuffer(tempBuffer, 0, stagingBuffer, 0, size)
-    
-    tempBuffer.destroy()
-  }
-  
-  device.queue.submit([commandEncoder.finish()])
-
-  await stagingBuffer.mapAsync(GPUMapMode.READ)
-  const copyArrayBuffer = stagingBuffer.getMappedRange()
-  const data = new Uint8ClampedArray(copyArrayBuffer.slice(0))
-  stagingBuffer.unmap()
-  stagingBuffer.destroy()
-
-  return new ImageData(data, width, height)
-}
-
-/**
  * 获取或初始化 WebGPU 设备
  */
 let cachedDevice: GPUDevice | null = null
-async function getGPUDevice(): Promise<GPUDevice> {
+export async function getGPUDevice(): Promise<GPUDevice> {
   if (cachedDevice) return cachedDevice
 
   if (!navigator.gpu) {
@@ -114,182 +66,6 @@ async function getGPUDevice(): Promise<GPUDevice> {
 
   cachedDevice = await adapter.requestDevice()
   return cachedDevice
-}
-
-/**
- * 步骤 1: 图像加载和缩放
- */
-class ImageLoadStep implements ImageProcessPipelineStep {
-  async execute(data: PipelineData, options: PipelineOptions): Promise<PipelineData> {
-    // 这是管线的第一步，data 参数实际上不会被使用
-    // 我们需要从外部传入的 originalImage 加载图像
-    throw new Error('ImageLoadStep 需要特殊处理，不能直接在管线中使用')
-  }
-
-  /**
-   * 从图像 URL 加载并缩放图像
-   */
-  async loadAndScale(originalImage: string, maxResolution: number): Promise<PipelineData> {
-    const device = await getGPUDevice()
-
-    // 创建图像元素
-    const img = new Image()
-    img.crossOrigin = 'anonymous'
-
-    await new Promise<void>((resolve, reject) => {
-      img.onload = () => resolve()
-      img.onerror = () => reject(new Error('图像加载失败'))
-      img.src = originalImage
-    })
-
-    // 缩放图像到最大分辨率
-    const scaledCanvas = scaleImageToMaxResolution(img, maxResolution)
-    const imageData = scaledCanvas.getContext('2d')!.getImageData(0, 0, scaledCanvas.width, scaledCanvas.height)
-
-    // 转换为 GPUBuffer
-    const buffer = await imageDataToGPUBuffer(imageData, device)
-
-    return {
-      buffer,
-      width: imageData.width,
-      height: imageData.height
-    }
-  }
-}
-
-/**
- * 步骤 2: LUT 处理
- */
-class LUTProcessStep implements ImageProcessPipelineStep {
-  async execute(data: PipelineData, options: PipelineOptions): Promise<PipelineData> {
-    // 如果没有 LUT 文件，直接返回原数据
-    if (!options.lutFile) {
-      return data
-    }
-
-    const device = await getGPUDevice()
-
-    try {
-      // 将 GPUBuffer 转换为 ImageData（内部处理需要）
-      const imageData = await gpuBufferToImageData(data.buffer, data.width, data.height, device)
-
-      // 解析 LUT 文件
-      const lutResult = await processLutData(options.lutFile, options.lutFile.name)
-
-      // 准备 maskData 对象
-      const maskOptions: any = {
-        intensity: options.lutIntensity || 1.0
-      }
-
-      if (options.maskData) {
-        console.log('🎭 应用蒙版:', imageData)
-        maskOptions.maskData = {
-          data: options.maskData,
-          width: imageData.width,
-          height: imageData.height
-        }
-        maskOptions.maskIntensity = 1.0
-        maskOptions.enableMask = true
-      } else {
-        console.log('⚠️ 无蒙版数据')
-      }
-
-      // 使用LUT库处理图像
-      const processResult = await processImageWithLUT(
-        { data: new Uint8Array(imageData.data.buffer), width: imageData.width, height: imageData.height },
-        lutResult.data,
-        maskOptions
-      )
-
-      if (processResult.success && processResult.result) {
-        // 更新图像数据为LUT处理后的结果
-        const processedImageData = new ImageData(
-          new Uint8ClampedArray(processResult.result),
-          imageData.width,
-          imageData.height
-        )
-
-        // 转换回 GPUBuffer
-        const processedBuffer = await imageDataToGPUBuffer(processedImageData, device)
-
-        // 销毁旧的 buffer
-        data.buffer.destroy()
-
-        return {
-          buffer: processedBuffer,
-          width: data.width,
-          height: data.height
-        }
-      }
-    } catch (error) {
-      console.warn('LUT处理失败，继续使用原始图像:', error)
-    }
-
-    // LUT 处理失败或未成功时返回原数据
-    return data
-  }
-}
-
-/**
- * 步骤 3: 可平铺化处理
- */
-class TileableProcessStep implements ImageProcessPipelineStep {
-  async execute(data: PipelineData, options: PipelineOptions): Promise<PipelineData> {
-    // 当 borderSize 为 0 时，不进行无缝化处理，直接返回原始数据
-    if (options.borderSize === 0) {
-      return data
-    }
-
-    const device = await getGPUDevice()
-
-    // 将 GPUBuffer 转换为 ImageData（内部处理需要）
-    const imageData = await gpuBufferToImageData(data.buffer, data.width, data.height, device)
-
-    // 处理图像（可平铺化）
-    const processedImageData = await makeTileable(imageData, options.borderSize!, null)
-
-    // 转换回 GPUBuffer
-    const processedBuffer = await imageDataToGPUBuffer(processedImageData, device)
-
-    // 销毁旧的 buffer
-    data.buffer.destroy()
-
-    return {
-      buffer: processedBuffer,
-      width: processedImageData.width,
-      height: processedImageData.height
-    }
-  }
-}
-
-/**
- * 步骤 4: 输出转换
- */
-class OutputConversionStep implements ImageProcessPipelineStep {
-  async execute(data: PipelineData, options: PipelineOptions): Promise<PipelineData> {
-    // 这个步骤不修改数据，只是标记管线结束
-    // 实际的转换工作在 processImageToTileable 函数中完成
-    return data
-  }
-
-  /**
-   * 将 GPUBuffer 转换为 DataURL
-   */
-  async convertToDataURL(data: PipelineData): Promise<string> {
-    const device = await getGPUDevice()
-
-    // 将 GPUBuffer 转换为 ImageData
-    const imageData = await gpuBufferToImageData(data.buffer, data.width, data.height, device)
-
-    // 将处理后的图像数据转换为URL
-    const canvas = document.createElement('canvas')
-    canvas.width = imageData.width
-    canvas.height = imageData.height
-    const ctx = canvas.getContext('2d')!
-    ctx.putImageData(imageData, 0, 0)
-
-    return canvas.toDataURL()
-  }
 }
 
 /**
