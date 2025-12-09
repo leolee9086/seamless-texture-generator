@@ -1,119 +1,35 @@
 <template>
-    <div class="flex flex-col gap-4">
-        <!-- Color Controls -->
-        <div class="flex flex-col gap-3">
-            <div class="flex items-center justify-between">
-                <span class="text-xs font-medium text-white/60">Colors (Gradient)</span>
-                <button @click="state.uiState.plainWeavePanel.showColors = !state.uiState.plainWeavePanel.showColors" class="text-white/40 hover:text-white/60 transition-colors">
-                    <div class="i-carbon-chevron-down text-sm transition-transform"
-                        :class="{ 'rotate-180': state.uiState.plainWeavePanel.showColors }"></div>
-                </button>
-            </div>
-            <div v-show="state.uiState.plainWeavePanel.showColors" class="flex flex-col gap-3">
-                <GradientEditor v-model="state.plainWeaveParams.gradientStops" />
-            </div>
-        </div>
-
-        <!-- Basic Parameters -->
-        <div class="flex flex-col gap-3">
-            <div class="flex items-center justify-between">
-                <span class="text-xs font-medium text-white/60">Basic Parameters</span>
-                <button @click="state.uiState.plainWeavePanel.showBasicParams = !state.uiState.plainWeavePanel.showBasicParams"
-                    class="text-white/40 hover:text-white/60 transition-colors">
-                    <div class="i-carbon-chevron-down text-sm transition-transform"
-                        :class="{ 'rotate-180': state.uiState.plainWeavePanel.showBasicParams }"></div>
-                </button>
-            </div>
-            <div v-show="state.uiState.plainWeavePanel.showBasicParams" class="flex flex-col gap-3">
-                <div v-for="param in basicWeaveSliderItems" :key="param.id">
-                    <Slider :items="[param]" @updateValue="handleWeaveParamUpdate" />
-                </div>
-            </div>
-        </div>
-
-        <!-- Thread Structure -->
-        <div class="flex flex-col gap-3">
-            <div class="flex items-center justify-between">
-                <span class="text-xs font-medium text-white/60">Thread Structure</span>
-                <button @click="state.uiState.plainWeavePanel.showThreadParams = !state.uiState.plainWeavePanel.showThreadParams"
-                    class="text-white/40 hover:text-white/60 transition-colors">
-                    <div class="i-carbon-chevron-down text-sm transition-transform"
-                        :class="{ 'rotate-180': state.uiState.plainWeavePanel.showThreadParams }"></div>
-                </button>
-            </div>
-            <div v-show="state.uiState.plainWeavePanel.showThreadParams" class="flex flex-col gap-3">
-                <div v-for="param in threadWeaveSliderItems" :key="param.id">
-                    <Slider :items="[param]" @updateValue="handleWeaveParamUpdate" />
-                </div>
-            </div>
-        </div>
-
-        <!-- Advanced Parameters -->
-        <div class="flex flex-col gap-3">
-            <div class="flex items-center justify-between">
-                <span class="text-xs font-medium text-white/60">Advanced Parameters</span>
-                <button @click="state.uiState.plainWeavePanel.showAdvancedParams = !state.uiState.plainWeavePanel.showAdvancedParams"
-                    class="text-white/40 hover:text-white/60 transition-colors">
-                    <div class="i-carbon-chevron-down text-sm transition-transform"
-                        :class="{ 'rotate-180': state.uiState.plainWeavePanel.showAdvancedParams }"></div>
-                </button>
-            </div>
-            <div v-show="state.uiState.plainWeavePanel.showAdvancedParams" class="flex flex-col gap-3">
-                <div v-for="param in advancedWeaveSliderItems" :key="param.id">
-                    <Slider :items="[param]" @updateValue="handleWeaveParamUpdate" />
-                </div>
-            </div>
-        </div>
-
-        <!-- Material Properties -->
-        <div class="flex flex-col gap-3">
-            <div class="flex items-center justify-between">
-                <span class="text-xs font-medium text-white/60">Material Properties</span>
-                <button @click="state.uiState.plainWeavePanel.showMaterialParams = !state.uiState.plainWeavePanel.showMaterialParams"
-                    class="text-white/40 hover:text-white/60 transition-colors">
-                    <div class="i-carbon-chevron-down text-sm transition-transform"
-                        :class="{ 'rotate-180': state.uiState.plainWeavePanel.showMaterialParams }"></div>
-                </button>
-            </div>
-            <div v-show="state.uiState.plainWeavePanel.showMaterialParams" class="flex flex-col gap-3">
-                <div v-for="param in materialWeaveSliderItems" :key="param.id">
-                    <Slider :items="[param]" @updateValue="handleWeaveParamUpdate" />
-                </div>
-            </div>
-        </div>
-
-        <!-- Presets -->
-        <div class="flex flex-col gap-3">
-            <div class="flex items-center justify-between">
-                <span class="text-xs font-medium text-white/60">Presets</span>
-                <button @click="state.uiState.plainWeavePanel.showPresets = !state.uiState.plainWeavePanel.showPresets" class="text-white/40 hover:text-white/60 transition-colors">
-                    <div class="i-carbon-chevron-down text-sm transition-transform"
-                        :class="{ 'rotate-180': state.uiState.plainWeavePanel.showPresets }"></div>
-                </button>
-            </div>
-            <div v-show="state.uiState.plainWeavePanel.showPresets" class="grid grid-cols-2 gap-2">
-                <button v-for="(preset, name) in weavePresets" :key="name" @click="applyPreset(preset)"
-                    class="glass-btn text-xs py-2 px-2 rounded bg-white/5 text-white/60 hover:bg-white/10 hover:text-white/90 transition-colors">
-                    {{ name }}
-                </button>
-            </div>
-        </div>
-
-        <button @click="generateWeave" :disabled="isGenerating"
-            class="glass-btn w-full py-2.5 rounded-xl bg-white/5 hover:bg-white/10 border border-white/5 text-white/60 hover:text-white/90 text-sm font-medium transition-all flex items-center justify-center gap-2 disabled:opacity-50">
-            <div v-if="isGenerating" class="i-carbon-circle-dash animate-spin text-lg"></div>
-            <div v-else class="i-carbon-magic-wand text-lg"></div>
-            {{ isGenerating ? 'Generating...' : 'Generate Fabric Texture' }}
-        </button>
-    </div>
+  <div class="flex flex-col gap-4">
+    <CollapsiblePanel title="Colors (Gradient)" v-model="state.uiState.plainWeavePanel.showColors">
+      <GradientEditor v-model="state.plainWeaveParams.gradientStops" />
+    </CollapsiblePanel>
+    
+    <template v-for="panel in sliderPanels" :key="panel.title">
+      <CollapsiblePanel :title="panel.title" :v-model="state.uiState.plainWeavePanel[panel.modelKey]">
+        <SliderParameterGroup :slider-items="panel.items" @update-value="handleWeaveParamUpdate" />
+      </CollapsiblePanel>
+    </template>
+    
+    <CollapsiblePanel title="Presets" v-model="state.uiState.plainWeavePanel.showPresets">
+      <PresetSelector :presets="weavePresets" @apply-preset="applyPreset" />
+    </CollapsiblePanel>
+    
+    <GenerateButton :is-generating="isGenerating" button-text="Generate Fabric Texture" @click="generateWeave" />
+  </div>
 </template>
 
 <script setup lang="ts">
 import { computed, ref, watch } from 'vue'
 import { Slider } from '@leolee9086/slider-component'
-import GradientEditor from '../gradient/GradientEditor.vue'
-import { generatePlainWeaveTexture } from '../../proceduralTexturing/fabrics/plainWeave/plainWeaveGenerator'
-import { useProceduralTextureState } from '../../composables/useProceduralTextureState'
+import {
+  GradientEditor,
+  CollapsiblePanel,
+  SliderParameterGroup,
+  PresetSelector,
+  GenerateButton,
+  generatePlainWeaveTexture,
+  useProceduralTextureState
+} from './imports'
 
 const props = defineProps<{
     isGenerating: boolean
@@ -350,6 +266,30 @@ const materialWeaveSliderItems = computed(() => [
         valuePosition: 'after' as const,
         showRuler: false
     }
+])
+
+// 面板配置
+const sliderPanels = computed(() => [
+  {
+    title: 'Basic Parameters',
+    modelKey: 'showBasicParams',
+    items: basicWeaveSliderItems.value
+  },
+  {
+    title: 'Thread Structure',
+    modelKey: 'showThreadParams',
+    items: threadWeaveSliderItems.value
+  },
+  {
+    title: 'Advanced Parameters',
+    modelKey: 'showAdvancedParams',
+    items: advancedWeaveSliderItems.value
+  },
+  {
+    title: 'Material Properties',
+    modelKey: 'showMaterialParams',
+    items: materialWeaveSliderItems.value
+  }
 ])
 
 // Weave Presets

@@ -1,6 +1,5 @@
 <template>
     <div class="flex flex-col gap-4">
-        <!-- Reaction Core Parameters -->
         <div class="flex flex-col gap-3">
             <div class="flex items-center justify-between">
                 <span class="text-xs font-medium text-white/60">Reaction Core (Gray-Scott)</span>
