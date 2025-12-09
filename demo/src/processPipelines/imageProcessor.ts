@@ -8,7 +8,7 @@ import { allMiddlewares, type MiddlewareContext } from './nodes'
  * 获取或初始化 WebGPU 设备
  * 统一使用 webgpuDevice.ts 中的设备获取逻辑
  */
-import { getWebGPUDevice } from '../utils/webgpu/webgpuDevice'
+import { getWebGPUDevice } from '../utils/webgpu/deviceCache/webgpuDevice'
 import type {
   HSLAdjustmentLayer,
   DehazeParams,

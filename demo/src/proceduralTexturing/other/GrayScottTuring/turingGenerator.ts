@@ -1,5 +1,5 @@
 import { filmGradeTuringShaderWGSL, FilmGradeTuringParams } from './turing'
-import { getWebGPUDevice } from '../../../utils/webgpu/webgpuDevice'
+import { getWebGPUDevice } from '../../../utils/webgpu/deviceCache/webgpuDevice'
 
 export type { FilmGradeTuringParams }
 

@@ -1,5 +1,5 @@
 import { grayscaleGenerationWGSL, colorApplicationWGSL, pbrMaterialWGSL } from './woodShaders'
-import { getWebGPUDevice } from '../../utils/webgpu/webgpuDevice'
+import { getWebGPUDevice } from '../../utils/webgpu/deviceCache/webgpuDevice'
 import type { PipelineData, PipelineDataMultiRecord } from '../../types/PipelineData.type'
 
 export interface WoodParams {

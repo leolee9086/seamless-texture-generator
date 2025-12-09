@@ -1,5 +1,5 @@
 import { grayscaleCompositorWGSL, GrayscaleCompositorParams } from './compositor'
-import { getWebGPUDevice } from '../../../utils/webgpu/webgpuDevice'
+import { getWebGPUDevice } from '../../../utils/webgpu/deviceCache/webgpuDevice'
 
 export type { GrayscaleCompositorParams }
 

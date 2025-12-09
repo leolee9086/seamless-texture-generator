@@ -1,5 +1,5 @@
 import { velvetShaderWGSL, VelvetParams } from './velvet'
-import { getWebGPUDevice } from '../../../utils/webgpu/webgpuDevice'
+import { getWebGPUDevice } from '../../../utils/webgpu/deviceCache/webgpuDevice'
 
 // 辅助函数：Hex 转 RGB (0-1)
 function hexToRgb(hex: string) {

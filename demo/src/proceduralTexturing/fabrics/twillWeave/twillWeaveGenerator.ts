@@ -1,5 +1,5 @@
 import { twillWeaveShaderWGSL, TwillWeaveParams } from './twillWeave'
-import { getWebGPUDevice } from '../../../utils/webgpu/webgpuDevice'
+import { getWebGPUDevice } from '../../../utils/webgpu/deviceCache/webgpuDevice'
 
 // 默认参数：经典牛仔布 (3/1 右斜纹)
 export const defaultTwillWeaveParams: TwillWeaveParams = {

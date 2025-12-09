@@ -1,5 +1,5 @@
 import { plainWeaveShaderWGSL } from './plainWeave'
-import { getWebGPUDevice } from '../../../utils/webgpu/webgpuDevice'
+import { getWebGPUDevice } from '../../../utils/webgpu/deviceCache/webgpuDevice'
 
 export interface PlainWeaveParams {
     tileSize: number;           // 平铺尺寸 (例如 1.0 表示在 0-1 UV 内无缝循环)

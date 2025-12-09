@@ -5,7 +5,7 @@ import {
     poresWGSL,
     structureCompositorWGSL
 } from './woodNodalShaders'
-import { getWebGPUDevice } from '../../utils/webgpu/webgpuDevice'
+import { getWebGPUDevice } from '../../utils/webgpu/deviceCache/webgpuDevice'
 import type { PipelineDataMultiRecord } from '../../types/PipelineData.type'
 
 /**

@@ -1,7 +1,10 @@
 /// <reference types="@webgpu/types" />
 
+import { WEBGPU_CACHE_KEY } from './webgpu.constants';
+import { getWebGPUCache } from './webgpu.guard';
+
 // WebGPU 设备和适配器全局缓存
-const WEBGPU缓存键 = Symbol.for('webgpu_cache');
+const WEBGPU缓存键 = Symbol.for(WEBGPU_CACHE_KEY);
 
 /**
  * 初始化 WebGPU 并返回一个 GPUDevice 实例。
@@ -11,16 +14,7 @@ const WEBGPU缓存键 = Symbol.for('webgpu_cache');
  */
 export const 获取WebGPU设备 = async (): Promise<GPUDevice> => {
   // 初始化全局缓存
-  const 全局缓存 = window as unknown as Record<symbol, { 设备: GPUDevice | null; 适配器: GPUAdapter | null }>;
-
-  if (!全局缓存[WEBGPU缓存键]) {
-    全局缓存[WEBGPU缓存键] = {
-      设备: null,
-      适配器: null
-    };
-  }
-
-  const 缓存 = 全局缓存[WEBGPU缓存键];
+  const 缓存 = getWebGPUCache(window, WEBGPU缓存键);
 
   if (缓存.设备) {
     return 缓存.设备;

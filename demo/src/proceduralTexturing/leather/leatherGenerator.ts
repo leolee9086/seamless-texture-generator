@@ -1,6 +1,6 @@
 import { leatherShaderWGSL, LeatherParams } from './leather'
 export type { LeatherParams }
-import { getWebGPUDevice } from '../../utils/webgpu/webgpuDevice'
+import { getWebGPUDevice } from '../../utils/webgpu/deviceCache/webgpuDevice'
 
 /**
  * Default parameters for a generic cowhide leather

@@ -6,19 +6,38 @@ export type { FilmGradeTuringParams }
 export const defaultFilmParams: FilmGradeTuringParams = {
     tileSize: 1.0,
     simulationSteps: 100,
-
-    activatorRadius: 1.5,
-    inhibitorRadius: 4.0,
+    activatorRadius: 1.5,  // 减小采样半径
+    inhibitorRadius: 4.0,  // 减小采样半径
     curvature: 0.55,
-
     diffusionAnisotropy: 0.2,
     flowDirection: 0.0,
-
+    patternScale: 1.0,
     variationScale: 1.5,
     variationStrength: 0.5,
-
+    poreDensity: 30.0,
+    poreDepth: 0.05,
+    skinWrinkleScale: 12.0,
+    skinWrinkleStrength: 0.03,
+    subsurfaceColor: '#8a1c0e',
+    epidermisColor: '#d6b6a0',
+    pigmentColor: '#1a1a1a',
+    roughnessBase: 0.6,
+    roughnessPigment: 0.3,
+    normalDetail: 1.5,
+    heightDisplacement: 1.0,
     contrast: 1.0,
     bias: 0.0
+}
+
+function hexToLinear(hex: string): [number, number, number] {
+    const bigint = parseInt(hex.slice(1), 16);
+    let r = ((bigint >> 16) & 255) / 255;
+    let g = ((bigint >> 8) & 255) / 255;
+    let b = (bigint & 255) / 255;
+    r = Math.pow(r, 2.2);
+    g = Math.pow(g, 2.2);
+    b = Math.pow(b, 2.2);
+    return [r, g, b];
 }
 
 export async function generateFilmGradeTexture(params: FilmGradeTuringParams, width: number, height: number): Promise<string> {
@@ -52,18 +71,50 @@ export async function generateFilmGradeTexture(params: FilmGradeTuringParams, wi
     simUpload[7] = Math.random() * 1000.0;
     simBuffer.unmap();
 
-    // 3. 渲染Uniforms (简化版)
-    const renderDataSize = 4 * 4; // 4 floats
+    // 3. Render Uniforms
+    const renderDataSize = 64 * 4;
     const renderBuffer = device.createBuffer({
         size: renderDataSize,
         usage: GPUBufferUsage.UNIFORM | GPUBufferUsage.COPY_DST,
         mappedAtCreation: true
     });
     const renderUpload = new Float32Array(renderBuffer.getMappedRange());
-    renderUpload[0] = (params.tileSize && params.tileSize > 0) ? params.tileSize : 1.0;
-    renderUpload[1] = params.contrast;
-    renderUpload[2] = params.bias;
-    renderUpload[3] = 0; // padding
+
+    // Matrix identity
+    renderUpload[0] = 1; renderUpload[5] = 1; renderUpload[10] = 1; renderUpload[15] = 1;
+
+    // Colors
+    // Offset 64 bytes -> Index 16
+    const cSub = hexToLinear(params.subsurfaceColor);
+    renderUpload[16] = cSub[0]; renderUpload[17] = cSub[1]; renderUpload[18] = cSub[2];
+
+    // Offset 80 bytes -> Index 20
+    const cEpi = hexToLinear(params.epidermisColor);
+    renderUpload[20] = cEpi[0]; renderUpload[21] = cEpi[1]; renderUpload[22] = cEpi[2];
+
+    // Offset 96 bytes -> Index 24
+    const cPig = hexToLinear(params.pigmentColor);
+    renderUpload[24] = cPig[0]; renderUpload[25] = cPig[1]; renderUpload[26] = cPig[2];
+
+    // Floats from Offset 112 -> Index 28
+    let offset = 28;
+    // Safe-guard: if params.tileSize is 0 or undefined, force 1.0
+    renderUpload[offset++] = (params.tileSize && params.tileSize > 0) ? params.tileSize : 1.0;
+    renderUpload[offset++] = params.poreDensity;
+    renderUpload[offset++] = params.poreDepth;
+    renderUpload[offset++] = params.skinWrinkleScale;
+    renderUpload[offset++] = params.skinWrinkleStrength;
+    renderUpload[offset++] = params.roughnessBase;
+    renderUpload[offset++] = params.roughnessPigment;
+    renderUpload[offset++] = params.normalDetail;
+    renderUpload[offset++] = params.heightDisplacement;
+
+    // Contrast (Was padding1)
+    renderUpload[offset++] = 10.0; // Hardcoded contrast multiplier for now
+
+    // Bias (Was padding2)
+    renderUpload[offset++] = 0.0;
+
     renderBuffer.unmap();
 
     // 3.5 MinMax Buffer (Atomic)
