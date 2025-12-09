@@ -124,7 +124,7 @@ const STRICT_CLASS_RESTRICTIONS = [
 
 // [E] 🔥🔥🔥 新增：禁止值导入约束 (只允许 import type) 🔥🔥🔥
 const ONLY_ALLOW_TYPE_IMPORTS = [
-{
+  {
     // 复杂选择器解释：
     // 1. 选中所有 ImportDeclaration
     // 2. 过滤出 importKind 不为 'type' 的 (即值导入)
@@ -140,7 +140,39 @@ const ONLY_ALLOW_TYPE_IMPORTS = [
     ].join('\n')
   }
 ];
+// [F] 🔥🔥🔥 硬编码值约束 (除 constants.ts 外全域禁止) 🔥🔥🔥
+const NO_MAGIC_STRINGS = [
+  {
+    // 选中：字符串字面量 ('str', "str") 和 模版字符串 (`str`)
+    // 排除：
+    // 1. Import/Export 的路径 source
+    // 2. TS 类型定义中的字符串 (type T = 'A')
+    // 3. 对象字面量的 Key ({ "key": val })
+    // 4. JSX 属性 (className="flex" - 如需极致严格可移除此项)
+    selector: [
+      // 1. 选中目标：以单/双引号开头的字面量 (排除数字/布尔) 或 模版字符串
+      ':matches(Literal[raw=/^["\']/], TemplateLiteral)',
 
+      // 2. 排除上下文 (注意：这里保留了必要的空格，表示后代关系)
+      ':not(ImportDeclaration Literal)',        // 排除 import 路径
+      ':not(ExportNamedDeclaration Literal)',   // 排除 export { x } from 'path'
+      ':not(ExportAllDeclaration Literal)',     // 排除 export * from 'path'
+      ':not(TSLiteralType Literal)',            // 排除 TS 类型 (type T = 'A')
+      ':not(Property > Literal.key)',           // 排除 对象属性 Key ({ "key": 1 })
+      ':not(JSXAttribute Literal)',             // 排除 JSX 属性 (class="foo")
+      ':not(TSEnumMember Literal)',             // 排除 枚举值 (enum A { B = 'C' })
+      ':not(TSPropertySignature Literal)',      // 排除 接口属性 Key
+      ':not(TSAsExpression Literal)',           // 排除 as 断言 (x as 'fixed')
+
+      // 3. (可选) 常用放行 - 如果你希望允许 console.log 使用字符串，取消下面注释
+      // ':not(CallExpression[callee.object.name="console"] Literal)',
+      // ':not(NewExpression[callee.name="Error"] Literal)',
+    ].join(''), // 直接连接字符串，不要 replace 空格
+    message: `架构严令：禁止在逻辑中硬编码字符串 (Magic String)。请将字符串提取到 *.constants.ts 中，引用常量使用。
+    特殊的,wgsl代码等非js语言代码应该位于*.code.ts中
+    `
+  }
+];
 // ========================================================================
 // 2. ESLint 配置主体
 // ========================================================================
@@ -212,7 +244,9 @@ export default [
       '**/*.class.ts',
       // 🔥 排除允许值导入的文件
       '**/*.utils.ts',
-      '**/*.ctx.ts'
+      '**/*.ctx.ts',
+      // 🔥 1. 忽略常量文件，交给下方专用块处理
+      '**/*.constants.ts'
     ],
     rules: {
       'no-restricted-syntax': [
@@ -221,7 +255,9 @@ export default [
         ...STRICT_TYPE_RESTRICTIONS,
         ...STRICT_IMPORT_RESTRICTIONS,
         ...STRICT_CLASS_RESTRICTIONS,
-        ...ONLY_ALLOW_TYPE_IMPORTS // <--- 强制只能导入类型
+        ...ONLY_ALLOW_TYPE_IMPORTS, // <--- 强制只能导入类型
+        // 🔥 2. 启用禁魔字符串
+        ...NO_MAGIC_STRINGS
       ]
     }
   },
@@ -303,8 +339,9 @@ export default [
         ...BASE_ARCHITECTURE_RESTRICTIONS,
         ...STRICT_IMPORT_RESTRICTIONS,
         ...STRICT_CLASS_RESTRICTIONS,
-        ...STRICT_TYPE_RESTRICTIONS.filter(r => !r.selector.includes('TSAsExpression')&& 
-          !r.selector.includes('TSTypePredicate'))
+        ...STRICT_TYPE_RESTRICTIONS.filter(r => !r.selector.includes('TSAsExpression') &&
+          !r.selector.includes('TSTypePredicate')),
+        ...NO_MAGIC_STRINGS // <--- 新增
       ]
     }
   },
@@ -337,7 +374,8 @@ export default [
         ...BASE_ARCHITECTURE_RESTRICTIONS,
         ...STRICT_TYPE_RESTRICTIONS,
         ...STRICT_IMPORT_RESTRICTIONS,
-        ...ONLY_ALLOW_TYPE_IMPORTS // <--- 🔥 关键：类文件中禁止引用运行时值
+        ...ONLY_ALLOW_TYPE_IMPORTS, // <--- 🔥 关键：类文件中禁止引用运行时值
+        ...NO_MAGIC_STRINGS // <--- 新增
       ]
     }
   },
@@ -353,8 +391,26 @@ export default [
         ...BASE_ARCHITECTURE_RESTRICTIONS,
         ...STRICT_TYPE_RESTRICTIONS, // 依然不建议在这里直接定义 interface
         ...STRICT_IMPORT_RESTRICTIONS,
-        ...STRICT_CLASS_RESTRICTIONS // 禁止定义 Class
+        ...STRICT_CLASS_RESTRICTIONS,
+        ...NO_MAGIC_STRINGS // <--- 新增
+        // 禁止定义 Class
         // 允许值导入，所以不加 ONLY_ALLOW_TYPE_IMPORTS
+      ]
+    }
+  },
+  // ========================================================================
+  // 11. 常量定义层 (*.constants.ts) - 字符串避难所
+  // ========================================================================
+  {
+    files: ['src/**/*.constants.ts', 'test/**/*.constants.ts','src/**/*.code.ts'],
+    rules: {
+      'no-restricted-syntax': [
+        'error',
+        // 依然遵守基础架构约束 (如禁止 switch, else 等)
+        ...BASE_ARCHITECTURE_RESTRICTIONS,
+        // 禁止 Class
+        ...STRICT_CLASS_RESTRICTIONS,
+        // 允许：字符串、数值等硬编码
       ]
     }
   }
