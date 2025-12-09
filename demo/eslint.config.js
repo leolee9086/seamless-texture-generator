@@ -129,7 +129,7 @@ const ONLY_ALLOW_TYPE_IMPORTS = [
     // 1. 选中所有 ImportDeclaration
     // 2. 过滤出 importKind 不为 'type' 的 (即值导入)
     // 3. 排除 (not) 来源路径以允许后缀结尾的导入
-    selector: 'ImportDeclaration[importKind!="type"]:not([source.value=/(\.utils|\.guard|\.constants|\.ctx|\.imports|index)$/])',
+    selector: 'ImportDeclaration[importKind!="type"]:not([source.value=/(\.utils|\.guard|\.code|\.constants|\.ctx|\.imports|index)$/])',
     message: [
       '架构严令：禁止从业务文件进行“值导入” (Value Import)。',
       '------------------------------------------------',
@@ -168,7 +168,7 @@ const NO_MAGIC_STRINGS = [
       // ':not(CallExpression[callee.object.name="console"] Literal)',
       // ':not(NewExpression[callee.name="Error"] Literal)',
     ].join(''), // 直接连接字符串，不要 replace 空格
-    message: `架构严令：禁止在逻辑中硬编码字符串 (Magic String)。请将字符串提取到 *.constants.ts 中，引用常量使用。
+    message: `架构严令：禁止在逻辑中硬编码字符串 (Magic String)。请将字符串提取到 *.constants.ts、*.code.ts等专用文件中，引用常量使用。
     特殊的,wgsl代码等非js语言代码应该位于*.code.ts中
     `
   }

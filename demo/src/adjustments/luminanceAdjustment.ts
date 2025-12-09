@@ -4,7 +4,7 @@
  */
 
 import type { LuminanceAdjustmentParams, ZoneAdjustment } from '../utils/webgpu/luminance-shaders';
-import { WebGPULuminanceProcessor, processLuminanceAdjustment } from '../utils/webgpu/luminance-processor';
+import { WebGPULuminanceProcessor, processLuminanceAdjustment } from '../utils/webgpu/luminance-processor.class';
 export type { LuminanceAdjustmentParams, ZoneAdjustment } from '../utils/webgpu/luminance-shaders';
 
 // Default parameters for luminance adjustment

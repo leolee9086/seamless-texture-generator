@@ -3,7 +3,7 @@
  * Implements luminance-based adjustments (Shadows, Midtones, Highlights) using WebGPU
  */
 
-import type { LuminanceAdjustmentParams } from './luminance-shaders';
+import type { LuminanceAdjustmentParams } from './luminance.types';
 import { luminanceComputeShader, createLuminanceParamsBuffer } from './luminance-shaders';
 
 export class WebGPULuminanceProcessor {
