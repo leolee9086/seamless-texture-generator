@@ -6,10 +6,11 @@
 // 类型导入转发 - 仅来自父级目录
 export type { ImageDownloadParams } from '../types/download.types'
 export type { ControlEvent } from '../types/controlEvents'
-export type { PipelineData, baseOptions } from '../types/PipelineData.type'
+export type { PipelineData, baseOptions, GeneralSynthesisPipelineStep } from '../types/PipelineData.type'
 export type { DehazeParams } from '../adjustments/dehaze/types'
 export type { ClarityParams } from '../adjustments/clarityAdjustment'
 export type { LuminanceAdjustmentParams } from '../adjustments/luminanceAdjustment'
+export type { HSLAdjustmentLayer } from '../utils/hslAdjustStep'
 
 // 外部依赖导入转发
 export { z } from 'zod'

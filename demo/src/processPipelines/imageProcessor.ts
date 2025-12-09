@@ -1,36 +1,23 @@
-import { HSLAdjustProcessStep, type HSLAdjustmentLayer } from '../utils/hslAdjustStep'
-import { type DehazeParams } from '@/adjustments/dehaze/types'
-import { type ClarityParams } from '../adjustments/clarityAdjustment'
-import { type LuminanceAdjustmentParams } from '../adjustments/luminanceAdjustment'
-import { baseOptions, GeneralSynthesisPipelineStep, PipelineData } from '../types/PipelineData.type'
+import { HSLAdjustProcessStep } from '../utils/hslAdjustStep'
 import { ImageLoadStep } from './ImageLoadStep'
 import { LUTProcessStep } from './LUTProcessStep'
 import { TileableProcessStep } from './TileableProcessStep'
 import { OutputConversionStep } from './OutputConversionStep'
 import { allMiddlewares, type MiddlewareContext } from './nodes'
 /**
- * 管线步骤选项
+ * 获取或初始化 WebGPU 设备
+ * 统一使用 webgpuDevice.ts 中的设备获取逻辑
  */
-export interface PipelineOptions extends baseOptions {
-  maxResolution?: number
-  borderSize?: number
-  lutFile?: File | null
-  lutIntensity?: number
-  maskData?: Uint8Array
-  hslLayers?: HSLAdjustmentLayer[]
-  exposureStrength?: number  // 新增
-  exposureManual?: { exposure: number; contrast: number; gamma: number }  // 新增
-  dehazeParams?: DehazeParams  // 新增
-  clarityParams?: ClarityParams  // 新增
-  luminanceParams?: LuminanceAdjustmentParams  // 新增
-}
-
-/**
- * 图片后处理管线步骤接口
- */
-export interface ImageProcessPipelineStep extends GeneralSynthesisPipelineStep {
-  execute(data: PipelineData, options: PipelineOptions): Promise<PipelineData>
-}
+import { getWebGPUDevice } from '../utils/webgpu/webgpuDevice'
+import type {
+  HSLAdjustmentLayer,
+  DehazeParams,
+  ClarityParams,
+  LuminanceAdjustmentParams
+} from './imports'
+import type {
+  PipelineOptions
+} from './imageProcessor.types'
 
 /**
  * 工具函数：ImageData 转 GPUBuffer
@@ -46,11 +33,6 @@ export async function imageDataToGPUBuffer(imageData: ImageData, device: GPUDevi
   return buffer
 }
 
-/**
- * 获取或初始化 WebGPU 设备
- * 统一使用 webgpuDevice.ts 中的设备获取逻辑
- */
-import { getWebGPUDevice } from '../utils/webgpu/webgpuDevice'
 
 /**
  * 处理图像，使其可平铺
