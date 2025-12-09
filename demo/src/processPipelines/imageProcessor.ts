@@ -1,4 +1,4 @@
-import { HSLAdjustProcessStep } from '../utils/hslAdjustStep'
+import { HSLAdjustProcessStep } from '../adjustments/hsl/hslAdjustStep'
 import { ImageLoadStep } from './ImageLoadStep'
 import { LUTProcessStep } from './LUTProcessStep'
 import { TileableProcessStep } from './TileableProcessStep'

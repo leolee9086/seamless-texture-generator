@@ -1,5 +1,5 @@
 import { computed, Ref } from "vue";
-import type { HSLAdjustmentLayer } from '../../../utils/hslAdjustStep'
+import type { HSLAdjustmentLayer } from '../../../adjustments/hsl/hslAdjustStep'
 import { z } from 'zod'
 
 // 常用颜色配置

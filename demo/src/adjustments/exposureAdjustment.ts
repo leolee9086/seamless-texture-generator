@@ -1,4 +1,4 @@
-import type { HSLAdjustmentLayer } from '../utils/hslAdjustStep'
+import type { HSLAdjustmentLayer } from './hsl/hslAdjustStep'
 
 export interface ExposureAdjustmentParams {
     strength: number

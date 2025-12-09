@@ -1,6 +1,6 @@
 import { ref, onMounted, type Ref, type Component, markRaw } from 'vue'
 import { processImageToTileable } from '../processPipelines/imageProcessor'
-import type { HSLAdjustmentLayer } from '../utils/hslAdjustStep'  // 新增这行
+import type { HSLAdjustmentLayer } from '../adjustments/hsl/hslAdjustStep'  // 新增这行
 import {
   handleImageUpload as uploadHandler,
   loadSampleImage as loadSample,

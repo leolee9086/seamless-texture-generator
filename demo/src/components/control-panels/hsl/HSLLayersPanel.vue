@@ -70,7 +70,7 @@
 <script setup lang="ts">
 import { ref, watch } from 'vue'
 import { Slider } from '@leolee9086/slider-component'
-import type { HSLAdjustmentLayer } from '../../../utils/hslAdjustStep'
+import type { HSLAdjustmentLayer } from '../../../adjustments/hsl/hslAdjustStep'
 import { createUpdateDataEvent } from '../../../types/controlEvents'
 import type { ControlEvent } from '../../../types/controlEvents'
 import { getLayerSliderItems, COMMON_COLORS, getLayerSchema, MetaSchema } from './params'

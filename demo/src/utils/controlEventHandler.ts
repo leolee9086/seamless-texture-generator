@@ -1,5 +1,5 @@
 import type { ControlEvent, DehazeParams, ClarityParams, LuminanceAdjustmentParams, Component } from './imports'
-import type { HSLAdjustmentLayer } from './hslAdjustStep'
+import type { HSLAdjustmentLayer } from '../adjustments/hsl/hslAdjustStep'
 
 /**
  * 创建统一事件处理器的配置选项

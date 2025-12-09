@@ -10,7 +10,7 @@ export type { PipelineData, baseOptions, GeneralSynthesisPipelineStep } from '..
 export type { DehazeParams } from '../adjustments/dehaze/types'
 export type { ClarityParams } from '../adjustments/clarityAdjustment'
 export type { LuminanceAdjustmentParams } from '../adjustments/luminanceAdjustment'
-export type { HSLAdjustmentLayer } from '../utils/hslAdjustStep'
+export type { HSLAdjustmentLayer } from '../adjustments/hsl/hslAdjustStep'
 
 // 外部依赖导入转发
 export { z } from 'zod'

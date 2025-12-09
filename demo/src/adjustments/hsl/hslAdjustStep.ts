@@ -3,9 +3,9 @@
  * 在图像处理管线中应用HSL颜色调整
  */
 
-import { WebGPUHSLProcessor, processGlobalHSLImage } from './webgpu/hsl-processor'
-import { type HSLAdjustmentParams, type GlobalHSLAdjustmentParams } from './webgpu/hsl-shaders'
-import { type PipelineData } from '../types/PipelineData.type'
+import { WebGPUHSLProcessor, processGlobalHSLImage } from './hsl-processor.class'
+import { type HSLAdjustmentParams, type GlobalHSLAdjustmentParams } from './hsl-shaders'
+import { type PipelineData } from '../../types/PipelineData.type'
 
 /**
  * HSL调整层接口
