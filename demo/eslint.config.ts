@@ -208,29 +208,53 @@ ID: ${prompt.id}
 // ========================================================================
 const localRulesPlugin = {
   rules: {
-    // Vue 模板行数守卫
+    // 规则 1: Vue 模板行数守卫
     'vue-template-max-lines': {
       meta: { type: 'problem' },
       create(context: any) {
         const MAX_LINES = 50;
-
         return {
-          // 修正点 1: 监听 Program 根节点，而不是 VElement
           Program(node: any) {
-            // 修正点 2: vue-eslint-parser 会将根 template 挂载在 templateBody 属性上
-            // 如果文件没有 <template> (比如只有 script)，这里会是 null
             const templateBody = node.templateBody;
-            
             if (!templateBody || !templateBody.loc) return;
-
-            // 计算行数
             const lines = templateBody.loc.end.line - templateBody.loc.start.line;
-
             if (lines > MAX_LINES) {
               context.report({
-                // 注意：报错节点指向 templateBody，这样红线会标在 <template> 标签上
                 node: templateBody,
                 message: generateAgentInstruction(PROMPTS.VUE_TEMPLATE_TOO_LONG)
+              });
+            }
+          }
+        };
+      }
+    },
+    // 🔥 规则 2: 禁止 Style 标签守卫 (新增)
+    'no-vue-style-block': {
+      meta: { type: 'problem' },
+      create(context: any) {
+        return {
+          Program(node: any) {
+            // 获取 parser 服务
+            const services = context.sourceCode?.parserServices || context.parserServices;
+            // 获取 Vue 文件的根 DocumentFragment (包含 script, template, style)
+            const df = services?.getDocumentFragment?.();
+
+            if (df && df.children) {
+              df.children.forEach((child: any) => {
+                // 检查节点类型是否为 style 标签
+                if (child.type === 'VElement' && child.name === 'style') {
+                  context.report({
+                    node: child,
+                    message: [
+                      '架构严令：禁止在 Vue 组件中直接使用 <style> 代码块。',
+                      '------------------------------------------------',
+                      '❌ 违规行为: 定义了内部样式块。',
+                      '✅ 修正方案: ',
+                      '   1. 优先使用 Tailwind CSS / UnoCSS 等原子化类名。',
+                      '   2. 如果必须写自定义 CSS，请建立独立的 css/scss 文件并导入。'
+                    ].join('\n')
+                  });
+                }
               });
             }
           }
@@ -512,6 +536,7 @@ export default [
 
       // 3. 🔥 开启我们的 "System Prompt" 影子规则
       'local-guard/vue-template-max-lines': 'error',
+      'local-guard/no-vue-style-block': 'error', // <--- 启用这条新规则
 
       // 4. 其他架构约束 (依然生效)
       'no-restricted-syntax': [
@@ -521,6 +546,7 @@ export default [
         {
            selector: 'ImportDeclaration[source.value=/^\\.\\./]',
            message: '禁止从父级目录导入 (../)。必须通过 ./imports.ts 转发。'
+       
         }
       ]
     }
