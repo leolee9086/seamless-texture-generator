@@ -2,6 +2,8 @@ import js from '@eslint/js';
 import tsPlugin from '@typescript-eslint/eslint-plugin';
 import tsParser from '@typescript-eslint/parser';
 import importPlugin from 'eslint-plugin-import';
+import vueParser from 'vue-eslint-parser';
+import vuePlugin from 'eslint-plugin-vue';
 import {禁止静态方法规则} from './0_lints/messages.ts'
 // ========================================================================
 // 1. 定义规则片段
@@ -173,8 +175,73 @@ const NO_MAGIC_STRINGS = [
     `
   }
 ];
+
 // ========================================================================
-// 2. ESLint 配置主体
+// 1.5. PROMPTS 字典 (Linter-Agent Protocol)
+// ========================================================================
+const PROMPTS = {
+  // [G] UI 组件架构模式
+  VUE_TEMPLATE_TOO_LONG: {
+    id: 'UI-001: Giant Template',
+    mode: 'UI_COMPONENT_SPECIALIST', // 新角色：UI 组件专家
+    reason: "检测到 Vue 组件模板部分超过 50 行。巨型模板难以维护且复用性差。",
+    action: "请执行 '组件提取 (Extract Component)' 重构：\n1. 识别模板中的独立 UI 区块。\n2. 将其提取为子组件 (Sub-components)。\n3. 通过 props/events 通信。"
+  }
+};
+
+// 生成 Agent 指令的辅助函数
+function generateAgentInstruction(prompt: typeof PROMPTS[keyof typeof PROMPTS]): string {
+  return `
+🤖 Linter-Agent Protocol 指令 🤖
+----------------------------------------
+ID: ${prompt.id}
+模式: ${prompt.mode}
+原因: ${prompt.reason}
+行动: ${prompt.action}
+----------------------------------------
+请切换到 '${prompt.mode}' 模式执行上述重构。
+  `.trim();
+}
+
+// ========================================================================
+// 2. 本地规则插件 (Local Rules Plugin)
+// ========================================================================
+const localRulesPlugin = {
+  rules: {
+    // Vue 模板行数守卫
+    'vue-template-max-lines': {
+      meta: { type: 'problem' },
+      create(context: any) {
+        const MAX_LINES = 50;
+
+        return {
+          // 修正点 1: 监听 Program 根节点，而不是 VElement
+          Program(node: any) {
+            // 修正点 2: vue-eslint-parser 会将根 template 挂载在 templateBody 属性上
+            // 如果文件没有 <template> (比如只有 script)，这里会是 null
+            const templateBody = node.templateBody;
+            
+            if (!templateBody || !templateBody.loc) return;
+
+            // 计算行数
+            const lines = templateBody.loc.end.line - templateBody.loc.start.line;
+
+            if (lines > MAX_LINES) {
+              context.report({
+                // 注意：报错节点指向 templateBody，这样红线会标在 <template> 标签上
+                node: templateBody,
+                message: generateAgentInstruction(PROMPTS.VUE_TEMPLATE_TOO_LONG)
+              });
+            }
+          }
+        };
+      }
+    }
+  }
+};
+
+// ========================================================================
+// 3. ESLint 配置主体
 // ========================================================================
 
 export default [
@@ -411,6 +478,50 @@ export default [
         // 禁止 Class
         ...STRICT_CLASS_RESTRICTIONS,
         // 允许：字符串、数值等硬编码
+      ]
+    }
+  },
+
+  // ========================================================================
+  // 12. Vue 组件层 (*.vue) - 新增
+  // ========================================================================
+  {
+    files: ['src/**/*.vue'],
+    languageOptions: {
+      // 关键：外层解析器必须是 vue-eslint-parser
+      parser: vueParser,
+      parserOptions: {
+        // 关键：内层解析器负责处理 TS
+        parser: tsParser,
+        // 移除 project 配置，因为 Vue 文件不需要 TypeScript 项目配置
+        extraFileExtensions: ['.vue'],
+        ecmaVersion: 2020,
+        sourceType: 'module'
+      }
+    },
+    plugins: {
+      'vue': vuePlugin,           // 引入官方 vue 插件
+      'local-guard': localRulesPlugin // 引入我们的影子规则插件
+    },
+    rules: {
+      // 1. 基础 Vue 规则 (推荐开启 recommended)
+      ...vuePlugin.configs['flat/recommended'].rules,
+      
+      // 2. 关闭官方的长度限制 (如果它有的话，避免冲突)
+      // 'vue/max-lines-per-block': 'off',
+
+      // 3. 🔥 开启我们的 "System Prompt" 影子规则
+      'local-guard/vue-template-max-lines': 'error',
+
+      // 4. 其他架构约束 (依然生效)
+      'no-restricted-syntax': [
+        'error',
+        ...BASE_ARCHITECTURE_RESTRICTIONS,
+        // Vue 文件中通常允许 import 值 (组件)，但可以加其他限制
+        {
+           selector: 'ImportDeclaration[source.value=/^\\.\\./]',
+           message: '禁止从父级目录导入 (../)。必须通过 ./imports.ts 转发。'
+        }
       ]
     }
   }
