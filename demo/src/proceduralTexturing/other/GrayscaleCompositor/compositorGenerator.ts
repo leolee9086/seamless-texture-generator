@@ -16,7 +16,7 @@ import {
     BLEND_MODE_MAP,
     WORKGROUP_SIZE
 } from './compositor.constants'
-
+import {grayscaleCompositorWGSL} from './compositor.code'
 export type { GrayscaleCompositorParams }
 
 /**
@@ -279,7 +279,7 @@ function cleanupGPUResources(
 export async function compositeWithMask(
     params: CompositeWithMaskParams
 ): Promise<string> {
-    const { imageASource, imageBSource, maskSource, params: compositorParams, outputWidth, outputHeight, wgslCode } = params;
+    const { imageASource, imageBSource, maskSource, params: compositorParams, outputWidth, outputHeight } = params;
     const device = await getWebGPUDevice()
     if (!device) throw new Error(IMAGE_CONSTANTS.WEBGPU_NOT_SUPPORTED)
 
@@ -310,7 +310,7 @@ export async function compositeWithMask(
     const uniformBuffer = createUniformBuffer(device, compositorParams)
 
     // 5. 创建计算管线
-    const pipeline = createComputePipeline({ device, wgslCode })
+    const pipeline = createComputePipeline({ device, wgslCode: grayscaleCompositorWGSL })
 
     // 6. 执行计算着色器
     const bytesPerRow = Math.ceil(width * 4 / 256) * 256

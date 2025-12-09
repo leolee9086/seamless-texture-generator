@@ -28,7 +28,6 @@ export interface CompositeWithMaskParams {
     params: GrayscaleCompositorParams;
     outputWidth?: number;
     outputHeight?: number;
-    wgslCode: string;
 }
 
 /**
