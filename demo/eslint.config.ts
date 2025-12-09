@@ -60,15 +60,15 @@ const STRICT_TYPE_RESTRICTIONS = [
   },
   {
     selector: 'TSTypeAliasDeclaration',
-    message: '架构约束：禁止在业务文件定义 Type。请移至 *.types.ts。'
+    message: '架构约束：禁止在业务/UI文件定义 Type。请移至 *.types.ts。'
   },
   {
     selector: 'TSInterfaceDeclaration',
-    message: '架构约束：禁止在业务文件定义 Interface。请移至 *.types.ts。'
+    message: '架构约束：禁止在业务/UI文件定义 Interface。请移至 *.types.ts。'
   },
   {
     selector: 'TSEnumDeclaration',
-    message: '架构约束：禁止在业务文件定义 Enum。请移至 *.types.ts。'
+    message: '架构约束：禁止在业务/UI文件定义 Enum。请移至 *.types.ts。'
   },
   {
     selector: 'TSTypePredicate',
@@ -186,6 +186,13 @@ const PROMPTS = {
     mode: 'UI_COMPONENT_SPECIALIST', // 新角色：UI 组件专家
     reason: "检测到 Vue 组件模板部分超过 50 行。巨型模板难以维护且复用性差。",
     action: "请执行 '组件提取 (Extract Component)' 重构：\n1. 识别模板中的独立 UI 区块。\n2. 将其提取为子组件 (Sub-components)。\n3. 通过 props/events 通信。"
+  },
+  // 🔥🔥🔥 新增：Script 过长提示 🔥🔥🔥
+  VUE_SCRIPT_TOO_LONG: {
+    id: 'UI-002: Fat Script',
+    mode: 'LOGIC_EXTRACTION_SPECIALIST', // 新角色：逻辑提取专家
+    reason: "检测到 Vue 组件 Script 部分超过 50 行。UI 组件应只负责展示，不应包含复杂业务逻辑。",
+    action: "请执行 '逻辑提取 (Extract Logic)' 重构：\n1. 将业务逻辑提取为 Composables (useXxx) 或纯工具函数。\n2. 将这些函数放入 *.utils.ts 或 *.ctx.ts 中。\n3. 在 Vue 中仅进行调用。"
   }
 };
 
@@ -228,20 +235,47 @@ const localRulesPlugin = {
         };
       }
     },
-    // 🔥 规则 2: 禁止 Style 标签守卫 (新增)
+    // 🔥🔥🔥 规则 3 (新增): Vue Script 行数守卫 🔥🔥🔥
+    'vue-script-max-lines': {
+      meta: { type: 'problem' },
+      create(context: any) {
+        const MAX_LINES = 50;
+        return {
+          Program(node: any) {
+            // 获取 parser 服务
+            const services = context.sourceCode?.parserServices || context.parserServices;
+            // 获取 Vue 文件的根 DocumentFragment
+            const df = services?.getDocumentFragment?.();
+
+            if (df && df.children) {
+              df.children.forEach((child: any) => {
+                // 检查节点类型是否为 script 标签 (包括 script setup)
+                if (child.type === 'VElement' && child.name === 'script') {
+                   const lines = child.loc.end.line - child.loc.start.line;
+                   if (lines > MAX_LINES) {
+                     context.report({
+                       node: child,
+                       message: generateAgentInstruction(PROMPTS.VUE_SCRIPT_TOO_LONG)
+                     });
+                   }
+                }
+              });
+            }
+          }
+        };
+      }
+    },
+    // 规则 2: 禁止 Style 标签守卫
     'no-vue-style-block': {
       meta: { type: 'problem' },
       create(context: any) {
         return {
           Program(node: any) {
-            // 获取 parser 服务
             const services = context.sourceCode?.parserServices || context.parserServices;
-            // 获取 Vue 文件的根 DocumentFragment (包含 script, template, style)
             const df = services?.getDocumentFragment?.();
 
             if (df && df.children) {
               df.children.forEach((child: any) => {
-                // 检查节点类型是否为 style 标签
                 if (child.type === 'VElement' && child.name === 'style') {
                   context.report({
                     node: child,
@@ -536,12 +570,16 @@ export default [
 
       // 3. 🔥 开启我们的 "System Prompt" 影子规则
       'local-guard/vue-template-max-lines': 'error',
-      'local-guard/no-vue-style-block': 'error', // <--- 启用这条新规则
+      'local-guard/vue-script-max-lines': 'error', // <--- 🔥 新增：Script 长度限制
+      'local-guard/no-vue-style-block': 'error',
 
       // 4. 其他架构约束 (依然生效)
       'no-restricted-syntax': [
         'error',
         ...BASE_ARCHITECTURE_RESTRICTIONS,
+        // 🔥🔥 新增：禁止在 Vue 中定义 Type/Interface/Enum 🔥🔥
+        ...STRICT_TYPE_RESTRICTIONS,
+        
         // Vue 文件中通常允许 import 值 (组件)，但可以加其他限制
         {
            selector: 'ImportDeclaration[source.value=/^\\.\\./]',
