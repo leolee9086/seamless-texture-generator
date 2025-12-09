@@ -2,7 +2,7 @@ import js from '@eslint/js';
 import tsPlugin from '@typescript-eslint/eslint-plugin';
 import tsParser from '@typescript-eslint/parser';
 import importPlugin from 'eslint-plugin-import';
-
+import {禁止静态方法规则} from './0_lints/messages.ts'
 // ========================================================================
 // 1. 定义规则片段
 // ========================================================================
@@ -10,10 +10,7 @@ import importPlugin from 'eslint-plugin-import';
 // [A] 基础架构约束
 const BASE_ARCHITECTURE_RESTRICTIONS = [
   // ... (保持原有代码不变)
-  {
-    selector: 'MethodDefinition[static=true]',
-    message: '架构严令：禁止定义静态方法。类仅用于封装实例状态，无状态逻辑请提取为 export function。'
-  },
+  禁止静态方法规则,
   {
     selector: 'PropertyDefinition[static=true]',
     message: '架构严令：禁止定义静态属性。常量请定义为模块级的 const。'
@@ -168,8 +165,11 @@ const NO_MAGIC_STRINGS = [
       // ':not(CallExpression[callee.object.name="console"] Literal)',
       // ':not(NewExpression[callee.name="Error"] Literal)',
     ].join(''), // 直接连接字符串，不要 replace 空格
-    message: `架构严令：禁止在逻辑中硬编码字符串 (Magic String)。请将字符串提取到 *.constants.ts、*.code.ts等专用文件中，引用常量使用。
-    特殊的,wgsl代码等非js语言代码应该位于*.code.ts中
+    message: `
+架构严令：
+禁止在逻辑中硬编码字符串 (Magic String)。
+请将字符串提取到 *.constants.ts、*.code.ts等专用文件中，引用常量使用。
+特殊的,wgsl代码等非js语言代码应该位于*.code.ts中。
     `
   }
 ];
