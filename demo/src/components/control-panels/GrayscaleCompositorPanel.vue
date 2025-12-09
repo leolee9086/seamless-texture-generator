@@ -162,6 +162,7 @@ import {
     compositorPresets,
     type GrayscaleCompositorParams
 } from '../../proceduralTexturing/other/GrayscaleCompositor/compositorGenerator'
+import { grayscaleCompositorWGSL } from '../../proceduralTexturing/other/GrayscaleCompositor/compositor.code'
 import { generateFilmGradeTexture, defaultFilmParams } from '../../proceduralTexturing/other/GrayScottTuring/turingGenerator'
 
 const props = defineProps<{
@@ -331,12 +332,13 @@ const generateComposite = async () => {
     try {
         do {
             pendingGeneration.value = false
-            const result = await compositeWithMask(
-                imageA.value!,
-                imageB.value!,
-                mask.value!,
-                compositorParams
-            )
+            const result = await compositeWithMask({
+                imageASource: imageA.value!,
+                imageBSource: imageB.value!,
+                maskSource: mask.value!,
+                params: compositorParams,
+                wgslCode: grayscaleCompositorWGSL
+            })
             emit('set-image', result)
         } while (pendingGeneration.value)
     } catch (error) {

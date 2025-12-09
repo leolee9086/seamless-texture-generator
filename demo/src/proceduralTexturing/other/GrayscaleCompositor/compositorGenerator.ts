@@ -1,5 +1,21 @@
-import { grayscaleCompositorWGSL, GrayscaleCompositorParams } from './compositor'
-import { getWebGPUDevice } from '../../../utils/webgpu/deviceCache/webgpuDevice'
+import type {
+    GrayscaleCompositorParams,
+    CompositeWithMaskParams,
+    CreateTexturesParams,
+    ExecuteComputeShaderParams,
+    BufferToDataURLParams,
+    CleanupGPUResourcesParams,
+    CreateComputePipelineParams
+} from './types'
+import { getWebGPUDevice } from './imports'
+import {
+    IMAGE_CONSTANTS,
+    CANVAS_CONSTANTS,
+    GPU_CONSTANTS,
+    GPU_BINDING_CONSTANTS,
+    BLEND_MODE_MAP,
+    WORKGROUP_SIZE
+} from './compositor.constants'
 
 export type { GrayscaleCompositorParams }
 
@@ -25,11 +41,11 @@ export const defaultCompositorParams: GrayscaleCompositorParams = {
 async function loadImage(source: string): Promise<ImageBitmap> {
     return new Promise((resolve, reject) => {
         const img = new Image()
-        img.crossOrigin = 'anonymous'
-        img.onload = () => {
+        img.crossOrigin = IMAGE_CONSTANTS.CROSS_ORIGIN
+        img.onload = (): void => {
             createImageBitmap(img).then(resolve).catch(reject)
         }
-        img.onerror = () => reject(new Error('Failed to load image'))
+        img.onerror = (error): void => reject(new Error(IMAGE_CONSTANTS.FAILED_TO_LOAD_IMAGE+error.toString()))
         img.src = source
     })
 }
@@ -44,10 +60,10 @@ async function resizeImageBitmap(bitmap: ImageBitmap, targetWidth: number, targe
     }
 
     // 使用canvas进行缩放
-    const canvas = document.createElement('canvas')
+    const canvas = document.createElement(CANVAS_CONSTANTS.ELEMENT_TYPE)
     canvas.width = targetWidth
     canvas.height = targetHeight
-    const ctx = canvas.getContext('2d')!
+    const ctx = canvas.getContext(CANVAS_CONSTANTS.CONTEXT_TYPE)!
     ctx.drawImage(bitmap, 0, 0, targetWidth, targetHeight)
 
     return createImageBitmap(canvas)
@@ -59,7 +75,7 @@ async function resizeImageBitmap(bitmap: ImageBitmap, targetWidth: number, targe
 function imageBitmapToTexture(device: GPUDevice, bitmap: ImageBitmap): GPUTexture {
     const texture = device.createTexture({
         size: [bitmap.width, bitmap.height],
-        format: 'rgba8unorm',
+        format: GPU_CONSTANTS.TEXTURE_FORMAT,
         usage: GPUTextureUsage.TEXTURE_BINDING |
             GPUTextureUsage.COPY_DST |
             GPUTextureUsage.RENDER_ATTACHMENT
@@ -84,62 +100,41 @@ function imageBitmapToTexture(device: GPUDevice, bitmap: ImageBitmap): GPUTextur
  * @param outputWidth 输出宽度（可选，默认使用蒙版的宽度）
  * @param outputHeight 输出高度（可选，默认使用蒙版的高度）
  */
-export async function compositeWithMask(
-    imageASource: string,
-    imageBSource: string,
-    maskSource: string,
-    params: GrayscaleCompositorParams,
-    outputWidth?: number,
-    outputHeight?: number
-): Promise<string> {
-    const device = await getWebGPUDevice()
-    if (!device) throw new Error('WebGPU不支持')
 
-    // 1. 加载所有图片
-    const [bitmapA, bitmapB, bitmapMask] = await Promise.all([
-        loadImage(imageASource),
-        loadImage(imageBSource),
-        loadImage(maskSource)
-    ])
+/**
+ * 创建GPU纹理
+ */
+function createTextures(
+    params: CreateTexturesParams
+): { textureA: GPUTexture; textureB: GPUTexture; textureMask: GPUTexture; outputTexture: GPUTexture } {
+    const { device, bitmapA, bitmapB, bitmapMask, width, height } = params
+    const textureA = imageBitmapToTexture(device, bitmapA)
+    const textureB = imageBitmapToTexture(device, bitmapB)
+    const textureMask = imageBitmapToTexture(device, bitmapMask)
 
-    // 使用蒙版的尺寸作为基准（如果没有指定输出尺寸）
-    const width = outputWidth || bitmapMask.width
-    const height = outputHeight || bitmapMask.height
-
-    // 2. 将所有图片调整到统一尺寸（以蒙版为基准）
-    const [resizedA, resizedB, resizedMask] = await Promise.all([
-        resizeImageBitmap(bitmapA, width, height),
-        resizeImageBitmap(bitmapB, width, height),
-        resizeImageBitmap(bitmapMask, width, height)
-    ])
-
-    // 3. 创建纹理
-    const textureA = imageBitmapToTexture(device, resizedA)
-    const textureB = imageBitmapToTexture(device, resizedB)
-    const textureMask = imageBitmapToTexture(device, resizedMask)
-
-    // 4. 创建输出纹理
     const outputTexture = device.createTexture({
         size: [width, height],
-        format: 'rgba8unorm',
+        format: GPU_CONSTANTS.TEXTURE_FORMAT,
         usage: GPUTextureUsage.STORAGE_BINDING | GPUTextureUsage.COPY_SRC
     })
 
-    // 5. 创建uniform buffer
+    return { textureA, textureB, textureMask, outputTexture }
+}
+
+/**
+ * 创建uniform buffer
+ */
+function createUniformBuffer(
+    device: GPUDevice,
+    params: GrayscaleCompositorParams
+): GPUBuffer {
     const uniformData = new Float32Array(12)
     uniformData[0] = params.threshold
     uniformData[1] = params.softness
     uniformData[2] = params.contrast
     uniformData[3] = params.invert ? 1.0 : 0.0
 
-    // 混合模式编码
-    let blendModeCode = 0.0
-    switch (params.blendMode) {
-        case 'normal': blendModeCode = 0.0; break
-        case 'multiply': blendModeCode = 1.0; break
-        case 'screen': blendModeCode = 2.0; break
-        case 'overlay': blendModeCode = 3.0; break
-    }
+    const blendModeCode = BLEND_MODE_MAP[params.blendMode]
     uniformData[4] = blendModeCode
     uniformData[5] = params.opacity
     uniformData[6] = params.maskBias
@@ -156,16 +151,23 @@ export async function compositeWithMask(
     })
     device.queue.writeBuffer(uniformBuffer, 0, uniformData)
 
-    // 6. 创建compute pipeline
-    const shaderModule = device.createShaderModule({ code: grayscaleCompositorWGSL })
+    return uniformBuffer
+}
+
+/**
+ * 创建计算管线
+ */
+function createComputePipeline(params: CreateComputePipelineParams): GPUComputePipeline {
+    const { device, wgslCode } = params
+    const shaderModule = device.createShaderModule({ code: wgslCode })
 
     const computeBindGroupLayout = device.createBindGroupLayout({
         entries: [
-            { binding: 0, visibility: GPUShaderStage.COMPUTE, buffer: { type: 'uniform' } },
-            { binding: 1, visibility: GPUShaderStage.COMPUTE, texture: { sampleType: 'float' } },
-            { binding: 2, visibility: GPUShaderStage.COMPUTE, texture: { sampleType: 'float' } },
-            { binding: 3, visibility: GPUShaderStage.COMPUTE, texture: { sampleType: 'float' } },
-            { binding: 4, visibility: GPUShaderStage.COMPUTE, storageTexture: { access: 'write-only', format: 'rgba8unorm' } }
+            { binding: 0, visibility: GPUShaderStage.COMPUTE, buffer: { type: GPU_BINDING_CONSTANTS.BUFFER_TYPE_UNIFORM } },
+            { binding: 1, visibility: GPUShaderStage.COMPUTE, texture: { sampleType: GPU_BINDING_CONSTANTS.TEXTURE_SAMPLE_TYPE_FLOAT } },
+            { binding: 2, visibility: GPUShaderStage.COMPUTE, texture: { sampleType: GPU_BINDING_CONSTANTS.TEXTURE_SAMPLE_TYPE_FLOAT } },
+            { binding: 3, visibility: GPUShaderStage.COMPUTE, texture: { sampleType: GPU_BINDING_CONSTANTS.TEXTURE_SAMPLE_TYPE_FLOAT } },
+            { binding: 4, visibility: GPUShaderStage.COMPUTE, storageTexture: { access: GPU_BINDING_CONSTANTS.STORAGE_TEXTURE_ACCESS_WRITE_ONLY, format: GPU_CONSTANTS.TEXTURE_FORMAT } }
         ]
     })
 
@@ -173,14 +175,21 @@ export async function compositeWithMask(
         bindGroupLayouts: [computeBindGroupLayout]
     })
 
-    const computePipeline = device.createComputePipeline({
+    return device.createComputePipeline({
         layout: computePipelineLayout,
-        compute: { module: shaderModule, entryPoint: 'cs_main' }
+        compute: { module: shaderModule, entryPoint: GPU_BINDING_CONSTANTS.SHADER_ENTRY_POINT }
     })
+}
 
-    // 7. 创建bind group
+/**
+ * 执行计算着色器
+ */
+function executeComputeShader(
+    params: ExecuteComputeShaderParams
+): GPUBuffer {
+    const { device, pipeline, uniformBuffer, textureA, textureB, textureMask, outputTexture, width, height } = params
     const bindGroup = device.createBindGroup({
-        layout: computePipeline.getBindGroupLayout(0),
+        layout: pipeline.getBindGroupLayout(0),
         entries: [
             { binding: 0, resource: { buffer: uniformBuffer } },
             { binding: 1, resource: textureA.createView() },
@@ -190,18 +199,16 @@ export async function compositeWithMask(
         ]
     })
 
-    // 8. 执行compute shader
     const commandEncoder = device.createCommandEncoder()
     const computePass = commandEncoder.beginComputePass()
-    computePass.setPipeline(computePipeline)
+    computePass.setPipeline(pipeline)
     computePass.setBindGroup(0, bindGroup)
 
-    const workgroupsX = Math.ceil(width / 8)
-    const workgroupsY = Math.ceil(height / 8)
+    const workgroupsX = Math.ceil(width / WORKGROUP_SIZE)
+    const workgroupsY = Math.ceil(height / WORKGROUP_SIZE)
     computePass.dispatchWorkgroups(workgroupsX, workgroupsY)
     computePass.end()
 
-    // 9. 读取结果
     const bytesPerRow = Math.ceil(width * 4 / 256) * 256
     const readBuffer = device.createBuffer({
         size: bytesPerRow * height,
@@ -215,13 +222,22 @@ export async function compositeWithMask(
     )
 
     device.queue.submit([commandEncoder.finish()])
+    return readBuffer
+}
+
+/**
+ * 将GPU缓冲区转换为DataURL
+ */
+async function bufferToDataURL(
+    params: BufferToDataURLParams
+): Promise<string> {
+    const { readBuffer, width, height, bytesPerRow } = params
     await readBuffer.mapAsync(GPUMapMode.READ)
 
-    // 10. 转换为DataURL
-    const canvas = document.createElement('canvas')
+    const canvas = document.createElement(CANVAS_CONSTANTS.ELEMENT_TYPE)
     canvas.width = width
     canvas.height = height
-    const ctx = canvas.getContext('2d')!
+    const ctx = canvas.getContext(CANVAS_CONSTANTS.CONTEXT_TYPE)!
     const imageData = ctx.createImageData(width, height)
     const rawData = new Uint8Array(readBuffer.getMappedRange())
 
@@ -242,28 +258,88 @@ export async function compositeWithMask(
     ctx.putImageData(imageData, 0, 0)
     readBuffer.unmap()
 
-    // 清理资源
+    return canvas.toDataURL(CANVAS_CONSTANTS.OUTPUT_FORMAT)
+}
+
+/**
+ * 清理GPU资源
+ */
+function cleanupGPUResources(
+    params: CleanupGPUResourcesParams
+): void {
+    const { textureA, textureB, textureMask, outputTexture, uniformBuffer, readBuffer } = params
     textureA.destroy()
     textureB.destroy()
     textureMask.destroy()
     outputTexture.destroy()
     uniformBuffer.destroy()
     readBuffer.destroy()
+}
 
-    return canvas.toDataURL('image/png')
+export async function compositeWithMask(
+    params: CompositeWithMaskParams
+): Promise<string> {
+    const { imageASource, imageBSource, maskSource, params: compositorParams, outputWidth, outputHeight, wgslCode } = params;
+    const device = await getWebGPUDevice()
+    if (!device) throw new Error(IMAGE_CONSTANTS.WEBGPU_NOT_SUPPORTED)
+
+    // 1. 加载图片（不调整尺寸）
+    const [bitmapA, bitmapB, bitmapMask] = await Promise.all([
+        loadImage(imageASource),
+        loadImage(imageBSource),
+        loadImage(maskSource)
+    ])
+
+    // 使用蒙版的尺寸作为基准（如果没有指定输出尺寸）
+    const width = outputWidth || bitmapMask.width
+    const height = outputHeight || bitmapMask.height
+
+    // 2. 调整图片尺寸到目标尺寸
+    const [resizedA, resizedB, resizedMask] = await Promise.all([
+        resizeImageBitmap(bitmapA, width, height),
+        resizeImageBitmap(bitmapB, width, height),
+        resizeImageBitmap(bitmapMask, width, height)
+    ])
+
+    // 3. 创建GPU纹理
+    const { textureA, textureB, textureMask, outputTexture } = createTextures({
+        device, bitmapA: resizedA, bitmapB: resizedB, bitmapMask: resizedMask, width, height
+    })
+
+    // 4. 创建uniform buffer
+    const uniformBuffer = createUniformBuffer(device, compositorParams)
+
+    // 5. 创建计算管线
+    const pipeline = createComputePipeline({ device, wgslCode })
+
+    // 6. 执行计算着色器
+    const bytesPerRow = Math.ceil(width * 4 / 256) * 256
+    const readBuffer = executeComputeShader({
+        device, pipeline, uniformBuffer,
+        textureA, textureB, textureMask, outputTexture,
+        width, height
+    })
+
+    // 7. 转换为DataURL
+    const dataUrl = await bufferToDataURL({ readBuffer, width, height, bytesPerRow })
+
+    // 8. 清理资源
+    cleanupGPUResources({ textureA, textureB, textureMask, outputTexture, uniformBuffer, readBuffer })
+
+    return dataUrl
 }
 
 /**
  * 预设参数
  */
-export const compositorPresets = {
+export const compositorPresets: Record<string, GrayscaleCompositorParams> = {
     // 柔和过渡
     soft: {
         ...defaultCompositorParams,
         threshold: 0.5,
         softness: 0.5,
         contrast: 0.8
-    } as GrayscaleCompositorParams,
+    },
 
     // 硬边缘
     hard: {
@@ -271,7 +347,7 @@ export const compositorPresets = {
         threshold: 0.5,
         softness: 0.05,
         contrast: 2.0
-    } as GrayscaleCompositorParams,
+    },
 
     // 高对比度
     highContrast: {
@@ -280,7 +356,7 @@ export const compositorPresets = {
         softness: 0.2,
         contrast: 1.8,
         maskGamma: 0.7
-    } as GrayscaleCompositorParams,
+    },
 
     // 反向蒙版
     inverted: {
@@ -289,23 +365,23 @@ export const compositorPresets = {
         softness: 0.2,
         contrast: 1.0,
         invert: true
-    } as GrayscaleCompositorParams,
+    },
 
     // 正片叠底效果
     multiply: {
         ...defaultCompositorParams,
         threshold: 0.5,
         softness: 0.3,
-        blendMode: 'multiply' as const,
+        blendMode: 'multiply',
         opacity: 0.8
-    } as GrayscaleCompositorParams,
+    },
 
     // 滤色效果
     screen: {
         ...defaultCompositorParams,
         threshold: 0.5,
         softness: 0.3,
-        blendMode: 'screen' as const,
+        blendMode: 'screen',
         opacity: 0.8
-    } as GrayscaleCompositorParams
+    }
 }
