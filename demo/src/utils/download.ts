@@ -1,3 +1,5 @@
+import type { ImageDownloadParams } from './imports'
+
 export const downloadCanvasJPG = (canvas: HTMLCanvasElement | null, fileName: string = 'download'): void => {
     if (!canvas) return;
     // Create a JPG URL from the canvas
@@ -18,7 +20,8 @@ export const downloadCanvasJPG = (canvas: HTMLCanvasElement | null, fileName: st
  */
 export const dataURLToBlob = (dataURL: string): Blob => {
     const arr = dataURL.split(',')
-    const mime = arr[0].match(/:(.*?);/)![1]
+    const mimeMatch = arr[0].match(/:(.*?);/)
+    const mime = mimeMatch?.[1] || 'image/png'
     const bstr = atob(arr[1])
     let n = bstr.length
     const u8arr = new Uint8Array(n)
@@ -45,30 +48,39 @@ export const saveImage = (
         let dataURL: string
         let mimeType: string
 
+        // 卫语句：处理字符串类型的图像数据
         if (typeof imageData === 'string') {
             dataURL = imageData
             // 从 DataURL 中提取 MIME 类型
             const match = imageData.match(/data:([^;]+);/)
-            mimeType = match ? match[1] : `image/${format}`
-        } else {
-            // 如果是 Canvas，转换为指定格式的 DataURL
-            mimeType = format === 'jpg' || format === 'jpeg' ? 'image/jpeg' : 'image/png'
-            const quality = format === 'jpg' || format === 'jpeg' ? 1.0 : undefined
-            dataURL = imageData.toDataURL(mimeType, quality)
+            mimeType = match?.[1] || `image/${format}`
+            return processImageDownload({ dataURL, mimeType, fileName, format })
         }
 
-        const blob = dataURLToBlob(dataURL)
-        const url = URL.createObjectURL(blob)
-        const link = document.createElement('a')
-        link.href = url
-        link.download = `${fileName}-${Date.now()}.${format}`
-        document.body.appendChild(link)
-        link.click()
-        document.body.removeChild(link)
-        URL.revokeObjectURL(url)
+        // 卫语句：处理 Canvas 类型的图像数据
+        mimeType = format === 'jpg' || format === 'jpeg' ? 'image/jpeg' : 'image/png'
+        const quality = format === 'jpg' || format === 'jpeg' ? 1.0 : undefined
+        dataURL = imageData.toDataURL(mimeType, quality)
+        processImageDownload({ dataURL, mimeType, fileName, format })
     } catch (error) {
         console.error('保存图像失败:', error)
     }
+}
+
+/**
+ * 处理图像下载的通用逻辑
+ */
+const processImageDownload = (params: ImageDownloadParams): void => {
+    const { dataURL, fileName, format } = params
+    const blob = dataURLToBlob(dataURL)
+    const url = URL.createObjectURL(blob)
+    const link = document.createElement('a')
+    link.href = url
+    link.download = `${fileName}-${Date.now()}.${format}`
+    document.body.appendChild(link)
+    link.click()
+    document.body.removeChild(link)
+    URL.revokeObjectURL(url)
 }
 
 /**

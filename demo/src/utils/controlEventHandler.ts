@@ -1,9 +1,5 @@
-import type { ControlEvent } from '../types/controlEvents'
-import type { Component } from 'vue'
+import type { ControlEvent, DehazeParams, ClarityParams, LuminanceAdjustmentParams, Component } from './imports'
 import type { HSLAdjustmentLayer } from './hslAdjustStep'
-import type { DehazeParams } from '../adjustments/dehaze/types'
-import type { ClarityParams } from '../adjustments/clarityAdjustment'
-import type { LuminanceAdjustmentParams } from '../adjustments/luminanceAdjustment'
 
 /**
  * 创建统一事件处理器的配置选项
