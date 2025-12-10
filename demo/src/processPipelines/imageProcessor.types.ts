@@ -33,6 +33,30 @@ export interface ImageProcessPipelineStep extends GeneralSynthesisPipelineStep {
 }
 
 /**
+ * LUT 掩码选项
+ */
+export interface LutMaskOptions {
+  intensity: number
+  maskData?: {
+    data: Uint8Array
+    width: number
+    height: number
+  }
+  maskIntensity?: number
+  enableMask?: boolean
+}
+
+/**
+ * 应用 LUT 的参数对象
+ */
+export interface ApplyLUTParams {
+  imageData: ImageData
+  lutData: Uint8Array
+  maskOptions: LutMaskOptions
+  device: GPUDevice
+}
+
+/**
  * processImageToTileable 函数的参数对象
  */
 export interface ProcessImageToTileableParams extends PipelineOptions {
