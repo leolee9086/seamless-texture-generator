@@ -97,6 +97,7 @@
 <script setup lang="ts">
 import { ref } from 'vue'
 import '@leolee9086/slider-component/dist/slider-component.css'
+import './MobileControls.css'
 import { useControlsLogic } from '../../composables/useControlsLogic'
 import { horizontalScroll } from '../../utils/scroll'
 import type { DehazeParams } from '../../adjustments/dehaze/types'
@@ -170,27 +171,3 @@ const handleNavScroll = (event: WheelEvent) => {
 }
 
 </script>
-
-<style scoped>
-/* Override slider styles for glass theme */
-.slider-container {
-  --slider-track-bg: rgba(255, 255, 255, 0.1) !important;
-  --slider-track-fill: rgba(255, 255, 255, 0.8) !important;
-  --slider-thumb-bg: #fff !important;
-  --slider-thumb-border: 2px solid rgba(255, 255, 255, 0.5) !important;
-  --slider-text-color: rgba(255, 255, 255, 0.9) !important;
-  padding: 0.5rem 0 !important;
-}
-
-.slider-label {
-  font-size: 0.875rem !important;
-  font-weight: 500 !important;
-}
-
-.slider-value {
-  font-family: monospace !important;
-  background: rgba(0, 0, 0, 0.3) !important;
-  padding: 2px 6px !important;
-  border-radius: 4px !important;
-}
-</style>
