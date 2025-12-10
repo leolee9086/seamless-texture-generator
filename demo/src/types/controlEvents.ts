@@ -7,7 +7,7 @@ export interface ControlEvent {
   type: ControlEventType
   detail: {
     action: string
-    data?: any
+    data?: unknown
   }
 }
 
@@ -51,7 +51,7 @@ export const createButtonClickEvent = (action: ButtonAction): ControlEvent => ({
   detail: { action }
 })
 
-export const createUpdateDataEvent = <T = any>(action: UpdateAction, data: T): ControlEvent => ({
+export const createUpdateDataEvent = <T = unknown>(action: UpdateAction, data: T): ControlEvent => ({
   type: 'update-data',
   detail: { action, data }
 })

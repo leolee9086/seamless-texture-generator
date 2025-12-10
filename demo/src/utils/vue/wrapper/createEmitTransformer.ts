@@ -13,12 +13,11 @@ export function createEmitTransformer<TEmit>(
 ): (eventName: string, ...args: unknown[]) => [string, ...unknown[]] {
   return (eventName: string, ...args: unknown[]) => {
     // 使用类型守卫替代as断言
-    if (isValidEmitKey<TEmit>(eventName) && transformers[eventName]) {
+    if (isValidEmitKey<TEmit>(eventName) && transformers[eventName]&&isFunction(transformers[eventName])) {
       const transformer = transformers[eventName];
       // 合并条件判断，避免嵌套if
-      if (transformer && isFunction(transformer)) {
         return [eventName, ...transformer(...args)];
-      }
+      
     }
     return [eventName, ...args];
   };
