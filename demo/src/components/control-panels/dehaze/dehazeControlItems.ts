@@ -1,8 +1,8 @@
-import { DehazeParams, BasicParamsUIDefine, AdvancedParamsUIDefine, EnhancementParamsUIDefine, computed, Ref, ComputedRef, SliderItem } from './imports'
+import { DehazeParams, computed, Ref, ComputedRef, SliderItem } from './imports'
 import { isValidDehazeParamKey, isNumericDehazeParamKey, isNumber } from './dehazeParams.guard'
 import { INVALID_PARAM_KEY_WARNING_TEMPLATE } from './dehazePanel.templates'
 
-function createSliderItemsComputed(
+export function createSliderItemsComputed(
     paramsDef: Array<{ id: string; label: string; min: number; max: number; step: number; gradient: string; showRuler: boolean }>,
     dehazeParams: Ref<DehazeParams>
 ): ComputedRef<SliderItem[]> {
@@ -36,16 +36,4 @@ function createSliderItemsComputed(
             }
         })
     )
-}
-
-export const createBasicSliderItemsComputed = (dehazeParams: Ref<DehazeParams>): ComputedRef<SliderItem[]> => {
-    return createSliderItemsComputed(BasicParamsUIDefine, dehazeParams)
-}
-
-export const createAdvancedSliderItemsComputed = (dehazeParams: Ref<DehazeParams>): ComputedRef<SliderItem[]> => {
-    return createSliderItemsComputed(AdvancedParamsUIDefine, dehazeParams)
-}
-
-export const createEnhancementSliderItemsComputed = (dehazeParams: Ref<DehazeParams>): ComputedRef<SliderItem[]> => {
-    return createSliderItemsComputed(EnhancementParamsUIDefine, dehazeParams)
 }

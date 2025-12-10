@@ -1,11 +1,11 @@
 <template>
     <div class="flex flex-col gap-4">
-        <div v-if="!originalImage" :class="emptyStateClass">
+        <div v-if="!originalImage" :class="emptyStateClass(isMobile)">
             <div class="i-carbon-fog text-1xl"></div>
             <span class="text-sm">Please select an image first</span>
         </div>
 
-        <div v-else :class="contentContainerClass">
+        <div v-else :class="contentContainerClass(isMobile)">
             <!-- 预设选择 -->
             <div class="pb-3 pt-3" :class="{ 'px-4': !isMobile }">
                 <div class="flex items-center justify-between mb-3">
@@ -112,22 +112,12 @@
 </template>
 
 <script setup lang="ts">
-import { ref, computed, watch } from 'vue'
 import { Slider } from '@leolee9086/slider-component'
-import {
-    DEFAULT_DEHAZE_PARAMS,
-    type DehazePreset,
-    getDehazePreset} from '../../../adjustments/dehaze/dehazeAdjustment'
-import { DEHAZE_PRESETS } from '@/adjustments/dehaze/DEHAZE_PRESETS'
-import { type DehazeParams } from '@/adjustments/dehaze/types'
-import { validateDehazeParams } from '@/adjustments/dehaze/validateDehazeParams'
-import { createUpdateDataEvent } from '../../../types/controlEvents'
-import type { ControlEvent } from '../../../types/controlEvents'
-import {
-    createBasicSliderItemsComputed,
-    createAdvancedSliderItemsComputed,
-    createEnhancementSliderItemsComputed
-} from './dehazeControlItems'
+import { useDehazePanel } from './useDehazePanel'
+import { DEHAZE_PRESETS, BasicParamsUIDefine, AdvancedParamsUIDefine, EnhancementParamsUIDefine } from './imports'
+import { createSliderItemsComputed } from './dehazeControlItems'
+import { getPresetName } from './dehazePanel.utils'
+import type { ControlEvent } from './imports'
 
 const props = defineProps<{
     isMobile?: boolean
@@ -138,117 +128,26 @@ const emit = defineEmits<{
     'controlEvent': [event: ControlEvent]
 }>()
 
-// State
-const dehazeParams = ref<DehazeParams>({ ...DEFAULT_DEHAZE_PARAMS })
-const currentPreset = ref<DehazePreset | null>(null)
-const showAdvanced = ref(false)
-const isProcessing = ref(false)
-
-// Computed
-const emptyStateClass = computed(() =>
-    props.isMobile
-        ? 'text-center text-white/30 py-8 text-sm'
-        : 'flex flex-col items-center justify-center py-12 text-white/30 gap-4'
-)
-
-const contentContainerClass = computed(() =>
-    props.isMobile
-        ? 'flex flex-col gap-3'
-        : 'flex flex-col gap-3 bg-white/5 rounded-2xl border border-white/5'
-)
-
-const hasAdjustments = computed(() => {
-    return JSON.stringify(dehazeParams.value) !== JSON.stringify(DEFAULT_DEHAZE_PARAMS)
+// 使用 Composable
+const {
+    dehazeParams,
+    currentPreset,
+    showAdvanced,
+    isProcessing,
+    hasAdjustments,
+    emptyStateClass,
+    contentContainerClass,
+    handleBasicSliderUpdate,
+    handleAdvancedSliderUpdate,
+    handleEnhancementSliderUpdate,
+    applyPreset,
+    resetDehaze
+} = useDehazePanel((event: 'controlEvent', data: ControlEvent) => {
+    emit(event, data)
 })
 
-const basicSliderItems = createBasicSliderItemsComputed(dehazeParams)
-const advancedSliderItems = createAdvancedSliderItemsComputed(dehazeParams)
-const enhancementSliderItems = createEnhancementSliderItemsComputed(dehazeParams)
-
-// Methods
-const getPresetName = (preset: DehazePreset): string => {
-    const names = {
-        light: '轻度',
-        medium: '中度',
-        heavy: '重度',
-        adaptive: '自适应',
-        spatialAdaptive: '空间自适应',
-        enhanced: '增强',
-        default:'默认'
-    }
-    return names[preset]
-}
-
-const applyPreset = (preset: DehazePreset) => {
-    currentPreset.value = preset
-    dehazeParams.value = getDehazePreset(preset)
-    emitDehazeChange()
-}
-
-const resetDehaze = () => {
-    currentPreset.value = null
-    dehazeParams.value = { ...DEFAULT_DEHAZE_PARAMS }
-    emitDehazeChange()
-}
-
-const handleBasicSliderUpdate = (data: { id: string; value: number }) => {
-    const updates: Partial<DehazeParams> = {}
-    if (data.id === 'omega') updates.omega = data.value
-    else if (data.id === 't0') updates.t0 = data.value
-    else if (data.id === 'windowSize') updates.windowSize = Math.round(data.value / 2) * 2 + 1 // 确保为奇数
-
-    Object.assign(dehazeParams.value, updates)
-    currentPreset.value = null
-    emitDehazeChange()
-}
-
-const handleAdvancedSliderUpdate = (data: { id: string; value: number }) => {
-    const updates: Partial<DehazeParams> = {}
-    if (data.id === 'topRatio') updates.topRatio = data.value
-    else if (data.id === 'adaptiveStrength') updates.adaptiveStrength = data.value
-    else if (data.id === 'hazeWeight') updates.hazeWeight = data.value
-    else if (data.id === 'atmosphericWeight') updates.atmosphericWeight = data.value
-
-    Object.assign(dehazeParams.value, updates)
-    currentPreset.value = null
-    emitDehazeChange()
-}
-
-const handleEnhancementSliderUpdate = (data: { id: string; value: number }) => {
-    const updates: Partial<DehazeParams> = {}
-    if (data.id === 'saturationEnhancement') updates.saturationEnhancement = data.value
-    else if (data.id === 'contrastEnhancement') updates.contrastEnhancement = data.value
-    else if (data.id === 'brightnessEnhancement') updates.brightnessEnhancement = data.value
-
-    Object.assign(dehazeParams.value, updates)
-    currentPreset.value = null
-    emitDehazeChange()
-}
-
-const emitDehazeChange = () => {
-    const validation = validateDehazeParams(dehazeParams.value)
-    if (!validation.isValid) {
-        console.warn('去雾参数验证失败:', validation.errors)
-        return
-    }
-
-    emit('controlEvent', createUpdateDataEvent('dehaze-change', { ...dehazeParams.value }))
-}
-
-// Watchers
-watch(() => dehazeParams.value.adaptiveMode, (newValue) => {
-    if (!newValue) {
-        dehazeParams.value.spatialAdaptiveMode = false
-    }
-})
-
-watch(() => dehazeParams.value.spatialAdaptiveMode, (newValue) => {
-    if (newValue) {
-        dehazeParams.value.adaptiveMode = true
-    }
-})
+// 滑块项计算
+const basicSliderItems = createSliderItemsComputed(BasicParamsUIDefine, dehazeParams)
+const advancedSliderItems = createSliderItemsComputed(AdvancedParamsUIDefine, dehazeParams)
+const enhancementSliderItems = createSliderItemsComputed(EnhancementParamsUIDefine, dehazeParams)
 </script>
-
-<style scoped>
-/* Tailwind classes handled in template */
-</style>
