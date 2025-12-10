@@ -246,23 +246,23 @@ export function useTextureGenerator(options: UseTextureGeneratorOptions = {}) {
         }
       }
 
-      processedImage.value = await processImageToTileable(
-        originalImage.value,
-        maxResolution.value,
-        borderSize.value,
-        () => { isProcessing.value = true },
-        () => { isProcessing.value = false },
-        (message) => { errorMessage.value = message },
-        lutFile.value,
-        lutIntensity.value,
+      processedImage.value = await processImageToTileable({
+        originalImage: originalImage.value,
+        maxResolution: maxResolution.value,
+        borderSize: borderSize.value,
+        onProcessingStart: () => { isProcessing.value = true },
+        onProcessingEnd: () => { isProcessing.value = false },
+        onError: (message) => { errorMessage.value = message },
+        lutFile: lutFile.value,
+        lutIntensity: lutIntensity.value,
         maskData,
-        buildHSLLayers(),
-        exposureStrength.value,  // 新增参数
-        exposureManual.value,    // 新增参数
-        dehazeParams.value,  // 新增参数
-        clarityParams.value,  // 新增参数
-        luminanceParams.value  // 新增参数
-      )
+        hslLayers: buildHSLLayers(),
+        exposureStrength: exposureStrength.value,
+        exposureManual: exposureManual.value,
+        dehazeParams: dehazeParams.value,
+        clarityParams: clarityParams.value,
+        luminanceParams: luminanceParams.value,
+      })
     } catch (error) {
       console.error('处理图像时出错:', error)
     }
