@@ -19,16 +19,8 @@
 
 <script setup lang="ts">
 import { getHslBlockColor, type HSLRange } from './imports'
+import type { CommonHslBlocksProps, CommonHslBlocksEmits } from './hsl/types'
 
-interface Props {
-    commonHslBlocks: HSLRange[]
-    isMobile: boolean
-}
-
-interface Emits {
-    (e: 'add-hsl-layer', hslBlock: HSLRange): void
-}
-
-const props = defineProps<Props>()
-const emit = defineEmits<Emits>()
+const props = defineProps<CommonHslBlocksProps>()
+const emit = defineEmits<CommonHslBlocksEmits>()
 </script>

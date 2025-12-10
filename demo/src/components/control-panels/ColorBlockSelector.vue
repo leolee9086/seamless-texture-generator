@@ -39,30 +39,12 @@ import LayersList from './LayersList.vue'
 import LayerAdjustmentPanel from './LayerAdjustmentPanel.vue'
 import QuantizedColorBlocks from './QuantizedColorBlocks.vue'
 import CommonHslBlocks from './CommonHslBlocks.vue'
-import type { AdjustmentLayer, RGBColor, HSLRange } from './imports'
+import type { ColorBlockSelectorProps, ColorBlockSelectorEmits } from './ColorBlockSelector.types'
 
-interface Props {
-    processing: boolean
-    quantizedColorBlocks: RGBColor[]
-    commonHslBlocks: HSLRange[]
-    layers: AdjustmentLayer[]
-    activeLayerId: string | null
-    mode?: 'full' | 'add-only' | 'settings-only' | 'list-only'
-    isMobile: boolean
-}
-
-interface Emits {
-    (e: 'add-color-layer', color: RGBColor): void
-    (e: 'add-hsl-layer', hslBlock: HSLRange): void
-    (e: 'remove-layer', id: string): void
-    (e: 'select-layer', id: string): void
-    (e: 'update-layer', id: string, updates: Partial<AdjustmentLayer>): void
-}
-
-const props = withDefaults(defineProps<Props>(), {
+const props = withDefaults(defineProps<ColorBlockSelectorProps>(), {
     mode: 'full'
 })
-const emit = defineEmits<Emits>()
+const emit = defineEmits<ColorBlockSelectorEmits>()
 
 const showAdd = computed(() => props.mode === 'full' || props.mode === 'add-only')
 const showList = computed(() => props.mode === 'full' || props.mode === 'list-only')
