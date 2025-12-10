@@ -8,13 +8,9 @@
 </template>
 
 <script setup lang="ts">
-interface Props {
-  isGenerating: boolean
-  buttonText?: string
-  generatingText?: string
-}
+import type { GenerateButtonProps } from './GenerateButton.types'
 
-const props = withDefaults(defineProps<Props>(), {
+const props = withDefaults(defineProps<GenerateButtonProps>(), {
   buttonText: 'Generate',
   generatingText: 'Generating...'
 })

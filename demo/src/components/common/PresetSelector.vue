@@ -12,17 +12,13 @@
 </template>
 
 <script setup lang="ts">
-interface Props {
-  presets: Record<string, any>
-}
+import type { PresetSelectorProps, PresetSelectorEmits, PresetData } from './PresetSelector.types'
 
-defineProps<Props>()
+defineProps<PresetSelectorProps>()
 
-const emit = defineEmits<{
-  'apply-preset': [preset: any]
-}>()
+const emit = defineEmits<PresetSelectorEmits>()
 
-const handlePresetClick = (preset: any) => {
+const handlePresetClick = (preset: PresetData) => {
   emit('apply-preset', preset)
 }
 </script>
