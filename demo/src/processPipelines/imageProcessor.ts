@@ -1,37 +1,29 @@
-import { HSLAdjustProcessStep } from '../adjustments/hsl/hslAdjustStep'
-import { ImageLoadStep } from './ImageLoadStep'
-import { LUTProcessStep } from './LUTProcessStep'
-import { TileableProcessStep } from './TileableProcessStep'
-import { OutputConversionStep } from './OutputConversionStep'
-import { allMiddlewares, type MiddlewareContext } from './nodes'
+import { loadAndScaleImage } from './imageLoad.utils'
+import { executeLUTProcess } from './lut.utils'
+import { executeTileableProcess } from './tileable.utils'
+import { convertToDataURL } from './output.utils'
+import { allMiddlewares, type MiddlewareContext } from './nodes/index'
 /**
  * 获取或初始化 WebGPU 设备
  * 统一使用 webgpuDevice.ts 中的设备获取逻辑
  */
-import { getWebGPUDevice } from '../utils/webgpu/deviceCache/webgpuDevice'
+import {
+  getWebGPUDevice,
+  executeHSLAdjust
+} from './imports'
 import type {
-  HSLAdjustmentLayer,
   DehazeParams,
   ClarityParams,
-  LuminanceAdjustmentParams
+  LuminanceAdjustmentParams,
+  HSLAdjustmentLayer
 } from './imports'
 import type {
   PipelineOptions
 } from './imageProcessor.types'
+import { imageDataToGPUBuffer } from './imageProcessor.utils'
 
-/**
- * 工具函数：ImageData 转 GPUBuffer
- */
-export async function imageDataToGPUBuffer(imageData: ImageData, device: GPUDevice): Promise<GPUBuffer> {
-  const buffer = device.createBuffer({
-    size: imageData.data.byteLength,
-    usage: GPUBufferUsage.STORAGE | GPUBufferUsage.COPY_SRC | GPUBufferUsage.COPY_DST,
-    mappedAtCreation: true
-  })
-  new Uint8Array(buffer.getMappedRange()).set(imageData.data)
-  buffer.unmap()
-  return buffer
-}
+// 重新导出工具函数以保持向后兼容
+export { imageDataToGPUBuffer }
 
 
 /**
@@ -85,17 +77,14 @@ export async function processImageToTileable(
     }
 
     // 步骤 1: 加载和缩放图像
-    const imageLoadStep = new ImageLoadStep()
-    let pipelineData = await imageLoadStep.loadAndScale(originalImage, maxResolution)
+    let pipelineData = await loadAndScaleImage(originalImage, maxResolution)
 
     // 步骤 2: LUT 处理
-    const lutProcessStep = new LUTProcessStep()
-    pipelineData = await lutProcessStep.execute(pipelineData, options)
+    pipelineData = await executeLUTProcess(pipelineData, options)
     // 步骤 2.5: HSL调整
     if (options.hslLayers && options.hslLayers.length > 0) {
       const device = await getWebGPUDevice()
-      const hslAdjustStep = new HSLAdjustProcessStep()
-      pipelineData = await hslAdjustStep.execute(pipelineData, options.hslLayers, device)
+      pipelineData = await executeHSLAdjust(pipelineData, options.hslLayers, device)
     }
 
     // 步骤 2.6-2.9: 应用中间件处理
@@ -117,12 +106,10 @@ export async function processImageToTileable(
     }
 
     // 步骤 3: 可平铺化处理
-    const tileableProcessStep = new TileableProcessStep()
-    pipelineData = await tileableProcessStep.execute(pipelineData, options)
+    pipelineData = await executeTileableProcess(pipelineData, options)
 
     // 步骤 4: 输出转换
-    const outputConversionStep = new OutputConversionStep()
-    const result = await outputConversionStep.convertToDataURL(pipelineData)
+    const result = await convertToDataURL(pipelineData)
 
     // 清理 GPU 资源
     pipelineData.buffer.destroy()

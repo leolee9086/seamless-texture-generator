@@ -31,3 +31,13 @@ export interface PipelineOptions extends baseOptions {
 export interface ImageProcessPipelineStep extends GeneralSynthesisPipelineStep {
   execute(data: PipelineData, options: PipelineOptions): Promise<PipelineData>
 }
+
+/**
+ * processImageToTileable 函数的参数对象
+ */
+export interface ProcessImageToTileableParams extends PipelineOptions {
+  originalImage: string
+  onProcessingStart?: () => void
+  onProcessingEnd?: () => void
+  onError?: (message: string) => void
+}

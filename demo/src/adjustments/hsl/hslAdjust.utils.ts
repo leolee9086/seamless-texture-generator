@@ -1,0 +1,317 @@
+/**
+ * HSL调整处理工具函数
+ * 在图像处理管线中应用HSL颜色调整
+ */
+
+import { WebGPUHSLProcessor, processGlobalHSLImage } from './hsl-processor.class'
+import { type HSLAdjustmentParams, type GlobalHSLAdjustmentParams } from './hsl-shaders'
+import { type PipelineData } from '../../types/PipelineData.type'
+
+/**
+ * HSL调整层接口
+ */
+export interface HSLAdjustmentLayer {
+    id: string
+    type: 'global' | 'selective'
+    targetColor?: string  // selective模式使用
+    hue: number           // -180 到 180
+    saturation: number    // -100 到 100
+    lightness: number     // -100 到 100
+    precision?: number    // 0-100, selective模式使用
+    range?: number        // 0-100, selective模式使用
+}
+
+/**
+ * 执行HSL调整步骤
+ * @param data 管线数据
+ * @param hslLayers HSL调整层数组
+ * @param device WebGPU设备
+ * @returns 处理后的管线数据
+ */
+export async function executeHSLAdjust(
+    data: PipelineData,
+    hslLayers: HSLAdjustmentLayer[] | undefined,
+    device: GPUDevice
+): Promise<PipelineData> {
+    // 如果没有HSL调整层，直接返回原数据
+    if (!hslLayers || hslLayers.length === 0) {
+        return data
+    }
+
+    // 过滤出有实际调整的层（跳过所有值都为0的层）
+    const activeLayers = hslLayers.filter(
+        layer => layer.hue !== 0 || layer.saturation !== 0 || layer.lightness !== 0
+    )
+
+    if (activeLayers.length === 0) {
+        return data
+    }
+
+    // 确保输入是GPUBuffer，如果是GPUTexture则需要先转换
+    let inputBuffer: GPUBuffer
+    if (data.buffer instanceof GPUBuffer) {
+        inputBuffer = data.buffer
+    } else {
+        // 如果是GPUTexture，需要先转换为GPUBuffer
+        throw new Error('HSL调整步骤需要GPUBuffer作为输入，不支持GPUTexture')
+    }
+
+    // 分离全局调整层和选择性调整层
+    const globalLayers = activeLayers.filter(layer => layer.type === 'global')
+    const selectiveLayers = activeLayers.filter(layer => layer.type === 'selective')
+
+    // 创建纹理描述符
+    const textureDescriptor: GPUTextureDescriptor = {
+        size: { width: data.width, height: data.height },
+        format: 'rgba8unorm',
+        usage: GPUTextureUsage.TEXTURE_BINDING | GPUTextureUsage.COPY_DST | GPUTextureUsage.COPY_SRC | GPUTextureUsage.STORAGE_BINDING,
+        label: 'HSL Input Texture'
+    }
+
+    // 创建输入纹理并上传数据
+    const inputTexture = device.createTexture(textureDescriptor)
+
+    // 从GPUBuffer复制数据到纹理
+    const commandEncoder1 = device.createCommandEncoder({ label: 'HSL Copy Input' })
+
+    // 计算对齐的bytesPerRow (必须是256的倍数)
+    const alignment = 256
+    const bytesPerRow = data.width * 4
+    const alignedBytesPerRow = Math.ceil(bytesPerRow / alignment) * alignment
+
+    // 计算对齐后的总大小
+    const alignedBufferSize = alignedBytesPerRow * data.height
+
+    // 创建临时buffer用于复制（使用对齐后的大小）
+    const tempBuffer = device.createBuffer({
+        size: alignedBufferSize,
+        usage: GPUBufferUsage.COPY_SRC | GPUBufferUsage.COPY_DST,
+        mappedAtCreation: false
+    })
+
+    // 复制数据: buffer -> tempBuffer -> texture
+    // 需要逐行复制以确保正确的对齐
+    const compactBytesPerRow = data.width * 4
+    for (let y = 0; y < data.height; y++) {
+        const srcOffset = y * compactBytesPerRow
+        const dstOffset = y * alignedBytesPerRow
+        commandEncoder1.copyBufferToBuffer(inputBuffer, srcOffset, tempBuffer, dstOffset, compactBytesPerRow)
+    }
+
+    commandEncoder1.copyBufferToTexture(
+        { buffer: tempBuffer, offset: 0, bytesPerRow: alignedBytesPerRow },
+        { texture: inputTexture },
+        { width: data.width, height: data.height }
+    )
+
+    device.queue.submit([commandEncoder1.finish()])
+
+    // 创建临时纹理用于处理
+    let currentInputTexture = inputTexture
+    let outputTexture: GPUTexture | null = null
+
+    // 统一管理所有需要销毁的纹理
+    const texturesToDestroy: GPUTexture[] = []
+
+    // 首先处理全局调整（如果有）
+    if (globalLayers.length > 0) {
+        // 合并所有全局调整参数
+        const globalParams: GlobalHSLAdjustmentParams = {
+            hueOffset: globalLayers.reduce((sum, layer) => sum + layer.hue, 0),
+            saturationOffset: globalLayers.reduce((sum, layer) => sum + layer.saturation, 0),
+            lightnessOffset: globalLayers.reduce((sum, layer) => sum + layer.lightness, 0)
+        }
+
+        // 创建输出纹理
+        outputTexture = device.createTexture({
+            ...textureDescriptor,
+            label: 'Global HSL Output Texture'
+        })
+
+        // 使用全局HSL着色器处理
+        await processGlobalHSLImage(device, currentInputTexture, outputTexture, globalParams, false)
+
+        // 等待GPU命令完成后再销毁纹理
+        await device.queue.onSubmittedWorkDone()
+
+        // 将需要销毁的纹理收集起来
+        if (currentInputTexture !== inputTexture) {
+            texturesToDestroy.push(currentInputTexture)
+        }
+        currentInputTexture = outputTexture
+    }
+
+    // 然后处理选择性调整（如果有）
+    if (selectiveLayers.length > 0) {
+        // 创建HSL处理器
+        const processor = new WebGPUHSLProcessor(device, false)
+
+        try {
+            // 创建两个临时纹理用于叠加处理
+            let tempTexture1 = device.createTexture({
+                ...textureDescriptor,
+                label: 'HSL Temp Texture 1'
+            })
+            let tempTexture2 = device.createTexture({
+                ...textureDescriptor,
+                label: 'HSL Temp Texture 2'
+            })
+
+            let useTemp1 = true
+
+            // 依次应用每一层选择性HSL调整（叠加效果）
+            for (const layer of selectiveLayers) {
+                const params: HSLAdjustmentParams = {
+                    targetColor: layer.targetColor || '#000000',
+                    hueOffset: layer.hue,
+                    saturationOffset: layer.saturation,
+                    lightnessOffset: layer.lightness,
+                    precision: layer.precision ?? 30,
+                    range: layer.range ?? 50,
+                    maskMode: 'adjust'
+                }
+
+                const commandEncoder = device.createCommandEncoder({ label: `HSL Process Layer ${layer.id}` })
+
+                // 交替使用临时纹理
+                const selectiveOutputTexture = useTemp1 ? tempTexture1 : tempTexture2
+
+                processor.processImage(
+                    currentInputTexture,
+                    selectiveOutputTexture,
+                    params,
+                    commandEncoder
+                )
+
+                // 提交当前层的处理
+                const commandBuffer = commandEncoder.finish()
+                device.queue.submit([commandBuffer])
+
+                // 将需要销毁的纹理收集起来（除了当前正在使用的）
+                if (currentInputTexture !== inputTexture &&
+                    currentInputTexture !== tempTexture1 &&
+                    currentInputTexture !== tempTexture2) {
+                    texturesToDestroy.push(currentInputTexture)
+                }
+
+                // 交换纹理引用
+                currentInputTexture = selectiveOutputTexture
+                useTemp1 = !useTemp1
+            }
+
+            // 等待所有GPU命令完成后再销毁纹理
+            await device.queue.onSubmittedWorkDone()
+
+            // 销毁临时纹理（除了当前正在使用的）
+            if (currentInputTexture !== tempTexture1) {
+                tempTexture1.destroy()
+            }
+            if (currentInputTexture !== tempTexture2) {
+                tempTexture2.destroy()
+            }
+        } finally {
+            processor.destroy()
+        }
+    }
+
+    // 将最终结果从纹理复制回GPUBuffer
+    const outputBuffer = device.createBuffer({
+        size: data.width * data.height * 4,
+        usage: GPUBufferUsage.STORAGE | GPUBufferUsage.COPY_SRC | GPUBufferUsage.COPY_DST,
+        label: 'HSL Output Buffer'
+    })
+
+    // 使用 Compute Shader 将纹理数据打包到紧凑的 buffer 中
+    // copyTextureToBuffer 要求 bytesPerRow 必须是 256 的倍数，这会导致 buffer 大小增加
+    // 而管线后续步骤期望紧凑的 buffer (width * height * 4)
+
+    const packShader = `
+        @group(0) @binding(0) var inputTexture: texture_2d<f32>;
+        @group(0) @binding(1) var<storage, read_write> outputBuffer: array<u32>;
+
+        @compute @workgroup_size(16, 16)
+        fn main(@builtin(global_invocation_id) global_id: vec3<u32>) {
+            let x = global_id.x;
+            let y = global_id.y;
+            let dims = textureDimensions(inputTexture);
+            
+            if (x >= dims.x || y >= dims.y) {
+                return;
+            }
+            
+            let color = textureLoad(inputTexture, vec2<i32>(i32(x), i32(y)), 0);
+            
+            // Convert to RGBA8Unorm and pack into u32 (little endian: R G B A)
+            let r = u32(color.r * 255.0 + 0.5);
+            let g = u32(color.g * 255.0 + 0.5);
+            let b = u32(color.b * 255.0 + 0.5);
+            let a = u32(color.a * 255.0 + 0.5);
+            
+            let packed = r | (g << 8) | (b << 16) | (a << 24);
+            
+            let index = y * dims.x + x;
+            outputBuffer[index] = packed;
+        }
+    `
+
+    const packModule = device.createShaderModule({
+        code: packShader,
+        label: 'HSL Pack Shader'
+    })
+
+    const packPipeline = await device.createComputePipelineAsync({
+        layout: 'auto',
+        compute: {
+            module: packModule,
+            entryPoint: 'main'
+        },
+        label: 'HSL Pack Pipeline'
+    })
+
+    const packBindGroup = device.createBindGroup({
+        layout: packPipeline.getBindGroupLayout(0),
+        entries: [
+            { binding: 0, resource: currentInputTexture.createView() },
+            { binding: 1, resource: { buffer: outputBuffer } }
+        ],
+        label: 'HSL Pack BindGroup'
+    })
+
+    const commandEncoder2 = device.createCommandEncoder({ label: 'HSL Pack Encoder' })
+    const pass = commandEncoder2.beginComputePass({ label: 'HSL Pack Pass' })
+    pass.setPipeline(packPipeline)
+    pass.setBindGroup(0, packBindGroup)
+    pass.dispatchWorkgroups(Math.ceil(data.width / 16), Math.ceil(data.height / 16))
+    pass.end()
+
+    device.queue.submit([commandEncoder2.finish()])
+
+    // 等待GPU命令完成后再销毁纹理
+    await device.queue.onSubmittedWorkDone()
+
+    // 清理临时资源
+    inputTexture.destroy()
+    tempBuffer.destroy()
+
+    // 销毁所有收集到的纹理
+    texturesToDestroy.forEach(texture => {
+        if (texture !== currentInputTexture) {
+            texture.destroy()
+        }
+    })
+
+    // 销毁最终的输入纹理（如果不是原始输入纹理且还未被销毁）
+    if (currentInputTexture !== inputTexture &&
+        !texturesToDestroy.includes(currentInputTexture)) {
+        currentInputTexture.destroy()
+    }
+
+    // 销毁旧的buffer
+    inputBuffer.destroy()
+
+    return {
+        buffer: outputBuffer,
+        width: data.width,
+        height: data.height
+    }
+}
