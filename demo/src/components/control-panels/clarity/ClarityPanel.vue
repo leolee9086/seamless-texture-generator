@@ -155,11 +155,11 @@
 
                 <!-- 参数导出/导入 -->
                 <div class="flex gap-2">
-                    <button @click="exportParams"
+                    <button @click="() => exportParams(clarityParams)"
                         class="glass-btn text-xs py-2 rounded bg-white/5 text-white/60 hover:bg-white/10 hover:text-white/90 transition-colors flex-1">
                         导出参数
                     </button>
-                    <button @click="importParams"
+                    <button @click="handleImportParams"
                         class="glass-btn text-xs py-2 rounded bg-white/5 text-white/60 hover:bg-white/10 hover:text-white/90 transition-colors flex-1">
                         导入参数
                     </button>
@@ -172,9 +172,11 @@
 <script setup lang="ts">
 import { ref, computed } from 'vue'
 import { Slider } from '@leolee9086/slider-component'
-import type { ClarityParams } from '../../../adjustments/clarityAdjustment'
-import { DEFAULT_CLARITY_PARAMS, CLARITY_PRESETS, getClarityPreset, createClarityAdjustmentEvent } from '../../../adjustments/clarityAdjustment'
-import type { ControlEvent } from '../../../types/controlEvents'
+import type { ClarityParams, ControlEvent, Ref } from './imports'
+import { DEFAULT_CLARITY_PARAMS, CLARITY_PRESETS, getClarityPreset, createClarityAdjustmentEvent } from './imports'
+import { importParams } from './importParams'
+import { exportParams } from './exportParams'
+import { isValidClarityParamKey } from './clarityParams.guard'
 
 const props = defineProps<{
     isMobile?: boolean
@@ -204,8 +206,14 @@ const contentContainerClass = computed(() =>
 
 // Methods
 const handleParamUpdate = (data: { id: string; value: number }) => {
+    // 卫语句：如果参数键无效，直接返回
+    if (!isValidClarityParamKey(data.id)) {
+        console.warn(`Invalid clarity parameter key: ${data.id}`)
+        return
+    }
+    
     const updates: Partial<ClarityParams> = {}
-    updates[data.id as keyof ClarityParams] = data.value
+    updates[data.id] = data.value
     Object.assign(clarityParams.value, updates)
 
     // 清除当前预设
@@ -227,45 +235,9 @@ const applyPreset = (presetKey: keyof typeof CLARITY_PRESETS) => {
     emit('controlEvent', createClarityAdjustmentEvent(clarityParams.value))
 }
 
-const exportParams = () => {
-    const paramsData = JSON.stringify(clarityParams.value, null, 2)
-    const blob = new Blob([paramsData], { type: 'application/json' })
-    const url = URL.createObjectURL(blob)
-    const a = document.createElement('a')
-    a.href = url
-    a.download = `clarity-params-${new Date().toISOString().slice(0, 19).replace(/:/g, '-')}.json`
-    document.body.appendChild(a)
-    a.click()
-    document.body.removeChild(a)
-    URL.revokeObjectURL(url)
+
+const handleImportParams = () => {
+    importParams(clarityParams, currentPreset, emit)
 }
 
-const importParams = () => {
-    const input = document.createElement('input')
-    input.type = 'file'
-    input.accept = '.json'
-    input.onchange = (event) => {
-        const file = (event.target as HTMLInputElement).files?.[0]
-        if (file) {
-            const reader = new FileReader()
-            reader.onload = (e) => {
-                try {
-                    const importedParams = JSON.parse(e.target?.result as string)
-                    clarityParams.value = { ...DEFAULT_CLARITY_PARAMS, ...importedParams }
-                    currentPreset.value = null
-                    emit('controlEvent', createClarityAdjustmentEvent(clarityParams.value))
-                } catch (error) {
-                    console.error('导入参数失败:', error)
-                    alert('导入参数失败，请检查文件格式')
-                }
-            }
-            reader.readAsText(file)
-        }
-    }
-    input.click()
-}
 </script>
-
-<style scoped>
-/* Tailwind classes handled in template */
-</style>
