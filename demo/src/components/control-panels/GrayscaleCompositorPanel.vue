@@ -216,7 +216,7 @@ const maskSliderItems = computed(() => [
         value: compositorParams.contrast,
         min: 0.0,
         max: 2.0,
-        step: 0.05,
+        step: 0.01,
         valuePosition: 'after' as const,
         showRuler: false
     },
@@ -226,7 +226,7 @@ const maskSliderItems = computed(() => [
         value: compositorParams.maskBias,
         min: -1.0,
         max: 1.0,
-        step: 0.05,
+        step: 0.01,
         valuePosition: 'after' as const,
         showRuler: false
     },
@@ -234,9 +234,9 @@ const maskSliderItems = computed(() => [
         id: 'maskGamma',
         label: 'Gamma',
         value: compositorParams.maskGamma,
-        min: 0.1,
+        min: 0.01,
         max: 3.0,
-        step: 0.1,
+        step: 0.01,
         valuePosition: 'after' as const,
         showRuler: false
     }
