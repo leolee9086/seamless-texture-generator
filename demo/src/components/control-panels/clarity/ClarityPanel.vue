@@ -34,7 +34,6 @@
 </template>
 
 <script setup lang="ts">
-import { CLARITY_PRESETS } from './imports'
 import { useClarityPanel } from './useClarityPanel'
 import FilterParamsGroup from './FilterParamsGroup.vue'
 import EnhancementParamsGroup from './EnhancementParamsGroup.vue'
