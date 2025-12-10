@@ -4,7 +4,7 @@ import tsParser from '@typescript-eslint/parser';
 import importPlugin from 'eslint-plugin-import';
 import vueParser from 'vue-eslint-parser';
 import vuePlugin from 'eslint-plugin-vue';
-import {禁止静态方法规则} from './0_lints/messages.ts'
+import { 禁止静态方法规则 } from './0_lints/messages.ts'
 // ========================================================================
 // 1. 定义规则片段
 // ========================================================================
@@ -128,14 +128,14 @@ const ONLY_ALLOW_TYPE_IMPORTS = [
     // 1. 选中所有 ImportDeclaration
     // 2. 过滤出 importKind 不为 'type' 的 (即值导入)
     // 3. 排除 (not) 来源路径以允许后缀结尾的导入
-    selector: 'ImportDeclaration[importKind!="type"]:not([source.value=/(\.utils|\.guard|\.code|\.constants|\.ctx|\.imports|index)$/])',
+    selector: 'ImportDeclaration[importKind!="type"]:not([source.value=/(\.utils|\.guard|\.code|\.constants|\.templates|\.prompts|\.ctx|\.imports|index)$/])',
     message: [
       '架构严令：禁止从业务文件进行“值导入” (Value Import)。',
       '------------------------------------------------',
       '❌ 违规行为: 你正在引入一个具体的业务实现 (Service, Class, Logic)。',
       '✅ 修正方案: 请使用 `import type` 引入接口，并通过参数传递上下文等方式获取它的实例，你需要恰当地调整代码结构以完成这个注入。',
       '------------------------------------------------',
-      '💡例外情况: 允许直接导入纯工具与常量文件 (后缀: .utils, .guards, .constants, .ctx, imports, index)。'
+      '💡例外情况: 允许直接导入纯工具与常量文件 (后缀: .utils, .guards, .constants, .templates, .prompts, .ctx, imports, index)。'
     ].join('\n')
   }
 ];
@@ -170,8 +170,11 @@ const NO_MAGIC_STRINGS = [
     message: `
 架构严令：
 禁止在逻辑中硬编码字符串 (Magic String)。
-请将字符串提取到 *.constants.ts、*.code.ts等专用文件中，引用常量使用。
-特殊的,wgsl代码等非js语言代码应该位于*.code.ts中。
+请根据语义将字符串提取到专用文件：
+1. *.constants.ts : 纯粹的常量值、配置项
+2. *.code.ts      : 非JS代码片段 (如 WGSL, SQL, GLSL)
+3. *.templates.ts : 文本模板、HTML片段
+4. *.prompts.ts   : AI 提示词 (Prompt Engineering)
     `
   }
 ];
@@ -251,13 +254,13 @@ const localRulesPlugin = {
               df.children.forEach((child: any) => {
                 // 检查节点类型是否为 script 标签 (包括 script setup)
                 if (child.type === 'VElement' && child.name === 'script') {
-                   const lines = child.loc.end.line - child.loc.start.line;
-                   if (lines > MAX_LINES) {
-                     context.report({
-                       node: child,
-                       message: generateAgentInstruction(PROMPTS.VUE_SCRIPT_TOO_LONG)
-                     });
-                   }
+                  const lines = child.loc.end.line - child.loc.start.line;
+                  if (lines > MAX_LINES) {
+                    context.report({
+                      node: child,
+                      message: generateAgentInstruction(PROMPTS.VUE_SCRIPT_TOO_LONG)
+                    });
+                  }
                 }
               });
             }
@@ -370,8 +373,15 @@ export default [
       // 🔥 排除允许值导入的文件
       '**/*.utils.ts',
       '**/*.ctx.ts',
-      // 🔥 1. 忽略常量文件，交给下方专用块处理
-      '**/*.constants.ts'
+      // 🔥 1. 忽略常量与内容文件，交给下方专用块处理
+      '**/*.constants.ts',
+      '**/constants.ts',
+      // NEW: 排除 templates 和 prompts 以允许字符串
+      '**/*.templates.ts',
+      '**/templates.ts',
+      '**/*.prompts.ts',
+      '**/prompts.ts',
+      '**/*.code.ts' // 确保 code.ts 也被排除
     ],
     rules: {
       'no-restricted-syntax': [
@@ -524,10 +534,15 @@ export default [
     }
   },
   // ========================================================================
-  // 11. 常量定义层 (*.constants.ts) - 字符串避难所
+  // 11. 常量与内容定义层 (*.constants.ts, *.templates.ts, *.prompts.ts)
   // ========================================================================
   {
-    files: ['src/**/*.constants.ts', 'test/**/*.constants.ts','src/**/*.code.ts'],
+    files: [
+      'src/**/*.constants.ts', 'test/**/*.constants.ts', 'src/**/*.code.ts', 'src/**/constants.ts',
+      // NEW: 添加 Templates 和 Prompts
+      'src/**/*.templates.ts', 'test/**/*.templates.ts', 'src/**/templates.ts',
+      'src/**/*.prompts.ts', 'test/**/*.prompts.ts', 'src/**/prompts.ts'
+    ],
     rules: {
       'no-restricted-syntax': [
         'error',
@@ -564,7 +579,7 @@ export default [
     rules: {
       // 1. 基础 Vue 规则 (推荐开启 recommended)
       ...vuePlugin.configs['flat/recommended'].rules,
-      
+
       // 2. 关闭官方的长度限制 (如果它有的话，避免冲突)
       // 'vue/max-lines-per-block': 'off',
 
@@ -579,12 +594,12 @@ export default [
         ...BASE_ARCHITECTURE_RESTRICTIONS,
         // 🔥🔥 新增：禁止在 Vue 中定义 Type/Interface/Enum 🔥🔥
         ...STRICT_TYPE_RESTRICTIONS,
-        
+
         // Vue 文件中通常允许 import 值 (组件)，但可以加其他限制
         {
-           selector: 'ImportDeclaration[source.value=/^\\.\\./]',
-           message: '禁止从父级目录导入 (../)。必须通过 ./imports.ts 转发。'
-       
+          selector: 'ImportDeclaration[source.value=/^\\.\\./]',
+          message: '禁止从父级目录导入 (../)。必须通过 ./imports.ts 转发。'
+
         }
       ]
     }
