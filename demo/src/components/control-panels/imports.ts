@@ -4,6 +4,10 @@ export { default as SliderParameterGroup } from '../common/SliderParameterGroup.
 export { default as PresetSelector } from '../common/PresetSelector.vue'
 export { default as GenerateButton } from '../common/GenerateButton.vue'
 
+// External Components
+export { Slider } from '@leolee9086/slider-component'
+export type { SliderItem } from '@leolee9086/slider-component'
+
 // Gradient Editor
 export { default as GradientEditor } from '../gradient/GradientEditor.vue'
 
@@ -23,3 +27,7 @@ export { useColorBlockSelector, type AdjustmentLayer } from '../../composables/u
 export { getHslBlockColor } from '../../utils/lut/getHslBlockColor'
 export type { RGBColor } from '../../utils/lut/colorQuantization'
 export type { HSLRange } from '../../utils/lut/hslMask'
+
+// Vue Wrapper
+export { createComponentWrapper, withProps, withEmit, composeWrappers } from '../../utils/vue/wrapper'
+export type { ComponentWrapperConfig, VueComponent } from '../../utils/vue/wrapper'

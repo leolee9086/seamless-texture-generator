@@ -106,16 +106,16 @@
 <script setup lang="ts">
 import { computed, ref } from 'vue'
 import { Slider } from '@leolee9086/slider-component'
-import { horizontalScroll } from '../../utils/scroll'
-import { useProceduralTextureState } from '../../composables/useProceduralTextureState'
-import WoodPanel from './WoodPanel.vue'
-import PlainWeavePanel from './PlainWeavePanel.vue'
-import LeatherPanel from './LeatherPanel.vue'
-import TwillWeavePanel from './TwillWeavePanel.vue'
-import VelvetPanel from './VelvetPanel.vue'
-import TuringPanel from './MultiscaleTuringPanel.vue'
-import GrayScottTuringPanel from './GrayScottTuringPanel.vue'
-import GrayscaleCompositorPanel from './GrayscaleCompositorPanel.vue'
+import { horizontalScroll } from '../../../utils/scroll'
+import { useProceduralTextureState } from '../../../composables/useProceduralTextureState'
+import WoodPanel from '../WoodPanel.vue'
+import PlainWeavePanel from '../PlainWeavePanel.vue'
+import LeatherPanel from '../LeatherPanel.vue'
+import TwillWeavePanel from '../TwillWeavePanel.vue'
+import VelvetPanel from '../VelvetPanel.vue'
+import TuringPanel from '../MultiscaleTuringPanel.vue'
+import GrayScottTuringPanel from '../GrayScottTuringPanel.vue'
+import GrayscaleCompositorPanel from '../GrayscaleCompositorPanel.vue'
 
 const props = defineProps<{
     isMobile?: boolean

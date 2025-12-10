@@ -33,12 +33,10 @@
         <ContactPanel v-if="activeGroup === 'contact'" />
 
         <!-- Inputs Panel -->
-        <InputsPanel v-else-if="activeGroup === 'inputs'" :is-processing="isProcessing" :original-image="originalImage"
-          :input-slider-items="inputSliderItems" @load-sample="loadSampleImage" @image-upload="handleImageUpload"
-          @slider-update="handleSliderUpdate" @set-image="setImage" />
+        <component :is="wrappedInputsPanel" v-if="activeGroup === 'inputs'" />
 
         <!-- Crop Panel -->
-        <CropPanel v-else-if="activeGroup === 'crop'" :original-image="originalImage"
+        <CropPanel v-if="activeGroup === 'crop'" :original-image="originalImage"
           @open-sampling-editor="openSamplingEditor" />
 
         <!-- LUT Panel -->
@@ -92,7 +90,7 @@ import type { DehazeParams } from '../../adjustments/dehaze/types'
 import type { ClarityParams } from '../../adjustments/clarityAdjustment'
 import type { LuminanceAdjustmentParams } from '../../adjustments/luminanceAdjustment'
 import ContactPanel from '../control-panels/ContactPanel.vue'
-import InputsPanel from '../control-panels/InputsPanel.vue'
+import { createZeroBindingInputsPanel } from '../control-panels/inputs/InputsPanel.wrapper.utils'
 import CropPanel from '../control-panels/CropPanel.vue'
 import LUTPanel from '../control-panels/lut/LUTPanel.vue'
 import HSLPanel from '../control-panels/HSLPanel.vue'
@@ -152,6 +150,21 @@ const {
   setImage,
   handleControlEvent
 } = useControlsLogic(props, emit)
+
+// 创建零绑定包装后的 InputsPanel 组件
+const wrappedInputsPanel = createZeroBindingInputsPanel({
+  props: {
+    isProcessing:props.isProcessing,
+    originalImage:props.isProcessing,
+    inputSliderItems:props.inputSliderItems
+  },
+  emits: {
+    'load-sample': loadSampleImage,
+    'image-upload': handleImageUpload,
+    'slider-update': handleSliderUpdate,
+    'set-image': setImage
+  }
+})
 
 
 </script>
