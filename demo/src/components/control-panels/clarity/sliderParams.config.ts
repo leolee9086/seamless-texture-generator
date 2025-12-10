@@ -1,4 +1,4 @@
-import type { SliderParamConfig } from './sliderParams.types'
+import type { SliderParamConfig } from './clarityPanel.types'
 import type { ClarityParams, SliderItem } from './imports'
 
 /**
