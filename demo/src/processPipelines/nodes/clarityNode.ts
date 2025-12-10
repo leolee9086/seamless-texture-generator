@@ -1,7 +1,5 @@
-import { PipelineData, baseOptions } from '../../types/PipelineData.type'
-import { NodeContext, Node } from './types'
-import { processClarityAdjustment } from '../../adjustments/clarityAdjustment'
-import { gpuBufferToImageData } from '../../utils/webgpu/convert/gpuBufferToImageData'
+import { baseOptions, gpuBufferToImageData, processClarityAdjustment } from './imports'
+import type { NodeContext, Node } from './types'
 
 /**
  * 清晰度调整中间件
@@ -36,10 +34,12 @@ export const clarityMiddleware: Node = {
       new Uint8Array(processedBuffer.getMappedRange()).set(processedImageData.data)
       processedBuffer.unmap()
       
-      // 销毁旧的 buffer
+      // 销毁旧的 buffer - 使用卫语句避免嵌套
       if (pipelineData.buffer instanceof GPUBuffer) {
         pipelineData.buffer.destroy()
-      } else if (pipelineData.buffer instanceof GPUTexture) {
+      }
+      
+      if (pipelineData.buffer instanceof GPUTexture) {
         pipelineData.buffer.destroy()
       }
       
