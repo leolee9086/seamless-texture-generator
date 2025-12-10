@@ -29,7 +29,7 @@ import {
   GenerateButton,
   generatePlainWeaveTexture,
   useProceduralTextureState
-} from './imports'
+} from '../imports'
 
 const props = defineProps<{
     isGenerating: boolean

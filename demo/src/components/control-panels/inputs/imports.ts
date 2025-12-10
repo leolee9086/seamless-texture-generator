@@ -19,7 +19,7 @@ export { default as horizontalScrollButtons } from '../../common/horizontalScrol
 
 // Re-export panel components
 export { default as WoodPanel } from '../WoodPanel.vue'
-export { default as PlainWeavePanel } from '../PlainWeavePanel.vue'
+export { default as PlainWeavePanel } from '../plainWeave/PlainWeavePanel.vue'
 export { default as LeatherPanel } from '../LeatherPanel.vue'
 export { default as TwillWeavePanel } from '../TwillWeavePanel.vue'
 export { default as VelvetPanel } from '../VelvetPanel.vue'
