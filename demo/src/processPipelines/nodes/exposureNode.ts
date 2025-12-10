@@ -1,7 +1,6 @@
-import { PipelineData, baseOptions } from '../../types/PipelineData.type'
-import { NodeContext, Node } from './types'
-import { adjustExposure, adjustExposureManual } from '../../adjustments/exposureAdjustment'
-import { gpuBufferToImageData } from '../../utils/webgpu/convert/gpuBufferToImageData'
+import type { baseOptions } from './imports'
+import type { NodeContext, Node } from './types'
+import { adjustExposure, adjustExposureManual, gpuBufferToImageData } from './imports'
 
 /**
  * 曝光调整中间件
@@ -29,21 +28,32 @@ export const exposureMiddleware: Node = {
         try {
             let processedImageData: ImageData
 
+            // 自动曝光调整
             if (options.exposureStrength && options.exposureStrength !== 1.0) {
-                // 自动曝光调整
                 processedImageData = await adjustExposure(imageData, options.exposureStrength)
-            } else if (options.exposureManual) {
-                // 手动曝光调整
+                return updateContext(processedImageData)
+            }
+
+            // 手动曝光调整
+            if (options.exposureManual) {
                 processedImageData = adjustExposureManual(
                     imageData,
                     options.exposureManual.exposure,
                     options.exposureManual.contrast,
                     options.exposureManual.gamma
                 )
-            } else {
-                processedImageData = imageData
+                return updateContext(processedImageData)
             }
 
+            // 无需调整，使用原始图像
+            processedImageData = imageData
+            return updateContext(processedImageData)
+        } catch (error) {
+            console.warn('曝光处理失败，继续使用原始图像:', error)
+        }
+
+        // 辅助函数：更新上下文
+        function updateContext(processedImageData: ImageData): void {
             // 转换回 GPUBuffer
             const processedBuffer = device.createBuffer({
                 size: processedImageData.data.byteLength,
@@ -56,7 +66,8 @@ export const exposureMiddleware: Node = {
             // 销毁旧的 buffer
             if (pipelineData.buffer instanceof GPUBuffer) {
                 pipelineData.buffer.destroy()
-            } else if (pipelineData.buffer instanceof GPUTexture) {
+            }
+            if (pipelineData.buffer instanceof GPUTexture) {
                 pipelineData.buffer.destroy()
             }
 
@@ -66,8 +77,6 @@ export const exposureMiddleware: Node = {
                 width: processedImageData.width,
                 height: processedImageData.height
             }
-        } catch (error) {
-            console.warn('曝光处理失败，继续使用原始图像:', error)
         }
     }
 }

@@ -1,4 +1,5 @@
-import { baseOptions, gpuBufferToImageData, processClarityAdjustment } from './imports'
+import type { baseOptions } from './imports'
+import { gpuBufferToImageData, processClarityAdjustment } from './imports'
 import type { NodeContext, Node } from './types'
 
 /**
