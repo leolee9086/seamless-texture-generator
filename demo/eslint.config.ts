@@ -5,13 +5,13 @@ import importPlugin from 'eslint-plugin-import';
 import vueParser from 'vue-eslint-parser';
 import vuePlugin from 'eslint-plugin-vue';
 import { 禁止静态方法规则 } from './0_lints/messages.ts'
+
 // ========================================================================
 // 1. 定义规则片段
 // ========================================================================
 
-// [A] 基础架构约束
+// [A] 基础架构约束 (所有 TS 文件通用)
 const BASE_ARCHITECTURE_RESTRICTIONS = [
-  // ... (保持原有代码不变)
   禁止静态方法规则,
   {
     selector: 'PropertyDefinition[static=true]',
@@ -53,7 +53,6 @@ const BASE_ARCHITECTURE_RESTRICTIONS = [
 
 // [B] 类型纯洁性约束
 const STRICT_TYPE_RESTRICTIONS = [
-  // ... (保持原有代码不变)
   {
     selector: "TSAsExpression:not([typeAnnotation.type='TSTypeReference'][typeAnnotation.typeName.name='const']), TSTypeAssertion",
     message: "禁止使用 'as' 断言。请在 .guard.ts 中使用类型守卫，或依赖自动推断。"
@@ -78,7 +77,6 @@ const STRICT_TYPE_RESTRICTIONS = [
 
 // [C] 孤岛导入约束
 const STRICT_IMPORT_RESTRICTIONS = [
-  // ... (保持原有代码不变)
   {
     selector: 'ImportDeclaration[source.value=/^\\.\\./]',
     message: '禁止从父级目录导入 (../)。必须通过 ./imports.ts 转发。'
@@ -121,52 +119,36 @@ const STRICT_CLASS_RESTRICTIONS = [
   }
 ];
 
-// [E] 🔥🔥🔥 新增：禁止值导入约束 (只允许 import type) 🔥🔥🔥
+// [E] 禁止值导入约束
 const ONLY_ALLOW_TYPE_IMPORTS = [
   {
-    // 复杂选择器解释：
-    // 1. 选中所有 ImportDeclaration
-    // 2. 过滤出 importKind 不为 'type' 的 (即值导入)
-    // 3. 排除 (not) 来源路径以允许后缀结尾的导入
     selector: 'ImportDeclaration[importKind!="type"]:not([source.value=/(\.utils|\.guard|\.code|\.constants|\.templates|\.prompts|\.ctx|\.imports|index)$/])',
     message: [
       '架构严令：禁止从业务文件进行“值导入” (Value Import)。',
       '------------------------------------------------',
       '❌ 违规行为: 你正在引入一个具体的业务实现 (Service, Class, Logic)。',
-      '✅ 修正方案: 请使用 `import type` 引入接口，并通过参数传递上下文等方式获取它的实例，你需要恰当地调整代码结构以完成这个注入。',
+      '✅ 修正方案: 请使用 `import type` 引入接口，并通过参数传递上下文等方式获取它的实例。',
       '------------------------------------------------',
       '💡例外情况: 允许直接导入纯工具与常量文件 (后缀: .utils, .guards, .constants, .templates, .prompts, .ctx, imports, index)。'
     ].join('\n')
   }
 ];
-// [F] 🔥🔥🔥 硬编码值约束 (除 constants.ts 外全域禁止) 🔥🔥🔥
+
+// [F] 硬编码值约束
 const NO_MAGIC_STRINGS = [
   {
-    // 选中：字符串字面量 ('str', "str") 和 模版字符串 (`str`)
-    // 排除：
-    // 1. Import/Export 的路径 source
-    // 2. TS 类型定义中的字符串 (type T = 'A')
-    // 3. 对象字面量的 Key ({ "key": val })
-    // 4. JSX 属性 (className="flex" - 如需极致严格可移除此项)
     selector: [
-      // 1. 选中目标：以单/双引号开头的字面量 (排除数字/布尔) 或 模版字符串
       ':matches(Literal[raw=/^["\']/], TemplateLiteral)',
-
-      // 2. 排除上下文 (注意：这里保留了必要的空格，表示后代关系)
-      ':not(ImportDeclaration Literal)',        // 排除 import 路径
-      ':not(ExportNamedDeclaration Literal)',   // 排除 export { x } from 'path'
-      ':not(ExportAllDeclaration Literal)',     // 排除 export * from 'path'
-      ':not(TSLiteralType Literal)',            // 排除 TS 类型 (type T = 'A')
-      ':not(Property > Literal.key)',           // 排除 对象属性 Key ({ "key": 1 })
-      ':not(JSXAttribute Literal)',             // 排除 JSX 属性 (class="foo")
-      ':not(TSEnumMember Literal)',             // 排除 枚举值 (enum A { B = 'C' })
-      ':not(TSPropertySignature Literal)',      // 排除 接口属性 Key
-      ':not(TSAsExpression Literal)',           // 排除 as 断言 (x as 'fixed')
-
-      // 3. (可选) 常用放行 - 如果你希望允许 console.log 使用字符串，取消下面注释
-      // ':not(CallExpression[callee.object.name="console"] Literal)',
-      // ':not(NewExpression[callee.name="Error"] Literal)',
-    ].join(''), // 直接连接字符串，不要 replace 空格
+      ':not(ImportDeclaration Literal)',
+      ':not(ExportNamedDeclaration Literal)',
+      ':not(ExportAllDeclaration Literal)',
+      ':not(TSLiteralType Literal)',
+      ':not(Property > Literal.key)',
+      ':not(JSXAttribute Literal)',
+      ':not(TSEnumMember Literal)',
+      ':not(TSPropertySignature Literal)',
+      ':not(TSAsExpression Literal)',
+    ].join(''),
     message: `
 架构严令：
 禁止在逻辑中硬编码字符串 (Magic String)。
@@ -174,51 +156,61 @@ const NO_MAGIC_STRINGS = [
 1. *.constants.ts : 纯粹的常量值、配置项
 2. *.code.ts      : 非JS代码片段 (如 WGSL, SQL, GLSL)
 3. *.templates.ts : 文本模板、HTML片段
-4. *.prompts.ts   : AI 提示词 (Prompt Engineering)
+4. *.prompts.ts   : AI 提示词
     `
   }
 ];
 
+// [H] 🔥🔥🔥 新增：动态导入与网络请求约束 (已修正) 
+const RESTRICTION_NO_DYNAMIC_IMPORT = {
+  // 变更点：增加 TSImportType 以捕获 type T = import('./x') 写法
+  selector: ':matches(ImportExpression, TSImportType)', 
+  message: [
+    '架构严令：禁止使用内联导入或动态导入。',
+    '1. 如果是类型引用 (import("...")), 请在文件头部使用 standard "import type" 语句。',
+    '2. 如果是运行时懒加载 (await import("...")), 请将逻辑移至 *.loader.ts。'
+  ].join('\n')
+};
+const RESTRICTION_NO_NETWORK = {
+  selector: ':matches(CallExpression[callee.name="fetch"], CallExpression[callee.name="axios"], CallExpression[callee.object.name="axios"])',
+  message: '架构严令：禁止直接发起网络请求 (fetch/axios)。数据获取逻辑请移至 *.api.ts 或 *.fetcher.ts。'
+};
+
+// [I] 组合约束：全局默认逻辑 (包含所有禁令)
+// 大多数业务文件都应该遵守这个集合
+const GLOBAL_LOGIC_RESTRICTIONS = [
+  ...BASE_ARCHITECTURE_RESTRICTIONS,
+  RESTRICTION_NO_DYNAMIC_IMPORT, // 默认禁止 import()
+  RESTRICTION_NO_NETWORK         // 默认禁止 fetch
+];
+
 // ========================================================================
-// 1.5. PROMPTS 字典 (Linter-Agent Protocol)
+// 1.5. PROMPTS 字典
 // ========================================================================
 const PROMPTS = {
-  // [G] UI 组件架构模式
   VUE_TEMPLATE_TOO_LONG: {
     id: 'UI-001: Giant Template',
-    mode: 'UI_COMPONENT_SPECIALIST', // 新角色：UI 组件专家
-    reason: "检测到 Vue 组件模板部分超过 50 行。巨型模板难以维护且复用性差。",
-    action: "请执行 '组件提取 (Extract Component)' 重构：\n1. 识别模板中的独立 UI 区块。\n2. 将其提取为子组件 (Sub-components)。\n3. 通过 props/events 通信。"
+    mode: 'UI_COMPONENT_SPECIALIST',
+    reason: "检测到 Vue 组件模板部分超过 50 行。",
+    action: "请执行 '组件提取' 重构。"
   },
-  // 🔥🔥🔥 新增：Script 过长提示 🔥🔥🔥
   VUE_SCRIPT_TOO_LONG: {
     id: 'UI-002: Fat Script',
-    mode: 'LOGIC_EXTRACTION_SPECIALIST', // 新角色：逻辑提取专家
-    reason: "检测到 Vue 组件 Script 部分超过 50 行。UI 组件应只负责展示，不应包含复杂业务逻辑。",
-    action: "请执行 '逻辑提取 (Extract Logic)' 重构：\n1. 将业务逻辑提取为 Composables (useXxx) 或纯工具函数。\n2. 将这些函数放入 *.utils.ts 或 *.ctx.ts 中。\n3. 在 Vue 中仅进行调用。"
+    mode: 'LOGIC_EXTRACTION_SPECIALIST',
+    reason: "检测到 Vue 组件 Script 部分超过 50 行。",
+    action: "请执行 '逻辑提取' 重构，移入 .utils.ts 或 .ctx.ts。"
   }
 };
 
-// 生成 Agent 指令的辅助函数
-function generateAgentInstruction(prompt: typeof PROMPTS[keyof typeof PROMPTS]): string {
-  return `
-🤖 Linter-Agent Protocol 指令 🤖
-----------------------------------------
-ID: ${prompt.id}
-模式: ${prompt.mode}
-原因: ${prompt.reason}
-行动: ${prompt.action}
-----------------------------------------
-请切换到 '${prompt.mode}' 模式执行上述重构。
-  `.trim();
+function generateAgentInstruction(prompt: any): string {
+  return `🤖 Agent指令: ${prompt.id} | ${prompt.mode}\n${prompt.reason}\n${prompt.action}`;
 }
 
 // ========================================================================
-// 2. 本地规则插件 (Local Rules Plugin)
+// 2. 本地规则插件
 // ========================================================================
 const localRulesPlugin = {
   rules: {
-    // 规则 1: Vue 模板行数守卫
     'vue-template-max-lines': {
       meta: { type: 'problem' },
       create(context: any) {
@@ -238,21 +230,16 @@ const localRulesPlugin = {
         };
       }
     },
-    // 🔥🔥🔥 规则 3 (新增): Vue Script 行数守卫 🔥🔥🔥
     'vue-script-max-lines': {
       meta: { type: 'problem' },
       create(context: any) {
         const MAX_LINES = 50;
         return {
           Program(node: any) {
-            // 获取 parser 服务
             const services = context.sourceCode?.parserServices || context.parserServices;
-            // 获取 Vue 文件的根 DocumentFragment
             const df = services?.getDocumentFragment?.();
-
             if (df && df.children) {
               df.children.forEach((child: any) => {
-                // 检查节点类型是否为 script 标签 (包括 script setup)
                 if (child.type === 'VElement' && child.name === 'script') {
                   const lines = child.loc.end.line - child.loc.start.line;
                   if (lines > MAX_LINES) {
@@ -268,7 +255,6 @@ const localRulesPlugin = {
         };
       }
     },
-    // 规则 2: 禁止 Style 标签守卫
     'no-vue-style-block': {
       meta: { type: 'problem' },
       create(context: any) {
@@ -276,20 +262,12 @@ const localRulesPlugin = {
           Program(node: any) {
             const services = context.sourceCode?.parserServices || context.parserServices;
             const df = services?.getDocumentFragment?.();
-
             if (df && df.children) {
               df.children.forEach((child: any) => {
                 if (child.type === 'VElement' && child.name === 'style') {
                   context.report({
                     node: child,
-                    message: [
-                      '架构严令：禁止在 Vue 组件中直接使用 <style> 代码块。',
-                      '------------------------------------------------',
-                      '❌ 违规行为: 定义了内部样式块。',
-                      '✅ 修正方案: ',
-                      '   1. 优先使用 Tailwind CSS / UnoCSS 等原子化类名。',
-                      '   2. 如果必须写自定义 CSS，请建立独立的 css/scss 文件并导入。'
-                    ].join('\n')
+                    message: '禁止使用 <style>。请使用 Tailwind CSS 或外部 CSS 文件。'
                   });
                 }
               });
@@ -334,7 +312,6 @@ export default [
       'import': importPlugin,
     },
     rules: {
-      // ... (保持基础规则不变)
       'no-unused-vars': 'off',
       '@typescript-eslint/no-explicit-any': 'error',
       '@typescript-eslint/ban-ts-comment': 'error',
@@ -348,9 +325,10 @@ export default [
       'max-lines-per-function': ['error', { "max": 50, "skipBlankLines": true, "skipComments": true, "IIFEs": true }],
       'class-methods-use-this': ['error', { "enforceForClassFields": true }],
 
+      // 默认应用全局约束
       'no-restricted-syntax': [
         'error',
-        ...BASE_ARCHITECTURE_RESTRICTIONS,
+        ...GLOBAL_LOGIC_RESTRICTIONS,
         ...STRICT_CLASS_RESTRICTIONS
       ]
     },
@@ -359,81 +337,73 @@ export default [
   // ========================================================================
   // 3. 严格业务逻辑层 (Generic Core Logic)
   // ========================================================================
-  // 作用于：除特殊后缀外的所有 .ts 文件
-  // 约束：❌ 类定义, ❌ 值导入 (新增)
   {
     files: ['src/**/*.ts', 'src/**/*.tsx', 'test/**/*.ts', 'test/**/*.tsx'],
     ignores: [
-      '**/imports.ts',
-      '**/index.ts',
+      '**/imports.ts', '**/index.ts',
       '**/*.types.ts', '**/*.d.ts',
       '**/*.guard.ts',
       '**/*.test.ts', '**/*.spec.ts', '**/types.ts',
       '**/*.class.ts',
-      // 🔥 排除允许值导入的文件
-      '**/*.utils.ts',
-      '**/*.ctx.ts',
-      // 🔥 1. 忽略常量与内容文件，交给下方专用块处理
-      '**/*.constants.ts',
-      '**/constants.ts',
-      // NEW: 排除 templates 和 prompts 以允许字符串
-      '**/*.templates.ts',
-      '**/templates.ts',
-      '**/*.prompts.ts',
-      '**/prompts.ts',
-      '**/*.code.ts' // 确保 code.ts 也被排除
+      '**/*.utils.ts', '**/*.ctx.ts',
+      '**/*.constants.ts', '**/constants.ts',
+      '**/*.templates.ts', '**/templates.ts',
+      '**/*.prompts.ts', '**/prompts.ts',
+      '**/*.code.ts',
+      // 🔥 豁免特殊的加载和API文件，由专用层级处理
+      '**/*.loader.ts',
+      '**/*.api.ts',
+      '**/*.fetcher.ts'
     ],
     rules: {
       'no-restricted-syntax': [
         'error',
-        ...BASE_ARCHITECTURE_RESTRICTIONS,
+        ...GLOBAL_LOGIC_RESTRICTIONS, // <-- 包含 Network/Import 禁令
         ...STRICT_TYPE_RESTRICTIONS,
         ...STRICT_IMPORT_RESTRICTIONS,
         ...STRICT_CLASS_RESTRICTIONS,
-        ...ONLY_ALLOW_TYPE_IMPORTS, // <--- 强制只能导入类型
-        // 🔥 2. 启用禁魔字符串
+        ...ONLY_ALLOW_TYPE_IMPORTS,
         ...NO_MAGIC_STRINGS
       ]
     }
   },
 
   // ========================================================================
-  // 4. 网关层 (imports.ts) - 允许值导入
+  // 4. 网关层 (imports.ts)
   // ========================================================================
   {
     files: ['src/**/imports.ts', 'test/**/imports.ts'],
     rules: {
       'no-restricted-syntax': [
         'error',
-        ...BASE_ARCHITECTURE_RESTRICTIONS,
+        ...GLOBAL_LOGIC_RESTRICTIONS, // <-- 包含禁令
         ...STRICT_TYPE_RESTRICTIONS,
         ...STRICT_CLASS_RESTRICTIONS,
         {
           selector: 'ImportDeclaration[source.value=/^\\.\\u002F/]',
-          message: '架构约束：imports.ts 仅用于引入外部依赖。禁止导入同级或子级文件 (./)。同级文件不需要通过imports转发，直接导入即可'
+          message: '架构约束：imports.ts 仅用于引入外部依赖。'
         },
-        // ... (保持原有规则)
         {
           selector: 'ExportNamedDeclaration[source.value=/^\\.\\u002F/]',
-          message: '架构约束：imports.ts 仅用于引入外部依赖。禁止重导出同级或子级文件 (./)。同级文件不需要通过imports转发，直接导入即可'
+          message: '架构约束：imports.ts 仅用于引入外部依赖。'
         },
         {
           selector: 'ExportAllDeclaration[source.value=/^\\.\\u002F/]',
-          message: '架构约束：imports.ts 禁止全量重导出内部文件 (./)。同级文件不需要通过imports转发，直接导入即可'
+          message: '架构约束：imports.ts 禁止全量重导出内部文件。'
         }
       ]
     }
   },
 
   // ========================================================================
-  // 5. 公共接口层 (index.ts) - 允许值导入
+  // 5. 公共接口层 (index.ts)
   // ========================================================================
   {
     files: ['src/**/index.ts', 'src/**/index.tsx', 'test/**/index.ts', 'test/**/index.tsx'],
     rules: {
       'no-restricted-syntax': [
         'error',
-        ...BASE_ARCHITECTURE_RESTRICTIONS,
+        ...GLOBAL_LOGIC_RESTRICTIONS,
         ...STRICT_TYPE_RESTRICTIONS,
         ...STRICT_CLASS_RESTRICTIONS,
         ...STRICT_IMPORT_RESTRICTIONS.filter(r =>
@@ -445,7 +415,7 @@ export default [
   },
 
   // ========================================================================
-  // 6. 类型定义层 (*.types.ts) - 仅类型
+  // 6. 类型定义层 (*.types.ts)
   // ========================================================================
   {
     files: ['src/**/*.types.ts', 'src/**/*.d.ts', 'src/**/types/**/*.ts', 'test/**/*.types.ts', 'test/**/*.d.ts', 'test/**/types/**/*.ts'],
@@ -453,16 +423,16 @@ export default [
     rules: {
       'no-restricted-syntax': [
         'error',
-        ...BASE_ARCHITECTURE_RESTRICTIONS,
+        ...GLOBAL_LOGIC_RESTRICTIONS,
         ...STRICT_IMPORT_RESTRICTIONS,
         ...STRICT_CLASS_RESTRICTIONS,
-        ...ONLY_ALLOW_TYPE_IMPORTS // <--- 既然是 types 文件，当然只能 import type
+        ...ONLY_ALLOW_TYPE_IMPORTS
       ]
     }
   },
 
   // ========================================================================
-  // 7. 类型守卫层 (*.guard.ts) - 允许值导入
+  // 7. 类型守卫层 (*.guard.ts)
   // ========================================================================
   {
     files: ['src/**/*.guard.ts', 'test/**/*.guard.ts'],
@@ -471,18 +441,18 @@ export default [
       '@typescript-eslint/consistent-type-assertions': 'off',
       'no-restricted-syntax': [
         'error',
-        ...BASE_ARCHITECTURE_RESTRICTIONS,
+        ...GLOBAL_LOGIC_RESTRICTIONS,
         ...STRICT_IMPORT_RESTRICTIONS,
         ...STRICT_CLASS_RESTRICTIONS,
         ...STRICT_TYPE_RESTRICTIONS.filter(r => !r.selector.includes('TSAsExpression') &&
           !r.selector.includes('TSTypePredicate')),
-        ...NO_MAGIC_STRINGS // <--- 新增
+        ...NO_MAGIC_STRINGS
       ]
     }
   },
 
   // ========================================================================
-  // 8. 测试层 (*.test.ts) - 允许值导入
+  // 8. 测试层 (*.test.ts)
   // ========================================================================
   {
     files: ['test/**/*.test.ts', 'test/**/*.spec.ts', 'src/**/*.test.ts', 'src/**/*.spec.ts'],
@@ -493,114 +463,133 @@ export default [
       'no-restricted-syntax': [
         'error',
         ...BASE_ARCHITECTURE_RESTRICTIONS
+        // 测试文件通常可以允许 import() 和 fetch (如 mock)，暂不加严格限制
       ]
     }
   },
 
   // ========================================================================
-  // 9. 类定义文件 (*.class.ts) - 严格禁止值导入
+  // 9. 类定义文件 (*.class.ts)
   // ========================================================================
-  // 约束：✅ 允许 Class, ❌ 禁止值导入 (必须依赖注入或纯计算)
   {
     files: ['src/**/*.class.ts', 'test/**/*.class.ts'],
     rules: {
       'no-restricted-syntax': [
         'error',
-        ...BASE_ARCHITECTURE_RESTRICTIONS,
+        ...GLOBAL_LOGIC_RESTRICTIONS, // <-- 类中也禁止直接 Fetch 或 Import()
         ...STRICT_TYPE_RESTRICTIONS,
         ...STRICT_IMPORT_RESTRICTIONS,
-        ...ONLY_ALLOW_TYPE_IMPORTS, // <--- 🔥 关键：类文件中禁止引用运行时值
-        ...NO_MAGIC_STRINGS // <--- 新增
+        ...ONLY_ALLOW_TYPE_IMPORTS,
+        ...NO_MAGIC_STRINGS
       ]
     }
   },
 
   // ========================================================================
-  // 10. 工具与上下文 (*.utils.ts, *.ctx.ts) - 允许值导入 (新增)
+  // 10. 工具与上下文 (*.utils.ts, *.ctx.ts)
   // ========================================================================
   {
     files: ['src/**/*.utils.ts', 'src/**/*.ctx.ts', 'test/**/*.utils.ts', 'test/**/*.ctx.ts'],
     rules: {
       'no-restricted-syntax': [
         'error',
-        ...BASE_ARCHITECTURE_RESTRICTIONS,
-        ...STRICT_TYPE_RESTRICTIONS, // 依然不建议在这里直接定义 interface
+        ...GLOBAL_LOGIC_RESTRICTIONS, // <-- 工具函数也不应该直接发起请求，应依赖注入
+        ...STRICT_TYPE_RESTRICTIONS,
         ...STRICT_IMPORT_RESTRICTIONS,
         ...STRICT_CLASS_RESTRICTIONS,
-        ...NO_MAGIC_STRINGS // <--- 新增
-        // 禁止定义 Class
-        // 允许值导入，所以不加 ONLY_ALLOW_TYPE_IMPORTS
+        ...NO_MAGIC_STRINGS
       ]
     }
   },
+
   // ========================================================================
-  // 11. 常量与内容定义层 (*.constants.ts, *.templates.ts, *.prompts.ts)
+  // 11. 常量与内容定义层
   // ========================================================================
   {
     files: [
       'src/**/*.constants.ts', 'test/**/*.constants.ts', 'src/**/*.code.ts', 'src/**/constants.ts',
-      // NEW: 添加 Templates 和 Prompts
       'src/**/*.templates.ts', 'test/**/*.templates.ts', 'src/**/templates.ts',
       'src/**/*.prompts.ts', 'test/**/*.prompts.ts', 'src/**/prompts.ts'
     ],
     rules: {
       'no-restricted-syntax': [
         'error',
-        // 依然遵守基础架构约束 (如禁止 switch, else 等)
-        ...BASE_ARCHITECTURE_RESTRICTIONS,
-        // 禁止 Class
+        ...GLOBAL_LOGIC_RESTRICTIONS, // <-- 常量文件更不能有网络请求
         ...STRICT_CLASS_RESTRICTIONS,
-        // 允许：字符串、数值等硬编码
       ]
     }
   },
 
   // ========================================================================
-  // 12. Vue 组件层 (*.vue) - 新增
+  // 12. Vue 组件层 (*.vue)
   // ========================================================================
   {
     files: ['src/**/*.vue'],
     languageOptions: {
-      // 关键：外层解析器必须是 vue-eslint-parser
       parser: vueParser,
       parserOptions: {
-        // 关键：内层解析器负责处理 TS
         parser: tsParser,
-        // 移除 project 配置，因为 Vue 文件不需要 TypeScript 项目配置
         extraFileExtensions: ['.vue'],
         ecmaVersion: 2020,
         sourceType: 'module'
       }
     },
     plugins: {
-      'vue': vuePlugin,           // 引入官方 vue 插件
-      'local-guard': localRulesPlugin // 引入我们的影子规则插件
+      'vue': vuePlugin,
+      'local-guard': localRulesPlugin
     },
     rules: {
-      // 1. 基础 Vue 规则 (推荐开启 recommended)
       ...vuePlugin.configs['flat/recommended'].rules,
-
-      // 2. 关闭官方的长度限制 (如果它有的话，避免冲突)
-      // 'vue/max-lines-per-block': 'off',
-
-      // 3. 🔥 开启我们的 "System Prompt" 影子规则
       'local-guard/vue-template-max-lines': 'error',
-      'local-guard/vue-script-max-lines': 'error', // <--- 🔥 新增：Script 长度限制
+      'local-guard/vue-script-max-lines': 'error',
       'local-guard/no-vue-style-block': 'error',
 
-      // 4. 其他架构约束 (依然生效)
       'no-restricted-syntax': [
         'error',
-        ...BASE_ARCHITECTURE_RESTRICTIONS,
-        // 🔥🔥 新增：禁止在 Vue 中定义 Type/Interface/Enum 🔥🔥
+        ...GLOBAL_LOGIC_RESTRICTIONS, // <-- Vue 组件禁止直接 fetch 或 import()
         ...STRICT_TYPE_RESTRICTIONS,
-
-        // Vue 文件中通常允许 import 值 (组件)，但可以加其他限制
         {
           selector: 'ImportDeclaration[source.value=/^\\.\\./]',
           message: '禁止从父级目录导入 (../)。必须通过 ./imports.ts 转发。'
-
         }
+      ]
+    }
+  },
+
+  // ========================================================================
+  // 13. 🔥🔥🔥 数据加载层 (*.loader.ts) - 允许 Dynamic Import 🔥🔥🔥
+  // ========================================================================
+  {
+    files: ['src/**/*.loader.ts', 'test/**/*.loader.ts'],
+    rules: {
+      'no-restricted-syntax': [
+        'error',
+        ...BASE_ARCHITECTURE_RESTRICTIONS, // 基础约束
+        ...STRICT_TYPE_RESTRICTIONS,
+        ...STRICT_CLASS_RESTRICTIONS,
+        ...NO_MAGIC_STRINGS,
+        
+        // 关键：这里只包含 "禁止网络" 规则，【不】包含 "禁止动态导入" 规则
+        RESTRICTION_NO_NETWORK 
+      ]
+    }
+  },
+
+  // ========================================================================
+  // 14. 🔥🔥🔥 网络请求层 (*.api.ts, *.fetcher.ts) - 允许 Fetch/Axios 🔥🔥🔥
+  // ========================================================================
+  {
+    files: ['src/**/*.api.ts', 'src/**/*.fetcher.ts', 'test/**/*.api.ts', 'test/**/*.fetcher.ts'],
+    rules: {
+      'no-restricted-syntax': [
+        'error',
+        ...BASE_ARCHITECTURE_RESTRICTIONS, // 基础约束
+        ...STRICT_TYPE_RESTRICTIONS,
+        ...STRICT_CLASS_RESTRICTIONS,
+        ...NO_MAGIC_STRINGS,
+
+        // 关键：这里只包含 "禁止动态导入" 规则，【不】包含 "禁止网络" 规则
+        RESTRICTION_NO_DYNAMIC_IMPORT
       ]
     }
   }
