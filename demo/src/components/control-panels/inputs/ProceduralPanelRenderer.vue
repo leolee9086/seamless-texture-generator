@@ -5,8 +5,7 @@
       @set-image="$emit('set-image', $event)" />
 
     <!-- Plain Weave Panel -->
-    <PlainWeavePanel v-if="proceduralType === 'Plain Weave'" :is-generating="isGenerating"
-      @set-image="$emit('set-image', $event)" />
+    <component :is="wrappedPlainWeavePanel" v-if="proceduralType === 'Plain Weave'" />
 
     <!-- Leather Panel -->
     <LeatherPanel v-if="proceduralType === 'Leather'" :is-generating="isGenerating"
@@ -35,6 +34,7 @@
 </template>
 
 <script setup lang="ts">
+import { computed } from 'vue'
 import {
   WoodPanel,
   PlainWeavePanel,
@@ -43,15 +43,33 @@ import {
   VelvetPanel,
   TuringPanel,
   GrayScottTuringPanel,
-  GrayscaleCompositorPanel
+  GrayscaleCompositorPanel,
+  createZeroBindingPlainWeavePanel,
+  isValidImageDataArg
 } from './imports'
 
-defineProps<{
+const props = defineProps<{
   proceduralType: string
   isGenerating: boolean
 }>()
 
-defineEmits<{
+const emit = defineEmits<{
   'set-image': [imageData: string]
 }>()
+
+// 创建零绑定包装后的 PlainWeavePanel 组件
+const wrappedPlainWeavePanel = computed(() => {
+  return createZeroBindingPlainWeavePanel({
+    props: {
+      isGenerating: props.isGenerating
+    },
+    emits: {
+      'set-image': (...args: unknown[]) => {
+        if (isValidImageDataArg(args)) {
+          emit('set-image', args[0])
+        }
+      }
+    }
+  })
+})
 </script>

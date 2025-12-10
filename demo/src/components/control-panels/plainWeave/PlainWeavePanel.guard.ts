@@ -128,3 +128,10 @@ export const isNumericPlainWeaveParamKey = (key: string): boolean => {
   
   return numericKeys.includes(key)
 }
+
+/**
+ * 检查是否为有效的图片数据参数
+ */
+export const isValidImageDataArg = (args: unknown[]): args is [string] => {
+  return args.length === 1 && typeof args[0] === 'string'
+}

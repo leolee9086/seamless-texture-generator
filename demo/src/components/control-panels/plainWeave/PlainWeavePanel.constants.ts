@@ -12,7 +12,14 @@ export const PLAIN_WEAVE_PANEL_EVENTS = {
 // 验证错误消息常量
 export const PLAIN_WEAVE_PANEL_VALIDATION_ERRORS = {
   IS_GENERATING_BOOLEAN: 'isGenerating must be a boolean',
-  INVALID_SLIDER_UPDATE: 'Parameter should not be updated via number slider'
+  INVALID_SLIDER_UPDATE: 'Parameter should not be updated via number slider',
+  INVALID_IMAGE_DATA: 'Invalid image data for set-image event',
+  NO_IMAGE_DATA: 'No image data provided for set-image event'
+} as const
+
+// 错误消息模板函数
+export const PLAIN_WEAVE_PANEL_ERROR_TEMPLATES = {
+  INVALID_IMAGE_DATA_WITH_REASON: (reason: string) => `Invalid image data for set-image event: ${reason}`
 } as const
 
 // 默认值常量
