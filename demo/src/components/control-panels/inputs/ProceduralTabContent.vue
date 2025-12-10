@@ -5,7 +5,7 @@
     </div>
 
     <!-- Texture Type Selector -->
-    <TextureTypeSelector 
+    <horizontalScrollButtons 
       :active-type="proceduralType" 
       :texture-types="textureTypes"
       @type-change="$emit('type-change', $event)" 
@@ -22,7 +22,7 @@
 
 <script setup lang="ts">
 import { computed } from 'vue'
-import TextureTypeSelector from './TextureTypeSelector.vue'
+import { horizontalScrollButtons } from './imports'
 import ProceduralPanelRenderer from './ProceduralPanelRenderer.vue'
 
 const props = defineProps<{

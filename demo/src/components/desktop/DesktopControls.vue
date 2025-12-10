@@ -93,7 +93,7 @@ import ContactPanel from '../control-panels/ContactPanel.vue'
 import { createZeroBindingInputsPanel } from '../control-panels/inputs/InputsPanel.wrapper.utils'
 import CropPanel from '../control-panels/CropPanel.vue'
 import LUTPanel from '../control-panels/lut/LUTPanel.vue'
-import HSLPanel from '../control-panels/HSLPanel.vue'
+import HSLPanel from '../control-panels/hsl/HSLPanel.vue'
 import ExposurePanel from '../control-panels/ExposurePanel.vue'  // 新增导入
 import DehazePanel from '../control-panels/dehaze/DehazePanel.vue'  // 新增导入
 import ClarityPanel from '../control-panels/clarity/ClarityPanel.vue'  // 新增导入

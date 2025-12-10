@@ -14,6 +14,9 @@ export { useProceduralTextureState } from '../imports'
 // Re-export utils
 export { horizontalScroll } from '../../../utils/scroll'
 
+// Re-export common components
+export { default as horizontalScrollButtons } from '../../common/horizontalScrollButtons.vue'
+
 // Re-export panel components
 export { default as WoodPanel } from '../WoodPanel.vue'
 export { default as PlainWeavePanel } from '../PlainWeavePanel.vue'

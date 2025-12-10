@@ -35,11 +35,11 @@
 <script setup lang="ts">
 import { ref, computed, watch } from 'vue'
 import { Slider } from '@leolee9086/slider-component'
-import HSLLayersPanel from './hsl/HSLLayersPanel.vue'
-import type { HSLAdjustmentLayer } from '../../adjustments/hsl/hslAdjustStep'
-import { createUpdateDataEvent } from '../../types/controlEvents'
-import type { ControlEvent } from '../../types/controlEvents'
-import { getGlobalSliderItems } from './hsl/params'
+import HSLLayersPanel from './HSLLayersPanel.vue'
+import type { HSLAdjustmentLayer } from '../../../adjustments/hsl/hslAdjustStep'
+import { createUpdateDataEvent } from '../../../types/controlEvents'
+import type { ControlEvent } from '../../../types/controlEvents'
+import { getGlobalSliderItems } from './params'
 const props = defineProps<{
     isMobile?: boolean
     originalImage: string | null
