@@ -1,7 +1,7 @@
 // UI Components
 export { default as CollapsiblePanel } from '../common/CollapsiblePanel.vue'
 export { default as SliderParameterGroup } from '../common/SliderParameterGroup.vue'
-export { default as PresetSelector } from '../common/PresetSelector.vue'
+export { default as PresetSelector } from '../common/presetButtons/PresetSelector.vue'
 export { default as GenerateButton } from '../common/GenerateButton.vue'
 
 // External Components
