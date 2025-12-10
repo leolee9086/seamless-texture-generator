@@ -74,3 +74,13 @@ body {
 .animate-spin {
     animation: spin 1s linear infinite;
 }
+
+/* Scrollbar hide utility */
+.scrollbar-hide::-webkit-scrollbar {
+    display: none;
+}
+
+.scrollbar-hide {
+    -ms-overflow-style: none;
+    scrollbar-width: none;
+}
