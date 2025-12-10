@@ -8,7 +8,7 @@
 </template>
 
 <script setup lang="ts">
-import type { GenerateButtonProps } from './GenerateButton.types'
+import type { GenerateButtonProps } from './types'
 
 const props = withDefaults(defineProps<GenerateButtonProps>(), {
   buttonText: 'Generate',

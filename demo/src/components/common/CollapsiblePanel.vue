@@ -15,13 +15,9 @@
 
 <script setup lang="ts">
 import { ref, watch } from 'vue'
+import type { CollapsiblePanelProps } from './types'
 
-interface Props {
-  title: string
-  modelValue?: boolean
-}
-
-const props = withDefaults(defineProps<Props>(), {
+const props = withDefaults(defineProps<CollapsiblePanelProps>(), {
   modelValue: true
 })
 

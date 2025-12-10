@@ -12,7 +12,7 @@
 </template>
 
 <script setup lang="ts">
-import type { PresetSelectorProps, PresetSelectorEmits, PresetData } from './PresetSelector.types'
+import type { PresetSelectorProps, PresetSelectorEmits, PresetData } from './imports'
 
 defineProps<PresetSelectorProps>()
 
