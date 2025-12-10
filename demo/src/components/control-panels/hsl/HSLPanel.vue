@@ -204,7 +204,3 @@ const handleControlEvent = (event: ControlEvent) => {
 }
 </script>
 
-<style scoped>
-/* Tailwind classes handled in template */
-</style>
-

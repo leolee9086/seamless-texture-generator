@@ -152,6 +152,3 @@ const handleLayerSliderUpdate = (layerId: string, data: { id: string; value: num
 }
 </script>
 
-<style scoped>
-/* Tailwind classes handled in template */
-</style>
