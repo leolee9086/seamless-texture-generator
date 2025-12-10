@@ -69,7 +69,7 @@ const {
 } = useTextureGenerator({
   enableCamera: true,
   initialMaxResolution: 4096,
-  initialBorderSize: 20,
+  initialBorderSize: 0,
 })
 </script>
 

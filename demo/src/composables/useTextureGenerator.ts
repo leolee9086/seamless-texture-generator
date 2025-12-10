@@ -41,7 +41,7 @@ export function useTextureGenerator(options: UseTextureGeneratorOptions = {}) {
   const {
     enableCamera = false,
     initialMaxResolution = 4096,
-    initialBorderSize = 20
+    initialBorderSize = 0
   } = options
 
   // 响应式数据
