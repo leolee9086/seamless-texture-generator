@@ -1,7 +1,6 @@
-import { PipelineData, baseOptions } from '../../types/PipelineData.type'
-import { NodeContext, Node } from './types'
-import { applyDehazeAdjustment, DEFAULT_DEHAZE_PARAMS } from '../../adjustments/dehaze/dehazeAdjustment'
-import { gpuBufferToImageData } from '../../utils/webgpu/convert/gpuBufferToImageData'
+import type { baseOptions } from './imports'
+import { applyDehazeAdjustment, DEFAULT_DEHAZE_PARAMS, gpuBufferToImageData } from './imports'
+import type { NodeContext, Node } from './types'
 
 /**
  * 去雾调整中间件
@@ -36,7 +35,9 @@ export const dehazeMiddleware: Node = {
       // 销毁旧的 buffer
       if (pipelineData.buffer instanceof GPUBuffer) {
         pipelineData.buffer.destroy()
-      } else if (pipelineData.buffer instanceof GPUTexture) {
+      }
+      
+      if (pipelineData.buffer instanceof GPUTexture) {
         pipelineData.buffer.destroy()
       }
       
