@@ -38,7 +38,16 @@ export default defineConfig(() => {
         'Access-Control-Allow-Origin': '*',
         'Access-Control-Allow-Methods': 'GET, POST, PUT, DELETE, OPTIONS',
         'Access-Control-Allow-Headers': 'Content-Type, Authorization'
+      },
+        // 代理配置
+    proxy: {
+      '/api/proxy': {
+        target: 'https://api-inference.modelscope.cn',
+        changeOrigin: true,
+        secure: false,
+        rewrite: (path: string) => path.replace(/^\/api\/proxy/, '')
       }
+    }
     },
     build: {
       outDir: 'dist',
@@ -46,6 +55,7 @@ export default defineConfig(() => {
     },
     optimizeDeps: {
       include: ['@leolee9086/split-viewer']
-    }
+    },
+  
   }
 })

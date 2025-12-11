@@ -2,6 +2,15 @@
  * InputsPanel 相关常量定义
  */
 
+// 选项卡常量
+export const INPUTS_PANEL_TABS = {
+  UPLOAD: 'Upload',
+  PROCEDURAL: 'Procedural',
+  TEXT_TO_IMAGE: 'Text-to-Image'
+} as const
+
+export type InputsPanelTab = typeof INPUTS_PANEL_TABS[keyof typeof INPUTS_PANEL_TABS]
+
 // 事件名称常量
 export const INPUTS_PANEL_EVENTS = {
   LOAD_SAMPLE: 'load-sample',

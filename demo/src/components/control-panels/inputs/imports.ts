@@ -28,3 +28,14 @@ export { default as VelvetPanel } from '../VelvetPanel.vue'
 export { default as TuringPanel } from '../MultiscaleTuringPanel.vue'
 export { default as GrayScottTuringPanel } from '../GrayScottTuringPanel.vue'
 export { default as GrayscaleCompositorPanel } from '../GrayscaleCompositorPanel.vue'
+
+// Re-export ModelScope API
+export { submitGenerationTask, pollTaskUntilComplete } from '../../../api/modelscope.api'
+export type { TaskStatusResponse } from '../../../api/types'
+
+// Re-export image fetcher
+export { fetchImageAsBase64 } from '../../../api/imageFetcher.api'
+
+// Re-export Vue reactivity APIs
+export { ref, computed } from 'vue'
+export type { Ref } from 'vue'

@@ -84,3 +84,28 @@ body {
     -ms-overflow-style: none;
     scrollbar-width: none;
 }
+
+/* Glass input */
+.glass-input {
+    background: rgba(255, 255, 255, 0.05);
+    border: 1px solid rgba(255, 255, 255, 0.1);
+    color: white;
+    outline: none;
+    transition: border-color 0.2s;
+}
+.glass-input:focus {
+    border-color: rgba(59, 130, 246, 0.5);
+}
+
+/* Glass button */
+.glass-btn {
+    background: rgba(255, 255, 255, 0.05);
+    border: 1px solid rgba(255, 255, 255, 0.1);
+    color: white;
+    outline: none;
+    transition: all 0.2s;
+}
+.glass-btn:hover:not(:disabled) {
+    background: rgba(255, 255, 255, 0.1);
+    border-color: rgba(255, 255, 255, 0.2);
+}

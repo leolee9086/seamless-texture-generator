@@ -4,7 +4,7 @@ import { defaultWoodParams, type WoodParams } from '../proceduralTexturing/wood/
 // 定义所有程序化纹理类型的参数接口
 export interface ProceduralTextureState {
   // 通用状态
-  activeTab: 'Upload' | 'Procedural'
+  activeTab: 'Upload' | 'Procedural' | 'Text-to-Image'
   proceduralType: string
   
   // 木纹参数
@@ -18,6 +18,15 @@ export interface ProceduralTextureState {
   turingParams?: any
   grayScottParams?: any
   compositorParams?: any
+  
+  // 文本生成图像参数
+  textToImageParams?: {
+    prompt: string
+    size: string
+    n: number
+    numInferenceSteps: number
+    model: string
+  }
   
   // UI 状态
   uiState: {
@@ -35,7 +44,8 @@ export interface ProceduralTextureState {
     velvetPanel?: any,
     turingPanel?: any,
     grayScottPanel?: any,
-    compositorPanel?: any
+    compositorPanel?: any,
+    textToImagePanel?: any
   }
 }
 
