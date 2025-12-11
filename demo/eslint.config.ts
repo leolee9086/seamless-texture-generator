@@ -79,7 +79,7 @@ const STRICT_TYPE_RESTRICTIONS = [
 const STRICT_IMPORT_RESTRICTIONS = [
   {
     selector: 'ImportDeclaration[source.value=/^\\.\\./]',
-    message: '禁止从父级目录导入 (../)。必须通过 ./imports.ts 转发。'
+    message: '禁止从父级目录导入 (../)。必须通过本目录同层级的 ./imports.ts 转发。'
   },
   {
     selector: 'ExportNamedDeclaration[source.value=/^\\.\\./]',
@@ -91,7 +91,7 @@ const STRICT_IMPORT_RESTRICTIONS = [
   },
   {
     selector: 'ImportDeclaration[source.value=/^[^.]/]',
-    message: '禁止直接导入第三方包或别名。必须通过 ./imports.ts 转发。'
+    message: '禁止直接导入第三方包或别名。必须通过本目录同层级 ./imports.ts 转发。'
   },
   {
     selector: 'ExportNamedDeclaration[source.value=/^[^.]/]',
