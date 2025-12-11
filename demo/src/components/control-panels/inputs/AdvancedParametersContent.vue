@@ -29,6 +29,7 @@
       >
         <option value="Tongyi-MAI/Z-Image-Turbo">Z-Image-Turbo (推荐)</option>
         <option value="Tongyi-MAI/Z-Image">Z-Image</option>
+        <option value="Qwen/Qwen-Image">Qwen-Image</option>
       </select>
     </div>
     <!-- Proxy URL -->

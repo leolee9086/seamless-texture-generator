@@ -18,6 +18,7 @@ export const TASK_TYPE_IMAGE_GENERATION = 'image_generation'
 
 // 模型 ID
 export const MODEL_Z_IMAGE_TURBO = 'Tongyi-MAI/Z-Image-Turbo'
+export const MODEL_QWEN_IMAGE = 'Qwen/Qwen-Image'
 
 // 默认参数
 export const DEFAULT_SIZE = '1024×1024'

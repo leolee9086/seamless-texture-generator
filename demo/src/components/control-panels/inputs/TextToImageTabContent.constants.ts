@@ -37,6 +37,13 @@ export const DEFAULTS = {
   SHOW_ADVANCED: false,
 } as const
 
+// 可用模型列表
+export const AVAILABLE_MODELS = {
+  'Tongyi-MAI/Z-Image-Turbo': 'Z-Image-Turbo (推荐)',
+  'Tongyi-MAI/Z-Image': 'Z-Image',
+  'Qwen/Qwen-Image': 'Qwen-Image',
+} as const
+
 // API 验证前缀
 export const API_KEY_PREFIX = 'ms-'
 
