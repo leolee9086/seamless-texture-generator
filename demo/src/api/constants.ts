@@ -2,7 +2,6 @@
  * API 相关常量
  */
 
-export const PROXY_URL = import.meta.env.VITE_PROXY_URL || 'https://api-inference.modelscope.cn'
 export const MODEL_SCOPE_BASE_URL = 'https://api-inference.modelscope.cn'
 
 // 请求头常量

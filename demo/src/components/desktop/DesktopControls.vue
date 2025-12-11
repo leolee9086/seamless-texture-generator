@@ -156,7 +156,7 @@ const {
 const wrappedInputsPanel = createZeroBindingInputsPanel({
   props: {
     isProcessing:props.isProcessing,
-    originalImage:props.isProcessing,
+    originalImage:props.originalImage,
     inputSliderItems:props.inputSliderItems
   },
   emits: {

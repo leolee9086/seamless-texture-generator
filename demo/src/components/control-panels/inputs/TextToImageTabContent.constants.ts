@@ -53,3 +53,14 @@ export const ERROR_TEMPLATES = {
   TASK_SUCCEEDED_NO_IMAGE: (taskId: string) => `任务 ${taskId} 成功但未找到图像 URL`,
   TASK_FAILED: (taskId: string, message: string) => `任务 ${taskId} 失败: ${message}`,
 } as const
+
+// 图片缓存相关常量
+export const IMAGE_CACHE = {
+  PREFIX: 'cached-image-',
+  URL_PREFIX: 'cached-image-url:',
+  URL_LIST_KEY: 'cached-image-url-list',
+  MAX_COUNT: 10,
+  ERROR_MESSAGES: {
+    CACHE_FAILED: 'Failed to cache image:',
+  }
+} as const

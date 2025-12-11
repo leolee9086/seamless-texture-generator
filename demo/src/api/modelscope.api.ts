@@ -13,7 +13,7 @@ import type {
 } from './types'
 import { robustFetch, createAuthHeaders } from './fetchWrapper.api'
 import {
-  PROXY_URL,
+  MODEL_SCOPE_BASE_URL,
   HEADER_ASYNC_MODE,
   HEADER_TASK_TYPE,
   TASK_TYPE_IMAGE_GENERATION,
@@ -24,6 +24,7 @@ import {
   ERROR_POLL_TIMEOUT,
 } from './constants'
 import {
+  buildProxyUrl,
   IMAGE_GENERATION_URL,
   TASK_STATUS_URL,
 } from './templates'
@@ -34,10 +35,11 @@ import {
 export async function submitGenerationTask(
   params: SubmitGenerationTaskParams
 ): Promise<string[]> {
-  const { apiKey, prompt, params: generationParams = {}, proxyUrl } = params
-  const baseUrl = proxyUrl || PROXY_URL
-  const url = IMAGE_GENERATION_URL(baseUrl, ENDPOINT_IMAGE_GENERATIONS)
-  
+  const { apiKey, prompt, params: generationParams = {} ,proxyUrl} = params
+      const proxiedUrl = proxyUrl?buildProxyUrl(MODEL_SCOPE_BASE_URL,proxyUrl):MODEL_SCOPE_BASE_URL
+
+  const url = IMAGE_GENERATION_URL(proxiedUrl, ENDPOINT_IMAGE_GENERATIONS)
+
   // 获取任务数量，默认为 1
   const n = generationParams.n ?? DEFAULT_N
   
@@ -95,9 +97,10 @@ export async function getTaskStatus(
   params: GetTaskStatusParams
 ): Promise<TaskStatusResponse> {
   const { apiKey, taskId, proxyUrl } = params
-  const baseUrl = proxyUrl || PROXY_URL
-  const url = TASK_STATUS_URL(baseUrl, ENDPOINT_TASK_STATUS, taskId)
-  const response = await robustFetch<TaskStatusResponse>(url, {
+  
+  const url = TASK_STATUS_URL(    MODEL_SCOPE_BASE_URL, ENDPOINT_TASK_STATUS, taskId)
+  const proxiedUrl = proxyUrl?buildProxyUrl(url,proxyUrl):url
+  const response = await robustFetch<TaskStatusResponse>(proxiedUrl, {
     headers: {
       ...createAuthHeaders(apiKey),
       [HEADER_TASK_TYPE]: TASK_TYPE_IMAGE_GENERATION,

@@ -9,9 +9,11 @@ import {
   VALIDATION_ERRORS,
   STATUS_MESSAGES,
   ERROR_MESSAGES,
-  DEFAULTS
+  DEFAULTS,
 } from './TextToImageTabContent.constants'
+import { cacheImage } from './TextToImageTabContent.cache'
 import type { UseTextToImageReturn, TextToImageParams } from './TextToImageTabContent.types'
+import { buildProxyUrl } from '@/api/templates'
 
 /**
  * 创建生成函数
@@ -52,7 +54,7 @@ function createGenerate(
       state.status.value = STATUS_MESSAGES.DOWNLOADING
 
       // 更新生成的图像列表
-      if (result.imageUrls) {
+      if (result.imageUrls && result.imageUrls.length > 0) {
         state.generatedImages.value = result.imageUrls
       }
 
@@ -61,9 +63,13 @@ function createGenerate(
       if (!latestImageUrl) {
         throw new Error(ERROR_MESSAGES.NO_IMAGE_URL)
       }
-
-      const base64 = await fetchImageAsBase64(latestImageUrl)
-      onImageGenerated?.(base64)
+      const proxyUrl = params.proxyUrl
+      const proxiedUrl =proxyUrl?buildProxyUrl(latestImageUrl,proxyUrl):latestImageUrl
+      const base64 = await fetchImageAsBase64(proxiedUrl)
+      onImageGenerated&& onImageGenerated(base64)
+      
+      // 缓存图片到本地存储，防止 URL 失效
+      await cacheImage(base64, proxiedUrl)
 
       state.status.value = STATUS_MESSAGES.LOADED
     } catch (err: unknown) {

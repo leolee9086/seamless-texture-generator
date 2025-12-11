@@ -1,49 +1,27 @@
 <template>
   <div class="flex flex-col gap-4">
     <!-- API Key Input -->
-    <ApiKeyInput
-      v-model="apiKey"
-      :is-mobile="isMobile"
-    />
+    <ApiKeyInput v-model="apiKey" :is-mobile="isMobile" />
 
     <!-- Prompt Input -->
     <PromptInput v-model="prompt" />
 
     <!-- Parameters -->
-    <ParameterGrid
-      v-model:size="size"
-      v-model:n="n"
-    />
+    <ParameterGrid v-model:size="size" v-model:n="n" />
 
     <!-- Advanced Parameters (Collapsible) -->
-    <AdvancedParameters
-      v-model:num-inference-steps="numInferenceSteps"
-      v-model:model="model"
-      v-model:proxy-url="proxyUrl"
-      :show-advanced="showAdvanced"
-      @toggle="showAdvanced = !showAdvanced"
-    />
+    <AdvancedParameters v-model:num-inference-steps="numInferenceSteps" v-model:model="model"
+      v-model:proxy-url="proxyUrl" :show-advanced="showAdvanced" @toggle="showAdvanced = !showAdvanced" />
 
     <!-- Generate Button -->
-    <GenerateButton
-      :is-generating="isGenerating"
-      :disabled="isGenerating || !apiKeyValid || !prompt.trim()"
-      :api-key-valid="apiKeyValid"
-      :prompt-valid="!!prompt.trim()"
-      @generate="generate"
-    />
+    <GenerateButton :is-generating="isGenerating" :disabled="isGenerating || !apiKeyValid || !prompt.trim()"
+      :api-key-valid="apiKeyValid" :prompt-valid="!!prompt.trim()" @generate="generate" />
 
     <!-- Status & Error -->
-    <StatusDisplay
-      :error="error"
-      :status="status"
-    />
+    <StatusDisplay :error="error" :status="status" />
 
     <!-- Generated Images Gallery -->
-    <ImageGallery
-      :image-urls="generatedImages"
-      :on-image-click="handleImageClick"
-    />
+    <ImageGallery :image-urls="proxiedUrls" :on-image-click="handleImageClick" />
   </div>
 </template>
 
@@ -57,7 +35,8 @@ import GenerateButton from './GenerateButton.vue'
 import StatusDisplay from './StatusDisplay.vue'
 import ImageGallery from './ImageGallery.vue'
 import { fetchImageAsBase64 } from './imports'
-
+import { buildProxyUrl } from '@/api/templates'
+import { computed } from './imports'
 const props = defineProps<{
   isMobile?: boolean
 }>()
@@ -84,13 +63,24 @@ const {
 } = useTextToImage((base64) => {
   emit('set-image', base64)
 })
+const proxiedUrls = computed(() => (
+  generatedImages.value.map(
+    item => {
+      const proxiedUrl = proxyUrl.value ? buildProxyUrl(item, proxyUrl.value) : item
+
+      return proxiedUrl
+    }
+  )
+))
+
 
 /**
  * 处理图像点击事件
  */
 const handleImageClick = async (imageUrl: string): Promise<void> => {
   try {
-    const base64 = await fetchImageAsBase64(imageUrl)
+    const proxiedUrl = buildProxyUrl(imageUrl, proxyUrl.value)
+    const base64 = await fetchImageAsBase64(proxiedUrl)
     emit('set-image', base64)
   } catch (error) {
     console.error('Failed to load image:', error)
