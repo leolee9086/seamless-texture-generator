@@ -32,7 +32,7 @@ async function pollImageUrl(url: string): Promise<Response> {
  */
 export async function fetchImageAsBase64(url: string): Promise<string> {
   // 首先检查缓存中是否已有该图片
-  const cachedImage = getCachedImageByUrl(url)
+  const cachedImage = await getCachedImageByUrl(url)
   
   if (cachedImage) {
     console.log(`[fetchImageAsBase64] 缓存命中 URL: ${url}`)
@@ -59,7 +59,7 @@ export async function fetchImageAsBase64(url: string): Promise<string> {
   // 缓存新获取的图片，并关联 URL
   console.log(`[fetchImageAsBase64] 获取成功，开始缓存`)
   await cacheImage(base64, url)
-  const cached = getCachedImageByUrl(url)
+  const cached = await getCachedImageByUrl(url)
   if (!cached) {
     throw new Error('图片没有正确缓存')
   }

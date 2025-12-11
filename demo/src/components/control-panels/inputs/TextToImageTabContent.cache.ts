@@ -3,85 +3,111 @@
  */
 
 import { IMAGE_CACHE } from './TextToImageTabContent.constants'
-import { isNonNullString } from './TextToImageTabContent.cache.guard'
+import { isNonNullString, isStringArray } from './TextToImageTabContent.cache.guard'
+import type { 
+  CacheImageFunction,
+  GetCachedImagesFunction,
+  GetCachedImageByUrlFunction,
+  ClearAllCacheFunction
+} from './TextToImageTabContent.cache.types'
+import * as indexedDBFunctions from './TextToImageTabContent.indexedDB.ctx'
 
 /**
- * 缓存图片到本地存储
+ * 缓存图片到 IndexedDB
  */
-export async function cacheImage(base64: string, url: string): Promise<void> {
+export const cacheImage: CacheImageFunction = async (base64: string, url: string): Promise<void> => {
   if (!url) {
     return
   }
 
   try {
-    const urlKey = IMAGE_CACHE.URL_PREFIX + url
-    localStorage.setItem(urlKey, base64)
-    
-    // 更新 URL 列表
-    const urlList = getUrlList()
-    if (!urlList.includes(url)) {
-      urlList.push(url)
-      localStorage.setItem(IMAGE_CACHE.URL_LIST_KEY, JSON.stringify(urlList))
-    }
-    
-    await cleanupOldCache()
+    await indexedDBFunctions.cacheImage(base64, url)
   } catch (error) {
     console.warn(IMAGE_CACHE.ERROR_MESSAGES.CACHE_FAILED, error)
   }
 }
 
 /**
- * 清理旧的缓存
- */
-async function cleanupOldCache(): Promise<void> {
-  const urlList = getUrlList()
-  
-  if (urlList.length <= IMAGE_CACHE.MAX_COUNT) {
-    return
-  }
-  
-  // 移除超出限制的最旧的 URL
-  const urlsToRemove = urlList.slice(0, urlList.length - IMAGE_CACHE.MAX_COUNT)
-  const updatedUrlList = urlList.slice(urlList.length - IMAGE_CACHE.MAX_COUNT)
-  
-  for (const url of urlsToRemove) {
-    const urlKey = IMAGE_CACHE.URL_PREFIX + url
-    localStorage.removeItem(urlKey)
-  }
-  
-  localStorage.setItem(IMAGE_CACHE.URL_LIST_KEY, JSON.stringify(updatedUrlList))
-}
-
-/**
  * 获取所有缓存的图片
  */
-export function getCachedImages(): string[] {
-  const urlList = getUrlList()
-  
-  return urlList
-    .map(url => {
-      const urlKey = IMAGE_CACHE.URL_PREFIX + url
-      return localStorage.getItem(urlKey)
-    })
-    .filter(isNonNullString)
+export const getCachedImages: GetCachedImagesFunction = async (): Promise<string[]> => {
+  try {
+    const images = await indexedDBFunctions.getCachedImages()
+    return images.filter(isNonNullString)
+  } catch (error) {
+    console.warn('Failed to get cached images:', error)
+    return []
+  }
 }
 
 /**
  * 根据 URL 获取缓存的图片
  */
-export function getCachedImageByUrl(url: string): string | null {
-  const urlKey = IMAGE_CACHE.URL_PREFIX + url
-  return localStorage.getItem(urlKey)
+export const getCachedImageByUrl: GetCachedImageByUrlFunction = async (url: string): Promise<string | null> => {
+  if (!url) {
+    return null
+  }
+
+  try {
+    return await indexedDBFunctions.getCachedImageByUrl(url)
+  } catch (error) {
+    console.warn('Failed to get cached image by URL:', error)
+    return null
+  }
 }
 
 /**
- * 获取 URL 列表
+ * 清空所有缓存
  */
-function getUrlList(): string[] {
+export const clearAllCache: ClearAllCacheFunction = async (): Promise<void> => {
   try {
-    const listData = localStorage.getItem(IMAGE_CACHE.URL_LIST_KEY)
-    return listData ? JSON.parse(listData) : []
-  } catch {
-    return []
+    await indexedDBFunctions.clearAllCache()
+  } catch (error) {
+    console.warn('Failed to clear all cache:', error)
+  }
+}
+
+/**
+ * 迁移 localStorage 缓存到 IndexedDB
+ * 这个函数用于从旧的 localStorage 迁移数据到新的 IndexedDB
+ */
+export const migrateFromLocalStorage = async (): Promise<void> => {
+  try {
+    // 检查是否还有 localStorage 中的旧数据
+    const urlListKey = IMAGE_CACHE.URL_LIST_KEY
+    const listData = localStorage.getItem(urlListKey)
+    
+    if (!listData) {
+      return // 没有旧数据需要迁移
+    }
+
+    const parsedData = JSON.parse(listData)
+    
+    if (!isStringArray(parsedData)) {
+      console.warn('Invalid URL list data in localStorage, skipping migration')
+      return
+    }
+
+    const urlList = parsedData
+    
+    for (const url of urlList) {
+      const urlKey = IMAGE_CACHE.URL_PREFIX + url
+      const base64 = localStorage.getItem(urlKey)
+      
+      if (base64) {
+        // 迁移到 IndexedDB
+        await indexedDBFunctions.cacheImage(base64, url)
+        
+        // 清除 localStorage 中的数据
+        localStorage.removeItem(urlKey)
+      }
+    }
+    
+    // 清除 localStorage 中的 URL 列表
+    localStorage.removeItem(urlListKey)
+    
+    console.warn('Successfully migrated cache from localStorage to IndexedDB')
+  } catch (error) {
+    console.warn('Failed to migrate cache from localStorage:', error)
   }
 }

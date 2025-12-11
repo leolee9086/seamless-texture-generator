@@ -64,3 +64,27 @@ export const IMAGE_CACHE = {
     CACHE_FAILED: 'Failed to cache image:',
   }
 } as const
+
+// IndexedDB 相关常量
+export const INDEXED_DB = {
+  DB_NAME: 'ImageCacheDB',
+  DB_VERSION: 1,
+  STORE_NAME: 'imageCache',
+  URL_LIST_STORE_NAME: 'urlList',
+  URL_LIST_ID: 'main',
+  KEY_PATH: {
+    URL: 'url',
+    ID: 'id',
+  },
+  TRANSACTION_MODE: {
+    READONLY: 'readonly',
+    READWRITE: 'readwrite',
+  },
+  ERROR_MESSAGES: {
+    FAILED_TO_OPEN: 'Failed to open IndexedDB',
+    FAILED_TO_GET_IMAGES: 'Failed to get cached images:',
+    FAILED_TO_GET_IMAGE: 'Failed to get cached image by URL:',
+    FAILED_TO_GET_URL_LIST: 'Failed to get URL list:',
+    FAILED_TO_CLEAR_CACHE: 'Failed to clear all cache:',
+  }
+} as const
