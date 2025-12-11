@@ -36,6 +36,9 @@ export type { TaskStatusResponse } from '../../../api/types'
 // Re-export image fetcher
 export { fetchImageAsBase64 } from '../../../api/imageFetcher.api'
 
+// Re-export API templates
+export { buildProxyUrl } from '../../../api/templates'
+
 // Re-export Vue reactivity APIs
 export { ref, computed } from 'vue'
-export type { Ref } from 'vue'
+export type { Ref, ComputedRef } from 'vue'

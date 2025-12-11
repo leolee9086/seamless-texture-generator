@@ -4,7 +4,7 @@
 
 import { useTextToImageState } from './TextToImageTabContent.state'
 import { generateTextToImage } from './TextToImageTabContent.utils'
-import { fetchImageAsBase64 } from './imports'
+import { fetchImageAsBase64, buildProxyUrl } from './imports'
 import {
   VALIDATION_ERRORS,
   STATUS_MESSAGES,
@@ -13,7 +13,6 @@ import {
 } from './TextToImageTabContent.constants'
 import { cacheImage } from './TextToImageTabContent.cache'
 import type { UseTextToImageReturn, TextToImageParams } from './TextToImageTabContent.types'
-import { buildProxyUrl } from '@/api/templates'
 
 /**
  * 创建生成函数
