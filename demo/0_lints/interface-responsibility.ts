@@ -122,6 +122,48 @@ export const 接口职责分离插件 = {
 `
                             });
                         }
+                    },
+
+                    TSTypeAliasDeclaration(node: any) {
+                        const 文件名 = context.getFilename();
+                        // 允许 .model.types.ts 包含混合类型
+                        if (文件名.endsWith('.model.types.ts')) return;
+
+                        const 类型名 = node.id?.name || '匿名类型';
+                        const typeAnnotation = node.typeAnnotation;
+
+                        // 只检查对象字面量类型: type Foo = { ... }
+                        if (typeAnnotation.type !== 'TSTypeLiteral') return;
+
+                        const 成员列表 = typeAnnotation.members || [];
+                        if (成员列表.length === 0) return;
+
+                        const { 属性列表, 方法列表 } = 分析接口成员(成员列表);
+
+                        // 只有同时存在属性和方法才报错
+                        if (属性列表.length > 0 && 方法列表.length > 0) {
+                            const 属性名称 = 属性列表.slice(0, 3).map(获取成员名称).join(', ');
+                            const 方法名称 = 方法列表.slice(0, 3).map(获取成员名称).join(', ');
+
+                            context.report({
+                                node,
+                                message: `
+类型职责分离违规：类型 "${类型名}" 同时包含属性和方法。
+------------------------------------------------
+❌ 违规原因: 项目架构 架构要求数据与行为分离。
+
+📦 发现的数据属性 (${属性列表.length}个): ${属性名称}${属性列表.length > 3 ? '...' : ''}
+🔌 发现的行为方法 (${方法列表.length}个): ${方法名称}${方法列表.length > 3 ? '...' : ''}
+
+修正方案:
+1. 若为纯数据结构 → 移除所有方法，只保留属性
+2. 若为行为契约 → 移除所有属性，只保留方法
+3. 若确需混合 (Rich Model) → 请将文件重命名为 *.model.types.ts
+   或者改用 class 实现 (*.class.ts)
+------------------------------------------------
+`
+                            });
+                        }
                     }
                 };
             }
