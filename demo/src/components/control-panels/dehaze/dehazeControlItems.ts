@@ -1,5 +1,5 @@
-import { DehazeParams, computed, Ref, ComputedRef, SliderItem } from './imports'
-import { isValidDehazeParamKey, isNumericDehazeParamKey, isNumber } from './dehazeParams.guard'
+import { DehazeParams, computed, Ref, ComputedRef, SliderItem, isNumber } from './imports'
+import { isValidDehazeParamKey, isNumericDehazeParamKey } from './dehazeParams.guard'
 import { INVALID_PARAM_KEY_WARNING_TEMPLATE } from './dehazePanel.templates'
 
 export function createSliderItemsComputed(

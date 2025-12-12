@@ -10,8 +10,12 @@ import {
   clearAllCaches
 } from '@leolee9086/image-dehazing'
 
+// 转发通用守卫函数
+import { isNumber } from '../../utils/common.guard'
+
 export {
   dehazeImageWebGPUSimple,
   preInitializeDevice,
-  clearAllCaches
+  clearAllCaches,
+  isNumber
 }

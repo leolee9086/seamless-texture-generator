@@ -21,6 +21,9 @@ import { validateDehazeParams } from '../../../adjustments/dehaze/validateDehaze
 import { DEHAZE_PRESETS } from '../../../adjustments/dehaze/DEHAZE_PRESETS'
 import { DEFAULT_DEHAZE_PARAMS, getDehazePreset } from '../../../adjustments/dehaze'
 
+// Re-export common guards
+import { isNumber } from '../../../utils/common.guard'
+
 export type { ControlEvent, DehazeParams, DehazePreset, Ref, ComputedRef, SliderItem }
 export {
   createUpdateDataEvent,
@@ -32,5 +35,6 @@ export {
   validateDehazeParams,
   DEHAZE_PRESETS,
   DEFAULT_DEHAZE_PARAMS,
-  getDehazePreset
+  getDehazePreset,
+  isNumber
 }

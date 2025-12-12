@@ -1,13 +1,5 @@
 import type { DehazeParams } from './types';
-
-/**
- * 检查参数是否为数字类型
- * @param value 参数值
- * @returns 是否为数字类型
- */
-export function isNumber(value: unknown): value is number {
-  return typeof value === 'number' && !isNaN(value);
-}
+import { isNumber } from './imports';
 
 /**
  * 检查参数对象中是否存在指定参数

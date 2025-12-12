@@ -13,10 +13,11 @@ import {
 export function useSamplingPoints(imageObj: { value: HTMLImageElement | null }) {
     // 采样点状态
     const points = ref<Point[]>([]) // TopLeft, TopRight, BottomRight, BottomLeft
-    
+
     // 编辑器状态
     const ratios = [
-        { label: 'Free', value: 0 },
+        { label: 'Perspective', value: 0 },
+        { label: 'Free', value: -2 },
         { label: 'Original', value: -1 },
         { label: '1:1', value: 1 },
         { label: '4:3', value: 4 / 3 },
@@ -55,7 +56,7 @@ export function useSamplingPoints(imageObj: { value: HTMLImageElement | null }) 
             if (imageObj.value) {
                 snapToRatio(imageObj.value.width / imageObj.value.height)
             }
-        } else if (r !== 0) {
+        } else if (r !== 0 && r !== -2) {
             snapToRatio(r)
         }
     }
@@ -97,7 +98,7 @@ export function useSamplingPoints(imageObj: { value: HTMLImageElement | null }) 
             return
         }
 
-        // 约束模式（矩形 + 比例）
+        // 约束模式（矩形 + 比例）或 自由矩形模式
         const oppositeIndex = (index + 2) % 4
         const oppositePoint = points.value[oppositeIndex]
 
@@ -110,7 +111,38 @@ export function useSamplingPoints(imageObj: { value: HTMLImageElement | null }) 
         let w = Math.abs(rotNewPos.x - rotOpposite.x)
         let h = Math.abs(rotNewPos.y - rotOpposite.y)
 
-        // 强制比例
+        // 如果是Free模式 (-2)，直接使用 rotNewPos 作为 alignedNewPos (但在轴对齐之后)
+        if (currentRatio.value === -2) {
+            // 保持矩形约束，即对齐轴
+            // 构建4个点的对齐坐标
+            const pCurrent = rotNewPos
+            const pOpposite = rotOpposite
+
+            let pNext, pPrev
+
+            if (index % 2 === 0) {
+                // 0 or 2
+                // Next (1 or 3) takes Opposite.x, Current.y
+                pNext = { x: pOpposite.x, y: pCurrent.y }
+                pPrev = { x: pCurrent.x, y: pOpposite.y }
+            } else {
+                // 1 or 3
+                // Next (2 or 0) takes Current.x, Opposite.y
+                pNext = { x: pCurrent.x, y: pOpposite.y }
+                pPrev = { x: pOpposite.x, y: pCurrent.y }
+            }
+
+            const newPoints = [...points.value]
+            newPoints[index] = rotatePointAroundOrigin(pCurrent, -rad)
+            newPoints[(index + 1) % 4] = rotatePointAroundOrigin(pNext, -rad)
+            newPoints[oppositeIndex] = rotatePointAroundOrigin(pOpposite, -rad)
+            newPoints[(index + 3) % 4] = rotatePointAroundOrigin(pPrev, -rad)
+
+            points.value = newPoints
+            return
+        }
+
+        // 强制比例 (仅当不是自由矩形模式时)
         let targetR = currentRatio.value
         if (targetR === -1) {
             if (imageObj.value) {
@@ -255,13 +287,86 @@ export function useSamplingPoints(imageObj: { value: HTMLImageElement | null }) 
         }
     })
 
+    // 中点数据
+    const midPoints = computed(() => {
+        if (points.value.length < 4 || currentRatio.value !== -2) return []
+
+        return points.value.map((p, i) => {
+            const nextP = points.value[(i + 1) % 4]
+            const center = getCenter(p, nextP)
+            return {
+                x: center.x,
+                y: center.y,
+                index: i // 0: Top, 1: Right, 2: Bottom, 3: Left (Assuming standard order TL, TR, BR, BL)
+            }
+        })
+    })
+
+    // 处理中点拖动
+    const handleMidPointDragMove = (e: any, index: number) => {
+        if (currentRatio.value !== -2) return
+
+        const node = e.target
+        const newPos = { x: node.x(), y: node.y() }
+
+        // 旋转到对齐空间
+        const rad = -rotation.value * Math.PI / 180
+        const rotNewPos = rotatePointAroundOrigin(newPos, rad)
+
+        // 获取当前矩形在对齐空间的点
+        const alignedPoints = points.value.map(p => rotatePointAroundOrigin(p, rad))
+
+        // 0: Top(TL-TR), 1: Right(TR-BR), 2: Bottom(BR-BL), 3: Left(BL-TL)
+        // 假设顺序 TL(0), TR(1), BR(2), BL(3) 
+        // 实际上这取决于 points 的初始化顺序。
+        // resetPoints: TL, TR, BR, BL. 
+        // 所以:
+        // Index 0 (Top): Affects y (top). x range is min(0.x, 1.x) to max...
+        // Index 1 (Right): Affects x (right).
+        // Index 2 (Bottom): Affects y (bottom).
+        // Index 3 (Left): Affects x (left).
+
+        // 我们只需更新边界
+        let minX = Math.min(...alignedPoints.map(p => p.x))
+        let maxX = Math.max(...alignedPoints.map(p => p.x))
+        let minY = Math.min(...alignedPoints.map(p => p.y))
+        let maxY = Math.max(...alignedPoints.map(p => p.y))
+
+        if (index === 0) {
+            // Dragging Top Edge. Update MinY?
+            // Usually Top is the smaller Y (in screen coords), but with rotation it's relative.
+            // Let's use the actual edge vertical position.
+            // Edge 0 connects 0(TL) and 1(TR). Their Y should be same in aligned space.
+            // So we update their Y to rotNewPos.y
+            alignedPoints[0].y = rotNewPos.y
+            alignedPoints[1].y = rotNewPos.y
+        } else if (index === 2) {
+            // Bottom Edge (2 and 3)
+            alignedPoints[2].y = rotNewPos.y
+            alignedPoints[3].y = rotNewPos.y
+        } else if (index === 1) {
+            // Right Edge (1 and 2)
+            alignedPoints[1].x = rotNewPos.x
+            alignedPoints[2].x = rotNewPos.x
+        } else if (index === 3) {
+            // Left Edge (3 and 0)
+            alignedPoints[3].x = rotNewPos.x
+            alignedPoints[0].x = rotNewPos.x
+        }
+
+        // Rotate back
+        const newPoints = alignedPoints.map(p => rotatePointAroundOrigin(p, -rad))
+        points.value = newPoints
+    }
+
     return {
         // 状态
         points,
         ratios,
         currentRatio,
         rotation,
-        
+        midPoints,
+
         // 方法
         resetPoints,
         setRatio,
@@ -269,7 +374,8 @@ export function useSamplingPoints(imageObj: { value: HTMLImageElement | null }) 
         resetRotation,
         handlePointDragMove,
         handleRotatorDragMove,
-        
+        handleMidPointDragMove,
+
         // 计算配置
         lineConfig,
         rotationLineConfig,

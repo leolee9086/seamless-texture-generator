@@ -44,12 +44,3 @@ export function isNumericDehazeParamKey(key: keyof DehazeParams): boolean {
     ]
     return numericKeys.includes(key)
 }
-
-/**
- * 类型守卫：检查值是否为数字
- * @param value 任意值
- * @returns 是否为数字
- */
-export function isNumber(value: unknown): value is number {
-    return typeof value === 'number'
-}
