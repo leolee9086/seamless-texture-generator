@@ -4,8 +4,14 @@
  */
 
 // 转发 @leolee9086/image-dehazing 包的导入
-export { 
-  dehazeImageWebGPUSimple, 
-  preInitializeDevice, 
-  clearAllCaches 
+import {
+  dehazeImageWebGPUSimple,
+  preInitializeDevice,
+  clearAllCaches
 } from '@leolee9086/image-dehazing'
+
+export {
+  dehazeImageWebGPUSimple,
+  preInitializeDevice,
+  clearAllCaches
+}
