@@ -27,7 +27,7 @@
 
 <script setup lang="ts">
 import { useTextToImage } from './TextToImageTabContent.ctx'
-import ApiKeyInput from './ApiKeyInput.vue'
+import ApiKeyInput from './SecureApiKeyInput/SecureApiKeyInput.vue'
 import PromptInput from './PromptInput.vue'
 import ParameterGrid from './ParameterGrid.vue'
 import AdvancedParameters from './AdvancedParameters.vue'

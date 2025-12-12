@@ -38,11 +38,12 @@
       <input
         :value="proxyUrl"
         type="text"
-        placeholder="https://api-inference.modelscope.cn"
+        placeholder="/api/common-proxy"
         class="glass-input px-2 py-1.5 text-sm rounded-lg"
         @input="$emit('update:proxyUrl', ($event.target as HTMLInputElement).value)"
       />
-      <p class="text-xs text-white/50">留空则使用默认代理</p>
+      <p class="text-xs text-white/50">留空则使用默认代理 (/api/common-proxy)</p>
+      <p class="text-xs text-white/40">代理需支持 ?target=url 转发形式</p>
     </div>
   </div>
 </template>

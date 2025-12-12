@@ -35,6 +35,7 @@ export const DEFAULTS = {
   NUM_INFERENCE_STEPS: 9,
   MODEL: 'Tongyi-MAI/Z-Image-Turbo',
   SHOW_ADVANCED: false,
+  PROXY_URL: '/api/common-proxy',
 } as const
 
 // 可用模型列表

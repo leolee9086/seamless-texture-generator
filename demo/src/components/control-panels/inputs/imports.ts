@@ -40,5 +40,4 @@ export { fetchImageAsBase64 } from '../../../api/imageFetcher.api'
 export { buildProxyUrl } from '../../../api/templates'
 
 // Re-export Vue reactivity APIs
-export { ref, computed, watch } from 'vue'
-export type { Ref, ComputedRef } from 'vue'
+export { ref, computed, watch, onMounted, type Ref, type ComputedRef } from 'vue'
