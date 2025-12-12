@@ -14,6 +14,19 @@
 
     <!-- 原有的图像查看器 -->
     <div v-else-if="originalImage && containerWidth > 0 && containerHeight > 0" class="w-full h-full relative">
+      <!-- 下载按钮 -->
+      <button v-if="originalImage" @click="downloadOriginal"
+        class="absolute top-4 left-4 z-20 glass-btn p-2 rounded-full bg-black/50 hover:bg-black/70 text-white/80 hover:text-white transition-colors"
+        title="下载原始图像">
+        <div class="i-carbon-download text-lg"></div>
+      </button>
+      
+      <button v-if="processedImage" @click="downloadProcessedImage"
+        class="absolute top-4 right-4 z-20 glass-btn p-2 rounded-full bg-black/50 hover:bg-black/70 text-white/80 hover:text-white transition-colors"
+        title="下载处理后图像">
+        <div class="i-carbon-download text-lg"></div>
+      </button>
+
       <SplitViewer ref="splitViewerRef" :key="viewerKey" :leftImage="originalImage"
         :rightImage="processedImage || originalImage" :width="containerWidth" :height="containerHeight"
         :splitPosition="splitPosition" :magnifier="magnifierConfig" @split-change="handleSplitChange"
@@ -41,6 +54,7 @@
 <script setup lang="ts">
 import { ref, computed, watch, nextTick, onMounted, onUnmounted } from 'vue'
 import { SplitViewer, } from '@leolee9086/split-viewer'
+import { saveOriginalImage, saveProcessedImage } from './common/imports'
 
 import type { Component } from 'vue'
 
@@ -145,6 +159,18 @@ const resetZoom = async () => {
 
 const clearOverlay = () => {
   emit('clear-overlay')
+}
+
+const downloadOriginal = () => {
+  if (props.originalImage) {
+    saveOriginalImage(props.originalImage)
+  }
+}
+
+const downloadProcessedImage = () => {
+  if (props.processedImage) {
+    saveProcessedImage(props.processedImage)
+  }
 }
 
 watch(() => props.zoomLevel, handleZoomChange)
