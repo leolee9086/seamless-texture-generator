@@ -357,6 +357,7 @@ export default [
       '**/*.templates.ts', '**/templates.ts',
       '**/*.prompts.ts', '**/prompts.ts',
       '**/*.code.ts',
+      '**/*.schema.ts',
       // 🔥 豁免特殊的加载和API文件，由专用层级处理
       '**/*.loader.ts',
       '**/*.api.ts',
@@ -597,6 +598,24 @@ export default [
 
         // 关键：这里只包含 "禁止动态导入" 规则，【不】包含 "禁止网络" 规则
         RESTRICTION_NO_DYNAMIC_IMPORT
+      ]
+    }
+  },
+
+  // ========================================================================
+  // 15. 🔥🔥🔥 Schema 定义层 (*.schema.ts) - 允许 Zod 导入和类型声明 🔥🔥🔥
+  // ========================================================================
+  {
+    files: ['src/**/*.schema.ts', 'test/**/*.schema.ts'],
+    ignores: ['**/index.schema.ts', '**/imports.ts'],
+    rules: {
+      'no-restricted-syntax': [
+        'error',
+        ...GLOBAL_LOGIC_RESTRICTIONS,
+        ...STRICT_IMPORT_RESTRICTIONS,
+        ...STRICT_CLASS_RESTRICTIONS,
+        // 注意：这里不包含 ONLY_ALLOW_TYPE_IMPORTS，允许 zod 的值导入
+        ...NO_MAGIC_STRINGS
       ]
     }
   }
