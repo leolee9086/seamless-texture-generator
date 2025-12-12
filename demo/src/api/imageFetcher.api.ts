@@ -2,7 +2,7 @@
  * 图像获取 API
  */
 
-import { cacheImage, getCachedImageByUrl } from '../components/control-panels/inputs/TextToImageTabContent.cache'
+import { cacheImage, getCachedImageByUrl } from '../components/control-panels/inputs/TextToImage/TextToImageTabContent.cache'
 
 const POLLING_INTERVAL_MS = 2000 // 2 秒
 const MAX_POLLING_ATTEMPTS = 30 // 最多尝试 30 次（60 秒）

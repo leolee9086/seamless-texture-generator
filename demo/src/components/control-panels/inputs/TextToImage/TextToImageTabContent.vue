@@ -27,16 +27,12 @@
 
 <script setup lang="ts">
 import { useTextToImage } from './TextToImageTabContent.ctx'
-import ApiKeyInput from './SecureApiKeyInput/SecureApiKeyInput.vue'
-import PromptInput from './PromptInput.vue'
-import ParameterGrid from './ParameterGrid.vue'
+import { createProxiedUrlsComputed, handleImageClick as handleImageClickUtil } from './TextToImageTabContent.utils'
+import { ApiKeyInput, PromptInput, ParameterGrid, StatusDisplay } from './imports'
 import AdvancedParameters from './AdvancedParameters.vue'
 import GenerateButton from './GenerateButton.vue'
-import StatusDisplay from './StatusDisplay.vue'
 import ImageGallery from './ImageGallery.vue'
-import { fetchImageAsBase64 } from './imports'
-import { buildProxyUrl } from '@/api/templates'
-import { computed } from './imports'
+
 const props = defineProps<{
   isMobile?: boolean
 }>()
@@ -60,30 +56,19 @@ const {
   apiKeyValid,
   generate,
   generatedImages
-} = useTextToImage((base64) => {
+} = useTextToImage((base64: string) => {
   emit('set-image', base64)
 })
-const proxiedUrls = computed(() => (
-  generatedImages.value.map(
-    item => {
-      const proxiedUrl = proxyUrl.value ? buildProxyUrl(item, proxyUrl.value) : item
 
-      return proxiedUrl
-    }
-  )
-))
-
+// 使用工具函数创建代理URL计算属性
+const proxiedUrls = createProxiedUrlsComputed(generatedImages, proxyUrl)
 
 /**
  * 处理图像点击事件
  */
 const handleImageClick = async (imageUrl: string): Promise<void> => {
-  try {
-    const proxiedUrl = buildProxyUrl(imageUrl, proxyUrl.value)
-    const base64 = await fetchImageAsBase64(proxiedUrl)
+  await handleImageClickUtil(imageUrl, proxyUrl, (base64: string) => {
     emit('set-image', base64)
-  } catch (error) {
-    console.error('Failed to load image:', error)
-  }
+  })
 }
 </script>

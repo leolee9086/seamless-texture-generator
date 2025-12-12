@@ -52,7 +52,7 @@ import TabSelector from './TabSelector.vue'
 import UploadTabContent from './UploadTabContent.vue'
 import ProceduralTabContent from './ProceduralTabContent.vue'
 import MaxResolutionSlider from './MaxResolutionSlider.vue'
-import TextToImageTabContent from './TextToImageTabContent.vue'
+import TextToImageTabContent from './TextToImage/TextToImageTabContent.vue'
 import { INPUTS_PANEL_TABS, type InputsPanelTab } from './InputsPanel.constants'
 
 const props = defineProps<{

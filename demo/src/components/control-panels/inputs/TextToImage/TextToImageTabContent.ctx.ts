@@ -13,8 +13,7 @@ import {
 } from './TextToImageTabContent.constants'
 import { cacheImage } from './TextToImageTabContent.cache'
 import type { UseTextToImageReturn, TextToImageParams } from './TextToImageTabContent.types'
-import { secureKeyManager } from './SecureApiKeyInput/SecureApiKeyInput.ctx'
-import { API_KEY_PREFIX, EMPTY_API_KEY } from './SecureApiKeyInput/SecureApiKeyInput.constants'
+import { secureKeyManager, API_KEY_PREFIX, EMPTY_API_KEY } from './imports'
 
 /**
  * 检查是否使用文件模式

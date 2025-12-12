@@ -2,9 +2,8 @@
  * 图像画廊工具函数
  */
 
-import { ref, watch } from './imports'
+import { ref, watch, type Ref } from './imports'
 import { getCachedImageByUrl } from './TextToImageTabContent.cache'
-import type { Ref } from './imports'
 
 /**
  * 创建缓存图像 URL 的响应式引用

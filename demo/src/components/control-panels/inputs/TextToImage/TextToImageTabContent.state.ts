@@ -2,10 +2,9 @@
  * 文本生成图像状态管理
  */
 
-import { ref, computed } from './imports'
+import { ref, computed, hasValidApiKey } from './imports'
 import { DEFAULTS } from './TextToImageTabContent.constants'
 import type { UseTextToImageStateReturn } from './TextToImageTabContent.types'
-import { hasValidApiKey } from './SecureApiKeyInput/SecureApiKeyInput.utils'
 
 /**
  * 创建文本生成图像的状态和上下文

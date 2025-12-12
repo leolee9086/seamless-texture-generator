@@ -2,9 +2,8 @@
  * 文本生成图像工具函数
  */
 
-import { submitGenerationTask, pollTaskUntilComplete, computed, fetchImageAsBase64, buildProxyUrl } from './imports'
+import { submitGenerationTask, pollTaskUntilComplete, computed, fetchImageAsBase64, buildProxyUrl, type Ref, type ComputedRef, type TaskStatusResponse } from './imports'
 import type { TextToImageParams, TextToImageResult, ProcessTaskResultParams } from './TextToImageTabContent.types'
-import type { TaskStatusResponse, Ref, ComputedRef } from './imports'
 import { ERROR_MESSAGES, ERROR_TEMPLATES, TASK_STATUS } from './TextToImageTabContent.constants'
 
 /**
@@ -112,23 +111,6 @@ export async function generateTextToImage(
 }
 
 /**
- * 创建代理URL计算函数
- */
-export function createProxiedUrlsComputed(
-  generatedImages: Ref<string[]>,
-  proxyUrl: Ref<string>
-): ComputedRef<string[]> {
-  return computed(() => (
-    generatedImages.value.map(
-      (item: string) => {
-        const proxiedUrl = proxyUrl.value ? buildProxyUrl(item, proxyUrl.value) : item
-        return proxiedUrl
-      }
-    )
-  ))
-}
-
-/**
  * 处理图像点击事件
  */
 export async function handleImageClick(
@@ -143,4 +125,21 @@ export async function handleImageClick(
   } catch (error) {
     console.error('Failed to load image:', error)
   }
+}
+
+/**
+ * 创建代理URL计算函数
+ */
+export function createProxiedUrlsComputed(
+  generatedImages: Ref<string[]>,
+  proxyUrl: Ref<string>
+): ComputedRef<string[]> {
+  return computed(() => (
+    generatedImages.value.map(
+      (item: string) => {
+        const proxiedUrl = proxyUrl.value ? buildProxyUrl(item, proxyUrl.value) : item
+        return proxiedUrl
+      }
+    )
+  ))
 }
