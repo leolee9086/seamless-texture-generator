@@ -12,6 +12,7 @@ export interface TextToImageParams {
   numInferenceSteps: number
   model: string
   proxyUrl?: string
+  batchInterval?: number
 }
 
 export interface TextToImageResult {
@@ -46,6 +47,7 @@ export interface TextToImageState {
   numInferenceSteps: number
   model: string
   proxyUrl?: string
+  batchInterval?: number
   showAdvanced: boolean
   isGenerating: boolean
   error: string
@@ -65,6 +67,7 @@ export type UseTextToImageStateReturn = {
   numInferenceSteps: Ref<number>
   model: Ref<string>
   proxyUrl: Ref<string>
+  batchInterval: Ref<number>
   showAdvanced: Ref<boolean>
   isGenerating: Ref<boolean>
   error: Ref<string>
@@ -81,6 +84,7 @@ export type UseTextToImageReturn = {
   numInferenceSteps: Ref<number>
   model: Ref<string>
   proxyUrl: Ref<string>
+  batchInterval: Ref<number>
   showAdvanced: Ref<boolean>
   isGenerating: Ref<boolean>
   error: Ref<string>

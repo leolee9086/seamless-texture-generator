@@ -7,7 +7,7 @@
     <PromptInput v-model="prompt" />
 
     <!-- Parameters -->
-    <ParameterGrid v-model:size="size" v-model:n="n" />
+    <ParameterGrid v-model:size="size" v-model:n="n" v-model:batch-interval="batchInterval" />
 
     <!-- Advanced Parameters (Collapsible) -->
     <AdvancedParameters v-model:num-inference-steps="numInferenceSteps" v-model:model="model"
@@ -46,6 +46,7 @@ const {
   prompt,
   size,
   n,
+  batchInterval,
   numInferenceSteps,
   model,
   proxyUrl,

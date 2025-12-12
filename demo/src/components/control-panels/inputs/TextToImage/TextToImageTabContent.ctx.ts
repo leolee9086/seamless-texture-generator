@@ -36,7 +36,8 @@ async function generateWithFileMode(
     n: state.n.value,
     numInferenceSteps: state.numInferenceSteps.value,
     model: state.model.value,
-    proxyUrl: state.proxyUrl.value || undefined
+    proxyUrl: state.proxyUrl.value || undefined,
+    batchInterval: state.batchInterval.value
   }
 
   state.status.value = STATUS_MESSAGES.GENERATING
@@ -107,7 +108,8 @@ async function generateWithTempMode(
     n: state.n.value,
     numInferenceSteps: state.numInferenceSteps.value,
     model: state.model.value,
-    proxyUrl: state.proxyUrl.value || undefined
+    proxyUrl: state.proxyUrl.value || undefined,
+    batchInterval: state.batchInterval.value
   }
 
   state.status.value = STATUS_MESSAGES.GENERATING
@@ -173,6 +175,12 @@ function createGenerate(
       return
     }
 
+    // 强制检查：如果生成数量 > 4，必须设置批次间隔
+    if (state.n.value > 4 && (!state.batchInterval.value || state.batchInterval.value <= 0)) {
+      state.error.value = "批量生成数量大于4张时，为了防止请求超限，必须设置批次间隔 (建议 > 1000ms)"
+      return
+    }
+
     state.isGenerating.value = true
     state.error.value = DEFAULTS.EMPTY_STRING
     state.status.value = STATUS_MESSAGES.SUBMITTING
@@ -203,6 +211,7 @@ function createReset(state: ReturnType<typeof useTextToImageState>): () => void 
     state.numInferenceSteps.value = DEFAULTS.NUM_INFERENCE_STEPS
     state.model.value = DEFAULTS.MODEL
     state.proxyUrl.value = DEFAULTS.PROXY_URL
+    state.batchInterval.value = 0
     state.showAdvanced.value = DEFAULTS.SHOW_ADVANCED
     state.error.value = DEFAULTS.EMPTY_STRING
     state.status.value = DEFAULTS.EMPTY_STRING
@@ -223,6 +232,7 @@ export function useTextToImage(onImageGenerated?: (base64: string) => void): Use
     numInferenceSteps: state.numInferenceSteps,
     model: state.model,
     proxyUrl: state.proxyUrl,
+    batchInterval: state.batchInterval,
     showAdvanced: state.showAdvanced,
     isGenerating: state.isGenerating,
     error: state.error,

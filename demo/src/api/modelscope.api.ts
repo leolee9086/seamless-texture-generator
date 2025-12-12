@@ -35,14 +35,14 @@ import {
 export async function submitGenerationTask(
   params: SubmitGenerationTaskParams
 ): Promise<string[]> {
-  const { apiKey, prompt, params: generationParams = {} ,proxyUrl} = params
-      const proxiedUrl = proxyUrl?buildProxyUrl(MODEL_SCOPE_BASE_URL,proxyUrl):MODEL_SCOPE_BASE_URL
+  const { apiKey, prompt, params: generationParams = {}, proxyUrl, batchInterval = 0 } = params
+  const proxiedUrl = proxyUrl ? buildProxyUrl(MODEL_SCOPE_BASE_URL, proxyUrl) : MODEL_SCOPE_BASE_URL
 
   const url = IMAGE_GENERATION_URL(proxiedUrl, ENDPOINT_IMAGE_GENERATIONS)
 
   // 获取任务数量，默认为 1
   const n = generationParams.n ?? DEFAULT_N
-  
+
   // 构建基础有效负载（不包含 n，因为每个请求只生成一张图片）
   const basePayload: Omit<GenerationParams, 'n'> = {
     model: generationParams.model || MODEL_Z_IMAGE_TURBO,
@@ -69,13 +69,21 @@ export async function submitGenerationTask(
     return [response.task_id]
   }
 
-  // 并发发起 n 个请求
-  const requests = Array.from({ length: n }, async () => {
+  // 并发或串行发起 n 个请求
+  const requestIds: string[] = []
+
+  for (let i = 0; i < n; i++) {
+    // 如果设置了间隔且不是第一个请求，等待指定间隔
+    if (batchInterval > 0 && i > 0) {
+      await new Promise(resolve => setTimeout(resolve, batchInterval))
+    }
+
     // 为每个请求生成不同的种子（如果未指定种子）
     const payload = {
       ...basePayload,
       ...(basePayload.seed === undefined && { seed: Math.floor(Math.random() * 2147483647) }),
     }
+
     const response = await robustFetch<TaskResponse>(url, {
       method: 'POST',
       headers: {
@@ -84,10 +92,11 @@ export async function submitGenerationTask(
       },
       body: JSON.stringify(payload),
     })
-    return response.task_id
-  })
 
-  return Promise.all(requests)
+    requestIds.push(response.task_id)
+  }
+
+  return requestIds
 }
 
 /**
@@ -97,9 +106,9 @@ export async function getTaskStatus(
   params: GetTaskStatusParams
 ): Promise<TaskStatusResponse> {
   const { apiKey, taskId, proxyUrl } = params
-  
-  const url = TASK_STATUS_URL(    MODEL_SCOPE_BASE_URL, ENDPOINT_TASK_STATUS, taskId)
-  const proxiedUrl = proxyUrl?buildProxyUrl(url,proxyUrl):url
+
+  const url = TASK_STATUS_URL(MODEL_SCOPE_BASE_URL, ENDPOINT_TASK_STATUS, taskId)
+  const proxiedUrl = proxyUrl ? buildProxyUrl(url, proxyUrl) : url
   const response = await robustFetch<TaskStatusResponse>(proxiedUrl, {
     headers: {
       ...createAuthHeaders(apiKey),

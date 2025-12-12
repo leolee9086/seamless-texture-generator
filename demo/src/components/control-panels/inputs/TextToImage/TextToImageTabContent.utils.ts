@@ -11,7 +11,7 @@ import { ERROR_MESSAGES, ERROR_TEMPLATES, TASK_STATUS } from './TextToImageTabCo
  */
 function processTaskResult(params: ProcessTaskResultParams): void {
   const { result, taskId, imageUrls, errors } = params
-  
+
   if (result.task_status !== TASK_STATUS.SUCCEED) {
     errors.push(ERROR_TEMPLATES.TASK_FAILED(taskId, result.error?.message || ERROR_MESSAGES.UNKNOWN_ERROR))
     return
@@ -34,7 +34,8 @@ async function submitTasks(params: TextToImageParams): Promise<string[]> {
       steps: params.numInferenceSteps,
       model: params.model
     },
-    proxyUrl: params.proxyUrl
+    proxyUrl: params.proxyUrl,
+    batchInterval: params.batchInterval
   })
 }
 

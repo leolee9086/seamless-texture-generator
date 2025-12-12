@@ -17,15 +17,16 @@ export function useTextToImageState(): UseTextToImageStateReturn {
   const numInferenceSteps = ref(DEFAULTS.NUM_INFERENCE_STEPS)
   const model = ref(DEFAULTS.MODEL)
   const proxyUrl = ref(DEFAULTS.PROXY_URL)
+  const batchInterval = ref(0)
   const showAdvanced = ref(DEFAULTS.SHOW_ADVANCED)
   const isGenerating = ref(false)
   const error = ref('')
   const status = ref('')
   const generatedImages = ref<string[]>([])
-  
+
   // 检查 API Key 是否有效（支持临时输入和文件模式）
   const apiKeyValid = computed(() => hasValidApiKey(apiKey.value))
-  
+
   return {
     apiKey,
     prompt,
@@ -34,6 +35,7 @@ export function useTextToImageState(): UseTextToImageStateReturn {
     numInferenceSteps,
     model,
     proxyUrl,
+    batchInterval,
     showAdvanced,
     isGenerating,
     error,

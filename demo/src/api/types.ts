@@ -100,4 +100,5 @@ export interface SubmitGenerationTaskParams {
   prompt: string
   params?: Partial<Omit<GenerationParams, 'prompt'>>
   proxyUrl?: string
+  batchInterval?: number
 }
