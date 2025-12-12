@@ -3,9 +3,10 @@
  * Provides functions for managing luminance-based adjustments (Shadows, Midtones, Highlights)
  */
 
-import type { LuminanceAdjustmentParams, ZoneAdjustment } from '../utils/webgpu/luminance-shaders';
+import type { LuminanceAdjustmentParams, ZoneAdjustment } from '../utils/webgpu/luminance.types';
+import type { LuminancePreset } from './luminanceAdjustment.types';
 import { WebGPULuminanceProcessor, processLuminanceAdjustment } from '../utils/webgpu/luminance-processor.class';
-export type { LuminanceAdjustmentParams, ZoneAdjustment } from '../utils/webgpu/luminance-shaders';
+import { 验证错误消息 } from './luminanceAdjustment.templates';
 
 // Default parameters for luminance adjustment
 export const DEFAULT_LUMINANCE_PARAMS: LuminanceAdjustmentParams = {
@@ -194,8 +195,7 @@ export const LUMINANCE_PRESETS = {
     }
 };
 
-// Type for preset keys
-export type LuminancePreset = keyof typeof LUMINANCE_PRESETS;
+
 
 // Get preset by key
 export function getLuminancePreset(preset: LuminancePreset): LuminanceAdjustmentParams {
@@ -214,45 +214,45 @@ export function validateLuminanceParams(params: LuminanceAdjustmentParams): {
         const zoneParams = params[zone] as ZoneAdjustment;
 
         if (zoneParams.brightness < -1.0 || zoneParams.brightness > 1.0) {
-            errors.push(`${zone} brightness must be between -1.0 and 1.0`);
+            errors.push(验证错误消息.zone参数.brightness超出范围(zone));
         }
 
         if (zoneParams.contrast < -1.0 || zoneParams.contrast > 1.0) {
-            errors.push(`${zone} contrast must be between -1.0 and 1.0`);
+            errors.push(验证错误消息.zone参数.contrast超出范围(zone));
         }
 
         if (zoneParams.saturation < -1.0 || zoneParams.saturation > 1.0) {
-            errors.push(`${zone} saturation must be between -1.0 and 1.0`);
+            errors.push(验证错误消息.zone参数.saturation超出范围(zone));
         }
 
         if (zoneParams.red < -1.0 || zoneParams.red > 1.0) {
-            errors.push(`${zone} red must be between -1.0 and 1.0`);
+            errors.push(验证错误消息.zone参数.red超出范围(zone));
         }
 
         if (zoneParams.green < -1.0 || zoneParams.green > 1.0) {
-            errors.push(`${zone} green must be between -1.0 and 1.0`);
+            errors.push(验证错误消息.zone参数.green超出范围(zone));
         }
 
         if (zoneParams.blue < -1.0 || zoneParams.blue > 1.0) {
-            errors.push(`${zone} blue must be between -1.0 and 1.0`);
+            errors.push(验证错误消息.zone参数.blue超出范围(zone));
         }
     }
 
     // Validate range parameters
     if (params.shadowEnd < 0.0 || params.shadowEnd > 1.0) {
-        errors.push('shadowEnd must be between 0.0 and 1.0');
+        errors.push(验证错误消息.范围参数.shadowEnd超出范围);
     }
 
     if (params.highlightStart < 0.0 || params.highlightStart > 1.0) {
-        errors.push('highlightStart must be between 0.0 and 1.0');
+        errors.push(验证错误消息.范围参数.highlightStart超出范围);
     }
 
     if (params.shadowEnd >= params.highlightStart) {
-        errors.push('shadowEnd must be less than highlightStart');
+        errors.push(验证错误消息.范围参数.shadowEnd必须小于highlightStart);
     }
 
     if (params.softness < 0.0 || params.softness > 1.0) {
-        errors.push('softness must be between 0.0 and 1.0');
+        errors.push(验证错误消息.范围参数.softness超出范围);
     }
 
     return {
@@ -262,7 +262,13 @@ export function validateLuminanceParams(params: LuminanceAdjustmentParams): {
 }
 
 // Create control event for luminance adjustment
-export function createLuminanceAdjustmentEvent(params: LuminanceAdjustmentParams) {
+export function createLuminanceAdjustmentEvent(params: LuminanceAdjustmentParams): {
+    type: 'update-data';
+    detail: {
+        action: 'luminance-adjustment';
+        data: LuminanceAdjustmentParams;
+    };
+} {
     return {
         type: 'update-data' as const,
         detail: {
@@ -282,24 +288,15 @@ export async function applyLuminanceAdjustment(
     await processLuminanceAdjustment(device, inputTexture, outputTexture, params);
 }
 
-// Apply luminance adjustment to ImageData using WebGPU
-export async function applyLuminanceAdjustmentToImageData(
-    device: GPUDevice,
-    imageData: ImageData,
-    params: LuminanceAdjustmentParams
-): Promise<ImageData> {
-
-    // Create temporary textures for processing
-    const textureDescriptor: GPUTextureDescriptor = {
-        size: { width: imageData.width, height: imageData.height },
-        format: 'rgba8unorm',
-        usage: GPUTextureUsage.TEXTURE_BINDING | GPUTextureUsage.COPY_DST | GPUTextureUsage.COPY_SRC | GPUTextureUsage.STORAGE_BINDING
-    };
-
-    const inputTexture = device.createTexture(textureDescriptor);
-    const outputTexture = device.createTexture(textureDescriptor);
-
-    // Write image data to input texture
+/**
+ * 写入ImageData到GPU纹理
+ */
+async function 写入ImageData到纹理(options: {
+    device: GPUDevice;
+    imageData: ImageData;
+    texture: GPUTexture;
+}): Promise<GPUBuffer> {
+    const { device, imageData, texture } = options;
     // 计算对齐的bytesPerRow (必须是256的倍数)
     const alignment = 256;
     const bytesPerRow = imageData.width * 4;
@@ -329,28 +326,39 @@ export async function applyLuminanceAdjustmentToImageData(
             buffer: dataBuffer,
             bytesPerRow: alignedBytesPerRow
         },
-        { texture: inputTexture },
+        { texture },
         { width: imageData.width, height: imageData.height }
     );
     device.queue.submit([commandEncoder.finish()]);
 
-    // Process: image
-    const processor = new WebGPULuminanceProcessor(device);
-    await processor.initialize();
-    const processEncoder = await processor.processImage(inputTexture, outputTexture, params);
-    device.queue.submit([processEncoder.finish()]);
+    return dataBuffer;
+}
 
-    // Read back the result
+/**
+ * 从GPU纹理读取ImageData
+ */
+async function 从纹理读取ImageData(options: {
+    device: GPUDevice;
+    texture: GPUTexture;
+    width: number;
+    height: number;
+}): Promise<ImageData> {
+    const { device, texture, width, height } = options;
+    // 计算对齐的bytesPerRow
+    const alignment = 256;
+    const bytesPerRow = width * 4;
+    const alignedBytesPerRow = Math.ceil(bytesPerRow / alignment) * alignment;
+
     const readbackBuffer = device.createBuffer({
-        size: alignedBytesPerRow * imageData.height,
+        size: alignedBytesPerRow * height,
         usage: GPUBufferUsage.COPY_DST | GPUBufferUsage.MAP_READ
     });
 
     const readEncoder = device.createCommandEncoder();
     readEncoder.copyTextureToBuffer(
-        { texture: outputTexture },
+        { texture },
         { buffer: readbackBuffer, bytesPerRow: alignedBytesPerRow },
-        { width: imageData.width, height: imageData.height }
+        { width, height }
     );
     device.queue.submit([readEncoder.finish()]);
 
@@ -359,8 +367,8 @@ export async function applyLuminanceAdjustmentToImageData(
     const mappedData = new Uint8Array(readbackBuffer.getMappedRange());
 
     // Extract data from aligned buffer
-    const resultData = new Uint8ClampedArray(imageData.width * imageData.height * 4);
-    for (let y = 0; y < imageData.height; y++) {
+    const resultData = new Uint8ClampedArray(width * height * 4);
+    for (let y = 0; y < height; y++) {
         const srcOffset = y * alignedBytesPerRow;
         const dstOffset = y * bytesPerRow;
         resultData.set(
@@ -369,13 +377,44 @@ export async function applyLuminanceAdjustmentToImageData(
         );
     }
     readbackBuffer.unmap();
+    readbackBuffer.destroy();
+
+    return new ImageData(resultData, width, height);
+}
+
+// Apply luminance adjustment to ImageData using WebGPU
+export async function applyLuminanceAdjustmentToImageData(
+    device: GPUDevice,
+    imageData: ImageData,
+    params: LuminanceAdjustmentParams
+): Promise<ImageData> {
+    // Create temporary textures for processing
+    const textureDescriptor: GPUTextureDescriptor = {
+        size: { width: imageData.width, height: imageData.height },
+        format: 'rgba8unorm',
+        usage: GPUTextureUsage.TEXTURE_BINDING | GPUTextureUsage.COPY_DST | GPUTextureUsage.COPY_SRC | GPUTextureUsage.STORAGE_BINDING
+    };
+
+    const inputTexture = device.createTexture(textureDescriptor);
+    const outputTexture = device.createTexture(textureDescriptor);
+
+    // Write image data to input texture
+    const dataBuffer = await 写入ImageData到纹理({ device, imageData, texture: inputTexture });
+
+    // Process image
+    const processor = new WebGPULuminanceProcessor(device);
+    await processor.initialize();
+    const processEncoder = await processor.processImage(inputTexture, outputTexture, params);
+    device.queue.submit([processEncoder.finish()]);
+
+    // Read back the result
+    const result = await 从纹理读取ImageData({ device, texture: outputTexture, width: imageData.width, height: imageData.height });
 
     // Clean up
     inputTexture.destroy();
     outputTexture.destroy();
     dataBuffer.destroy();
-    readbackBuffer.destroy();
     processor.destroy();
 
-    return new ImageData(resultData, imageData.width, imageData.height);
+    return result;
 }
