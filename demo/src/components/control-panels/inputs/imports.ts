@@ -18,7 +18,7 @@ export { horizontalScroll } from '../../../utils/scroll'
 export { default as horizontalScrollButtons } from '../../common/horizontalScrollButtons.vue'
 
 // Re-export panel components
-export { default as WoodPanel } from '../WoodPanel.vue'
+export { default as WoodPanel } from '../wood/WoodPanel.vue'
 export { default as PlainWeavePanel } from '../plainWeave/PlainWeavePanel.vue'
 export { createZeroBindingPlainWeavePanel } from '../plainWeave/PlainWeavePanel.wrapper.utils'
 export { isValidImageDataArg } from '../plainWeave/PlainWeavePanel.guard'
