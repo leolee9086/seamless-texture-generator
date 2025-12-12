@@ -49,6 +49,34 @@ const BASE_ARCHITECTURE_RESTRICTIONS = [
       '替代方案: Object Literal / Map / Strategy Pattern / Polymorphism'
     ].join('\n'),
   },
+  {
+    selector: 'ExportNamedDeclaration[source]',
+    message: [
+      '❌ 禁止直接使用 export { ... } from "..." 语法。',
+      '原因: 导出转发会降低代码可追溯性。',
+      '要求: 必须先 import，然后再 export。',
+      '示例:',
+      '  // ❌ 错误',
+      '  export { foo } from "./bar"',
+      '  // ✅ 正确',
+      '  import { foo } from "./bar"',
+      '  export { foo }'
+    ].join('\n'),
+  },
+  {
+    selector: 'ExportAllDeclaration',
+    message: [
+      '❌ 禁止直接使用 export * from "..." 语法。',
+      '原因: 全量导出转发会严重降低代码可追溯性和可维护性。',
+      '要求: 必须先 import，然后再 export。',
+      '示例:',
+      '  // ❌ 错误',
+      '  export * from "./utils"',
+      '  // ✅ 正确',
+      '  import * as utils from "./utils"',
+      '  export { utils }'
+    ].join('\n'),
+  },
 ];
 
 // [B] 类型纯洁性约束
@@ -100,15 +128,8 @@ const STRICT_IMPORT_RESTRICTIONS = [
   {
     selector: 'ExportAllDeclaration[source.value=/^[^.]/]',
     message: '禁止直接全量重导出第三方包或别名。'
-  },
-  {
-    selector: 'ExportAllDeclaration',
-    message: '禁止全量重导出 (export *)。仅允许在 index.ts 中使用。'
-  },
-  {
-    selector: 'ExportNamedDeclaration[source]',
-    message: '禁止重导出转发 (export { x } from ...)。仅允许在 index.ts 中使用。'
   }
+  // 注意：export ... from 的全局禁令已移至 BASE_ARCHITECTURE_RESTRICTIONS
 ];
 
 // [D] 类定义约束
@@ -171,7 +192,7 @@ const NO_MAGIC_STRINGS = [
 // [H] 🔥🔥🔥 新增：动态导入与网络请求约束 (已修正) 
 const RESTRICTION_NO_DYNAMIC_IMPORT = {
   // 变更点：增加 TSImportType 以捕获 type T = import('./x') 写法
-  selector: ':matches(ImportExpression, TSImportType)', 
+  selector: ':matches(ImportExpression, TSImportType)',
   message: [
     '架构严令：禁止使用内联导入或动态导入。',
     '1. 如果是类型引用 (import("...")), 请在文件头部使用 standard "import type" 语句。',
@@ -414,10 +435,8 @@ export default [
         ...GLOBAL_LOGIC_RESTRICTIONS,
         ...STRICT_TYPE_RESTRICTIONS,
         ...STRICT_CLASS_RESTRICTIONS,
-        ...STRICT_IMPORT_RESTRICTIONS.filter(r =>
-          !r.selector.includes('ExportAllDeclaration') &&
-          !r.selector.includes('ExportNamedDeclaration[source]')
-        )
+        ...STRICT_IMPORT_RESTRICTIONS
+        // 注意：不再对 export ... from 语法进行豁免，所有文件都必须先 import 再 export
       ]
     }
   },
@@ -576,9 +595,9 @@ export default [
         ...STRICT_TYPE_RESTRICTIONS,
         ...STRICT_CLASS_RESTRICTIONS,
         ...NO_MAGIC_STRINGS,
-        
+
         // 关键：这里只包含 "禁止网络" 规则，【不】包含 "禁止动态导入" 规则
-        RESTRICTION_NO_NETWORK 
+        RESTRICTION_NO_NETWORK
       ]
     }
   },
