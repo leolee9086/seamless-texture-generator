@@ -30,3 +30,9 @@ export interface DehazeParams {
   /** 明度增强因子 (0.5-2.0) */
   brightnessEnhancement: number;
 }
+
+/**
+ * 去雾预设类型
+ */
+export type DehazePreset = 'light' | 'medium' | 'heavy' | 'adaptive' | 'spatialAdaptive' | 'enhanced' | 'default'
+

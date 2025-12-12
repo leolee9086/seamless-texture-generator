@@ -4,29 +4,15 @@
  * @author 织
  */
 
-import { dehazeImageWebGPUSimple, preInitializeDevice, clearAllCaches } from '@leolee9086/image-dehazing'
-import { DehazeParams } from './types'
+import { dehazeImageWebGPUSimple, preInitializeDevice, clearAllCaches } from './imports'
+import { DehazeParams, DehazePreset } from './types'
 import { DEHAZE_PRESETS } from './DEHAZE_PRESETS'
 import { dehazeFailed } from './templates'
 
 /**
  * 默认去雾参数
  */
-export const DEFAULT_DEHAZE_PARAMS: DehazeParams = {
-  omega: 0.95,
-  t0: 0.1,
-  windowSize: 15,
-  topRatio: 0.1,
-  adaptiveMode: false,
-  spatialAdaptiveMode: false,
-  adaptiveStrength: 1.0,
-  hazeWeight: 0.5,
-  atmosphericWeight: 0.3,
-  enableEnhancement: false,
-  saturationEnhancement: 1.2,
-  contrastEnhancement: 1.1,
-  brightnessEnhancement: 1.0
-}
+export const DEFAULT_DEHAZE_PARAMS: DehazeParams = DEHAZE_PRESETS.default
 
 /**
  * 应用去雾调整
@@ -82,10 +68,6 @@ export async function applyDehazeAdjustment(
   }
 }
 
-/**
- * 去雾预设类型
- */
-export type DehazePreset = keyof typeof DEHAZE_PRESETS
 
 /**
  * 获取去雾预设
