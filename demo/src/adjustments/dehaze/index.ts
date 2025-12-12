@@ -7,6 +7,7 @@
 import { dehazeImageWebGPUSimple, preInitializeDevice, clearAllCaches } from '@leolee9086/image-dehazing'
 import { DehazeParams } from './types'
 import { DEHAZE_PRESETS } from './DEHAZE_PRESETS'
+import { dehazeFailed } from './templates'
 
 /**
  * 默认去雾参数
@@ -77,7 +78,7 @@ export async function applyDehazeAdjustment(
     return outputImageData
   } catch (error) {
     console.error('去雾处理失败:', error)
-    throw new Error(`去雾处理失败: ${error instanceof Error ? error.message : String(error)}`)
+    throw new Error(dehazeFailed(error))
   }
 }
 

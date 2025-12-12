@@ -8,7 +8,7 @@ export type { PipelineData, baseOptions } from '../../types/PipelineData.type'
 export type { DehazeParams } from '../../adjustments/dehaze/types'
 
 // 值导入转发 - 来自父级目录的业务逻辑
-export { applyDehazeAdjustment, DEFAULT_DEHAZE_PARAMS } from '../../adjustments/dehaze/dehazeAdjustment'
+export { applyDehazeAdjustment, DEFAULT_DEHAZE_PARAMS } from '../../adjustments/dehaze'
 export { processClarityAdjustment } from '../../adjustments/clarityAdjustment'
 export { adjustExposure, adjustExposureManual } from '../../adjustments/exposureAdjustment'
 export { applyLuminanceAdjustmentToImageData } from '../../adjustments/luminanceAdjustment'

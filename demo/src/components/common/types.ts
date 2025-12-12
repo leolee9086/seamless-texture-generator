@@ -11,6 +11,7 @@ export interface CollapsiblePanelProps {
  */
 export interface GenerateButtonProps {
   isGenerating: boolean
+  disabled?: boolean
   buttonText?: string
   generatingText?: string
 }

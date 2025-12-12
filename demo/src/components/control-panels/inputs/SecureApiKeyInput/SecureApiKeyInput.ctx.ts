@@ -110,6 +110,11 @@ function createSecureApiKeyMethods(
   }
   
   const setInputMode = (mode: InputMode): void => {
+    // 清理不再活跃的模式的状态
+    if (mode === INPUT_MODE.FILE) {
+      // 切换到文件模式，清除临时密钥
+      state.tempApiKey.value = EMPTY_STRING
+    }
     inputMode.value = mode
     notifyKeyStatus({ mode, hasKeyFile, hasTempKey, onKeyReady })
   }

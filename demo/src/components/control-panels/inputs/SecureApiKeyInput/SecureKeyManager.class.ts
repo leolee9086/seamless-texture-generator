@@ -3,6 +3,7 @@
  * 管理本地密钥文件的句柄，实现"用完即删"的零持久化安全策略。
  */
 
+import { ref } from './imports'
 import {
   ERROR_MESSAGES,
   SUCCESS_MESSAGES,
@@ -15,7 +16,7 @@ import { checkFileSystemAPISupport, verifyPermission } from './SecureKeyManager.
 import type { KeyRequestFunction } from './SecureApiKeyInput.types'
 
 class SecureKeyManager {
-  private _fileHandle: FileSystemFileHandle | null = null
+  private _fileHandle = ref<FileSystemFileHandle | null>(null)
   private readonly _isSupported: boolean
 
   constructor() {
@@ -45,7 +46,7 @@ class SecureKeyManager {
       const filePickerOptions = getFilePickerOptions()
       const [handle] = await window.showOpenFilePicker!(filePickerOptions)
       
-      this._fileHandle = handle
+      this._fileHandle.value = handle
       console.warn(SUCCESS_MESSAGES.FILE_HANDLE_ACQUIRED)
       return true
     } catch (error: unknown) {
@@ -66,12 +67,12 @@ class SecureKeyManager {
    * @param requestFn - 使用密钥执行请求的函数
    */
   async executeWithKey<T>(requestFn: KeyRequestFunction<T>): Promise<T> {
-    if (!this._fileHandle) {
+    if (!this._fileHandle.value) {
       throw new Error(ERROR_MESSAGES.NO_KEY_FILE_SELECTED)
     }
 
     // 确保我们仍然拥有读取文件的权限
-    const hasPermission = await verifyPermission(this._fileHandle)
+    const hasPermission = await verifyPermission(this._fileHandle.value!)
     if (!hasPermission) {
       throw new Error(ERROR_MESSAGES.FILE_READ_PERMISSION_DENIED)
     }
@@ -82,11 +83,11 @@ class SecureKeyManager {
       // --- 危险区开始 (Key 进入内存) ---
       
       // 1. 从句柄实时读取文件
-      const file = await this._fileHandle.getFile()
+      const file = await this._fileHandle.value!.getFile()
       sensitiveKey = await file.text()
       
       // 简单清洗 (去除换行/空格)
-      sensitiveKey = sensitiveKey.trim()
+      sensitiveKey = sensitiveKey!.trim()
 
       if (!sensitiveKey) {
         throw new Error(ERROR_MESSAGES.EMPTY_KEY_FILE)
@@ -121,19 +122,19 @@ class SecureKeyManager {
    * 检查是否已选择密钥文件
    */
   hasKeyFile(): boolean {
-    return this._fileHandle !== null
+    return this._fileHandle.value !== null
   }
 
   /**
    * 获取密钥文件名（用于显示）
    */
   async getFileName(): Promise<string> {
-    if (!this._fileHandle) {
+    if (!this._fileHandle.value) {
       return EMPTY_STRING
     }
     
     try {
-      return this._fileHandle.name
+      return this._fileHandle.value!.name
     } catch (error) {
       console.error(ERROR_MESSAGES.GET_FILE_NAME_FAILED, error)
       return EMPTY_STRING
@@ -144,7 +145,7 @@ class SecureKeyManager {
    * 可选: 如果用户登出，销毁句柄
    */
   clearSession(): void {
-    this._fileHandle = null
+    this._fileHandle.value = null
     console.warn(SUCCESS_MESSAGES.KEY_HANDLE_CLEARED)
   }
 }

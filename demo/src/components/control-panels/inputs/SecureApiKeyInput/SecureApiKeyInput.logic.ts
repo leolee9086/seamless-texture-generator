@@ -73,6 +73,7 @@ function createKeyFileMethods(
  */
 function createInputModeMethods(params: {
   inputMode: Ref<'file' | 'temp'>
+  tempApiKey: Ref<string>
   hasKeyFile: ComputedRef<boolean>
   hasTempKey: ComputedRef<boolean>
   emit: SecureApiKeyInputEmits
@@ -80,8 +81,13 @@ function createInputModeMethods(params: {
   setInputMode: (mode: 'file' | 'temp') => void
   handleTempKeyChange: () => void
 } {
-  const { inputMode, hasKeyFile, hasTempKey, emit } = params
+  const { inputMode, tempApiKey, hasKeyFile, hasTempKey, emit } = params
   const setInputMode = (mode: 'file' | 'temp'): void => {
+    // 清理不再活跃的模式的状态
+    if (mode === INPUT_MODE.FILE) {
+      // 切换到文件模式，清除临时密钥
+      tempApiKey.value = EMPTY_STRING
+    }
     inputMode.value = mode
     
     if (mode === INPUT_MODE.TEMP) {
@@ -122,6 +128,7 @@ export function useSecureApiKeyInput(props: { isMobile?: boolean }, emit: Secure
   const keyFileMethods = createKeyFileMethods(state.fileName, emit)
   const inputModeMethods = createInputModeMethods({
     inputMode: state.inputMode,
+    tempApiKey: state.tempApiKey,
     hasKeyFile: state.hasKeyFile,
     hasTempKey: state.hasTempKey,
     emit
