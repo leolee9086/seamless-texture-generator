@@ -68,8 +68,13 @@ async function generateWithFileMode(
   const base64 = await fetchImageAsBase64(proxiedUrl)
   onImageGenerated && onImageGenerated(base64)
   
-  // 缓存图片到本地存储，防止 URL 失效
-  await cacheImage(base64, proxiedUrl)
+  // 缓存所有生成的图片到本地存储，防止 URL 失效
+  // 使用代理URL作为缓存key，确保与ImageGallery中的查询key一致
+  for (const imageUrl of result.imageUrls || []) {
+    const imageProxiedUrl = proxyUrl ? buildProxyUrl(imageUrl, proxyUrl) : imageUrl
+    const imageBase64 = await fetchImageAsBase64(imageProxiedUrl)
+    await cacheImage(imageBase64, imageProxiedUrl)
+  }
 
   state.status.value = STATUS_MESSAGES.LOADED
 }
@@ -116,8 +121,13 @@ async function generateWithTempMode(
   const base64 = await fetchImageAsBase64(proxiedUrl)
   onImageGenerated && onImageGenerated(base64)
   
-  // 缓存图片到本地存储，防止 URL 失效
-  await cacheImage(base64, proxiedUrl)
+  // 缓存所有生成的图片到本地存储，防止 URL 失效
+  // 使用代理URL作为缓存key，确保与ImageGallery中的查询key一致
+  for (const imageUrl of result.imageUrls || []) {
+    const imageProxiedUrl = proxyUrl ? buildProxyUrl(imageUrl, proxyUrl) : imageUrl
+    const imageBase64 = await fetchImageAsBase64(imageProxiedUrl)
+    await cacheImage(imageBase64, imageProxiedUrl)
+  }
 
   state.status.value = STATUS_MESSAGES.LOADED
 }

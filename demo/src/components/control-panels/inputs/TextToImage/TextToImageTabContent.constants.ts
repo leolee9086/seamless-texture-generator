@@ -70,6 +70,7 @@ export const IMAGE_CACHE = {
   MAX_COUNT: 10,
   ERROR_MESSAGES: {
     CACHE_FAILED: 'Failed to cache image:',
+    FAILED_TO_DECODE_PROXY_URL: 'Failed to decode proxy URL:',
   }
 } as const
 

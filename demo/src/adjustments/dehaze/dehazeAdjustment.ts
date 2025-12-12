@@ -102,7 +102,6 @@ export function getDehazePreset(preset: DehazePreset): DehazeParams {
 export function clearDehazeCache(): void {
   try {
     clearAllCaches()
-    console.log('去雾缓存已清理')
   } catch (error) {
     console.warn('清理去雾缓存失败:', error)
   }
