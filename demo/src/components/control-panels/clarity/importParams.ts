@@ -25,13 +25,13 @@ export const importParams = (
         const file = target.files?.[0]
         if (file) {
             const reader = new FileReader()
-            reader.onload = (e: ProgressEvent<FileReader>): void => {
+            reader.onload = (progressEvent: ProgressEvent<FileReader>): void => {
                 try {
-                    if (!isFileReaderResultString(e.target?.result)) {
+                    if (!isFileReaderResultString(progressEvent.target?.result)) {
                         throw new Error('FileReader result is not a string')
                     }
                     
-                    const importedParams = JSON.parse(e.target.result)
+                    const importedParams = JSON.parse(progressEvent.target.result)
                     clarityParamsRef.value = { ...DEFAULT_CLARITY_PARAMS, ...importedParams }
                     currentPresetRef.value = null
                     emit('controlEvent', createClarityAdjustmentEvent(clarityParamsRef.value))

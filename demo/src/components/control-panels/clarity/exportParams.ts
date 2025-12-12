@@ -14,16 +14,16 @@ export const exportParams = (clarityParams: ClarityParams): void => {
     const paramsData = JSON.stringify(clarityParams, null, 2)
     const blob = new Blob([paramsData], { type: JSON_MIME_TYPE })
     const url = URL.createObjectURL(blob)
-    const a = document.createElement('a')
-    a.href = url
+    const downloadLink = document.createElement('a')
+    downloadLink.href = url
     
     // 生成带时间戳的文件名
     const timestamp = new Date().toISOString().slice(0, 19).replace(TIMESTAMP_PATTERN, TIMESTAMP_REPLACEMENT)
     const fileName = FILE_NAME_TEMPLATE.replace('{timestamp}', timestamp)
-    a.download = fileName
+    downloadLink.download = fileName
     
-    document.body.appendChild(a)
-    a.click()
-    document.body.removeChild(a)
+    document.body.appendChild(downloadLink)
+    downloadLink.click()
+    document.body.removeChild(downloadLink)
     URL.revokeObjectURL(url)
 }
