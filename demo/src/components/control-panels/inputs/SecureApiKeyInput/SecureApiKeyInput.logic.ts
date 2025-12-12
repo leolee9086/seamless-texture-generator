@@ -4,7 +4,7 @@
 
 import { ref, computed, onMounted } from './imports'
 import { secureKeyManager } from './SecureApiKeyInput.ctx'
-import type { SecureApiKeyInputEmits, SecureApiKeyInputReturn } from './SecureApiKeyInput.types'
+import type { SecureApiKeyInputEmits, SecureApiKeyInputState, SecureApiKeyInputActions } from './SecureApiKeyInput.types'
 import type { Ref, ComputedRef } from './imports'
 import { INPUT_MODE, API_KEY_PREFIX, EMPTY_STRING, ERROR_MESSAGES, EVENT_NAMES } from './SecureApiKeyInput.constants'
 
@@ -22,11 +22,11 @@ function createSecureApiKeyInputState(): {
   const inputMode = ref<'file' | 'temp'>(INPUT_MODE.FILE)
   const fileName = ref(EMPTY_STRING)
   const tempApiKey = ref(EMPTY_STRING)
-  
+
   const hasKeyFile = computed(() => secureKeyManager.hasKeyFile())
   const hasTempKey = computed(() => tempApiKey.value.trim().startsWith(API_KEY_PREFIX))
   const hasAnyKey = computed(() => hasKeyFile.value || hasTempKey.value)
-  
+
   return {
     inputMode,
     fileName,
@@ -58,13 +58,13 @@ function createKeyFileMethods(
       console.error(ERROR_MESSAGES.FILE_SELECTION_FAILED, error)
     }
   }
-  
+
   const clearKeyFile = (): void => {
     secureKeyManager.clearSession()
     fileName.value = EMPTY_STRING
     emit(EVENT_NAMES.KEY_CLEARED)
   }
-  
+
   return { selectKeyFile, clearKeyFile }
 }
 
@@ -89,22 +89,22 @@ function createInputModeMethods(params: {
       tempApiKey.value = EMPTY_STRING
     }
     inputMode.value = mode
-    
+
     if (mode === INPUT_MODE.TEMP) {
       emit(EVENT_NAMES.KEY_READY, hasTempKey.value)
     }
-    
+
     if (mode === INPUT_MODE.FILE) {
       emit(EVENT_NAMES.KEY_READY, hasKeyFile.value)
     }
   }
-  
+
   const handleTempKeyChange = (): void => {
     if (inputMode.value === INPUT_MODE.TEMP) {
       emit(EVENT_NAMES.KEY_READY, hasTempKey.value)
     }
   }
-  
+
   return { setInputMode, handleTempKeyChange }
 }
 
@@ -123,7 +123,7 @@ function initializeComponent(
   })
 }
 
-export function useSecureApiKeyInput(props: { isMobile?: boolean }, emit: SecureApiKeyInputEmits): SecureApiKeyInputReturn {
+export function useSecureApiKeyInput(props: { isMobile?: boolean }, emit: SecureApiKeyInputEmits): { state: SecureApiKeyInputState, actions: SecureApiKeyInputActions } {
   const state = createSecureApiKeyInputState()
   const keyFileMethods = createKeyFileMethods(state.fileName, emit)
   const inputModeMethods = createInputModeMethods({
@@ -133,12 +133,14 @@ export function useSecureApiKeyInput(props: { isMobile?: boolean }, emit: Secure
     hasTempKey: state.hasTempKey,
     emit
   })
-  
+
   initializeComponent(state.fileName, emit)
-  
+
   return {
-    ...state,
-    ...keyFileMethods,
-    ...inputModeMethods
+    state,
+    actions: {
+      ...keyFileMethods,
+      ...inputModeMethods
+    }
   }
 }

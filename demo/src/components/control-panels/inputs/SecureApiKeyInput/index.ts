@@ -21,7 +21,8 @@ import {
 import type {
   SecureApiKeyInputEmits,
   SecureApiKeyInputProps,
-  SecureApiKeyInputReturn,
+  SecureApiKeyInputState,
+  SecureApiKeyInputActions,
   InputMode,
   UseSecureApiKeyInputParams,
   UseSecureApiKeyInputReturn
@@ -55,7 +56,8 @@ export {
 export type {
   SecureApiKeyInputEmits,
   SecureApiKeyInputProps,
-  SecureApiKeyInputReturn,
+  SecureApiKeyInputState,
+  SecureApiKeyInputActions,
   InputMode,
   UseSecureApiKeyInputParams,
   UseSecureApiKeyInputReturn

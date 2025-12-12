@@ -37,7 +37,7 @@ export interface SecureApiKeyInputActions {
   handleTempKeyChange: () => void
 }
 
-export type SecureApiKeyInputReturn = SecureApiKeyInputState & SecureApiKeyInputActions
+
 
 export type InputMode = 'file' | 'temp'
 
@@ -47,7 +47,10 @@ export interface UseSecureApiKeyInputParams {
   onKeyCleared?: () => void
 }
 
-export type UseSecureApiKeyInputReturn = SecureApiKeyInputReturn
+export interface UseSecureApiKeyInputReturn {
+  state: SecureApiKeyInputState
+  actions: SecureApiKeyInputActions
+}
 
 /**
  * 密钥状态通知参数
