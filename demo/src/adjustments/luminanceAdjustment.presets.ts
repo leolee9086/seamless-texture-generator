@@ -6,6 +6,15 @@
 import type { LuminanceAdjustmentParams } from './imports';
 import type { LuminancePreset } from './luminanceAdjustment.types';
 
+// 预设项类型定义
+export interface LuminancePresetItem {
+    name: string;
+    params: LuminanceAdjustmentParams;
+}
+
+// 预设集合类型定义
+export type LuminancePresets = Record<LuminancePreset, LuminancePresetItem>;
+
 // Default parameters for luminance adjustment
 export const DEFAULT_LUMINANCE_PARAMS: LuminanceAdjustmentParams = {
     shadows: {
@@ -38,7 +47,7 @@ export const DEFAULT_LUMINANCE_PARAMS: LuminanceAdjustmentParams = {
 };
 
 // Presets for common adjustments
-export const LUMINANCE_PRESETS = {
+export const LUMINANCE_PRESETS: LuminancePresets = {
     default: {
         name: '默认',
         params: { ...DEFAULT_LUMINANCE_PARAMS }

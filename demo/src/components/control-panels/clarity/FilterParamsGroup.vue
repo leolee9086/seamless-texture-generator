@@ -21,7 +21,7 @@
 import { Slider } from '@leolee9086/slider-component'
 import { filterParams, createSliderItem } from './sliderParams.config'
 import type { ClarityParams } from './imports'
-import type { SliderParamConfig } from './sliderParams.types'
+import type { SliderParamConfig } from './clarityPanel.types'
 
 const props = defineProps<{
     isMobile?: boolean

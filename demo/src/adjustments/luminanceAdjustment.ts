@@ -3,8 +3,7 @@
  * Provides functions for managing luminance-based adjustments (Shadows, Midtones, Highlights)
  */
 
-import type { LuminanceAdjustmentParams, ZoneAdjustment } from './imports';
-import { processLuminanceAdjustment } from './imports';
+import type { LuminanceAdjustmentParams } from './imports';
 import { 验证错误消息 } from './luminanceAdjustment.templates';
 import { DEFAULT_LUMINANCE_PARAMS, LUMINANCE_PRESETS, getLuminancePreset } from './luminanceAdjustment.presets';
 import { applyLuminanceAdjustmentToImageData } from './luminanceAdjustment.gpu.utils';
@@ -20,8 +19,12 @@ export function validateLuminanceParams(params: LuminanceAdjustmentParams): {
     const errors: string[] = [];
 
     // Validate zone parameters
-    for (const zone of ['shadows', 'midtones', 'highlights'] as const) {
-        const zoneParams = params[zone] as ZoneAdjustment;
+    const zones = [
+        { name: 'shadows' as const, zoneParams: params.shadows },
+        { name: 'midtones' as const, zoneParams: params.midtones },
+        { name: 'highlights' as const, zoneParams: params.highlights },
+    ];
+    for (const { name: zone, zoneParams } of zones) {
 
         if (zoneParams.brightness < -1.0 || zoneParams.brightness > 1.0) {
             errors.push(验证错误消息.zone参数.brightness超出范围(zone));
@@ -88,12 +91,3 @@ export function createLuminanceAdjustmentEvent(params: LuminanceAdjustmentParams
     };
 }
 
-// Apply luminance adjustment to image using WebGPU
-export async function applyLuminanceAdjustment(
-    device: GPUDevice,
-    inputTexture: GPUTexture,
-    outputTexture: GPUTexture,
-    params: LuminanceAdjustmentParams
-): Promise<void> {
-    await processLuminanceAdjustment(device, inputTexture, outputTexture, params);
-}

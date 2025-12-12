@@ -3,12 +3,8 @@ import { processImageToTileable } from '../processPipelines/imageProcessor'
 import type { HSLAdjustmentLayer } from '../adjustments/hsl/hslAdjustStep'  // 新增这行
 import {
   handleImageUpload as uploadHandler,
-  loadSampleImage as loadSample,
-  handleSamplingConfirm as samplingConfirm,
-  toggleMagnifier as toggleMag,
   resetZoom as resetZoomFunc,
-  saveOriginal as saveOrig,
-  saveResult as saveRes
+  保存图像
 } from '../utils/imageHandlers'
 import { isMobileDevice, supportsNativeCamera as checkNativeCameraSupport } from '../utils/deviceDetection'
 import { watchImageChanges } from '../utils/imageWatcher'
@@ -163,13 +159,11 @@ export function useTextureGenerator(options: UseTextureGeneratorOptions = {}) {
     })
   }
 
-  // 加载示例图像
-  const loadSampleImageWrapper = () => {
-    loadSample((imageData: string) => {
-      rawOriginalImage.value = imageData
-      processedImage.value = null
-      errorMessage.value = ''
-    })
+  // 加载示例图像（直接使用URL，无需额外函数包装）
+  const loadSampleImageWrapper = (): void => {
+    rawOriginalImage.value = 'https://picsum.photos/seed/texture/512/512.jpg'
+    processedImage.value = null
+    errorMessage.value = ''
   }
 
   // 打开/关闭摄像头
@@ -201,12 +195,10 @@ export function useTextureGenerator(options: UseTextureGeneratorOptions = {}) {
     })
   }
 
-  // 处理采样确认
-  const handleSamplingConfirmWrapper = (imageData: string) => {
-    samplingConfirm(imageData, (updatedImageData: string) => {
-      originalImage.value = updatedImageData
-      processedImage.value = null
-    })
+  // 处理采样确认（直接更新状态，无需额外函数包装）
+  const handleSamplingConfirmWrapper = (imageData: string): void => {
+    originalImage.value = imageData
+    processedImage.value = null
   }
 
   // 构建完整的HSL调整层数组（全局 + 色块层）
@@ -279,11 +271,9 @@ export function useTextureGenerator(options: UseTextureGeneratorOptions = {}) {
     }, 300)
   }
 
-  // 切换放大镜
-  const toggleMagnifierWrapper = () => {
-    toggleMag(magnifierEnabled.value, (enabled: boolean) => {
-      magnifierEnabled.value = enabled
-    })
+  // 切换放大镜（直接取反，无需额外函数包装）
+  const toggleMagnifierWrapper = (): void => {
+    magnifierEnabled.value = !magnifierEnabled.value
   }
 
   const resetZoomWrapper = () => {
@@ -293,13 +283,13 @@ export function useTextureGenerator(options: UseTextureGeneratorOptions = {}) {
   }
 
   // 保存结果
-  const saveResultWrapper = () => {
-    saveRes(processedImage.value, saveProcessedImage)
+  const saveResultWrapper = (): void => {
+    保存图像(processedImage.value, saveProcessedImage)
   }
 
   // 保存原始图像
-  const saveOriginalWrapper = () => {
-    saveOrig(originalImage.value, saveOriginalImage)
+  const saveOriginalWrapper = (): void => {
+    保存图像(originalImage.value, saveOriginalImage)
   }
 
   // 打开采样编辑器
