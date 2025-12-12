@@ -27,7 +27,7 @@
 
 <script setup lang="ts">
 import { useTextToImage } from './TextToImageTabContent.ctx'
-import { createProxiedUrlsComputed, handleImageClick as handleImageClickUtil } from './TextToImageTabContent.utils'
+import { createProxiedUrlsComputed } from './TextToImageTabContent.utils'
 import { ApiKeyInput, PromptInput, ParameterGrid, StatusDisplay } from './imports'
 import AdvancedParameters from './AdvancedParameters.vue'
 import GenerateButton from './GenerateButton.vue'
@@ -65,10 +65,9 @@ const proxiedUrls = createProxiedUrlsComputed(generatedImages, proxyUrl)
 
 /**
  * 处理图像点击事件
+ * ImageGallery传递的是缓存的base64数据
  */
-const handleImageClick = async (imageUrl: string): Promise<void> => {
-  await handleImageClickUtil(imageUrl, proxyUrl, (base64: string) => {
-    emit('set-image', base64)
-  })
+const handleImageClick = (imageBase64: string): void => {
+  emit('set-image', imageBase64)
 }
 </script>

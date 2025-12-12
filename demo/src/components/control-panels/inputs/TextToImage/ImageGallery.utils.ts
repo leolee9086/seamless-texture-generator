@@ -42,12 +42,12 @@ export async function loadCachedImages(
  * 设置图像 URL 变化的监听器
  */
 export function setupImageUrlsWatcher(
-  imageUrls: string[],
+  imageUrlsGetter: () => string[],
   cachedImageUrls: Ref<string[]>
 ): void {
   watch(
-    () => imageUrls,
-    () => loadCachedImages(imageUrls, cachedImageUrls),
+    imageUrlsGetter,
+    (newUrls) => loadCachedImages(newUrls, cachedImageUrls),
     { immediate: true }
   )
 }
@@ -83,7 +83,7 @@ export function extractOriginalUrl(url: string): string {
   // 检查是否是代理URL格式: /api/common-proxy?target=encodedUrl
   const proxyUrlPattern = /^(.+)\?target=(.+)$/
   const match = url.match(proxyUrlPattern)
-  
+
   if (match) {
     try {
       // 解码URL参数
@@ -93,6 +93,6 @@ export function extractOriginalUrl(url: string): string {
       return url
     }
   }
-  
+
   return url
 }

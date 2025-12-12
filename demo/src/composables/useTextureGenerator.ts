@@ -4,7 +4,7 @@ import type { HSLAdjustmentLayer } from '../adjustments/hsl/hslAdjustStep'  // �
 import {
   handleImageUpload as uploadHandler,
   resetZoom as resetZoomFunc,
-  保存图像
+  saveImage
 } from '../utils/imageHandlers'
 import { isMobileDevice, supportsNativeCamera as checkNativeCameraSupport } from '../utils/deviceDetection'
 import { watchImageChanges } from '../utils/imageWatcher'
@@ -284,12 +284,12 @@ export function useTextureGenerator(options: UseTextureGeneratorOptions = {}) {
 
   // 保存结果
   const saveResultWrapper = (): void => {
-    保存图像(processedImage.value, saveProcessedImage)
+    saveImage(processedImage.value, saveProcessedImage)
   }
 
   // 保存原始图像
   const saveOriginalWrapper = (): void => {
-    保存图像(originalImage.value, saveOriginalImage)
+    saveImage(originalImage.value, saveOriginalImage)
   }
 
   // 打开采样编辑器

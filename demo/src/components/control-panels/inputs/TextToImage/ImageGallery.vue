@@ -40,7 +40,7 @@ const props = defineProps<ImageGalleryProps>()
 const cachedImageUrls = createCachedImageUrls()
 
 // 设置图像 URL 变化的监听器
-setupImageUrlsWatcher(props.imageUrls, cachedImageUrls)
+setupImageUrlsWatcher(() => props.imageUrls, cachedImageUrls)
 
 /**
  * 处理图像点击事件

@@ -53,27 +53,41 @@ async function generateWithFileMode(
 
   state.status.value = STATUS_MESSAGES.DOWNLOADING
 
-  // 更新生成的图像列表
-  if (result.imageUrls && result.imageUrls.length > 0) {
-    state.generatedImages.value = result.imageUrls
-  }
+  state.status.value = STATUS_MESSAGES.DOWNLOADING
 
-  // 将最新的一张图像发送到主画布
-  const latestImageUrl = result.imageUrls?.[0]
-  if (!latestImageUrl) {
+  const imageUrls = result.imageUrls || []
+  const proxyUrl = params.proxyUrl
+
+  // 1. 并行下载并缓存所有图片
+  // 这样可以避免多次请求同一张图片，并确保在更新 UI 前数据已准备好
+  const downloadPromises = imageUrls.map(async (imageUrl) => {
+    const imageProxiedUrl = proxyUrl ? buildProxyUrl(imageUrl, proxyUrl) : imageUrl
+    try {
+      const imageBase64 = await fetchImageAsBase64(imageProxiedUrl)
+      await cacheImage(imageBase64, imageProxiedUrl)
+      return { url: imageUrl, base64: imageBase64 }
+    } catch (error) {
+      console.warn(`Failed to download and cache image: ${imageUrl}`, error)
+      return null
+    }
+  })
+
+  const downloadedImages = await Promise.all(downloadPromises)
+  const validImages = downloadedImages.filter((img): img is { url: string, base64: string } => img !== null)
+
+  // 2. 将最新的一张图像发送到主画布
+  if (validImages.length > 0) {
+    const firstImage = validImages[0]
+    onImageGenerated && onImageGenerated(firstImage.base64)
+  } else if (imageUrls.length > 0) {
+    // 如果下载失败但有 URL，尝试抛出错误或只是警告
     throw new Error(ERROR_MESSAGES.NO_IMAGE_URL)
   }
-  const proxyUrl = params.proxyUrl
-  const proxiedUrl = proxyUrl ? buildProxyUrl(latestImageUrl, proxyUrl) : latestImageUrl
-  const base64 = await fetchImageAsBase64(proxiedUrl)
-  onImageGenerated && onImageGenerated(base64)
-  
-  // 缓存所有生成的图片到本地存储，防止 URL 失效
-  // 使用代理URL作为缓存key，确保与ImageGallery中的查询key一致
-  for (const imageUrl of result.imageUrls || []) {
-    const imageProxiedUrl = proxyUrl ? buildProxyUrl(imageUrl, proxyUrl) : imageUrl
-    const imageBase64 = await fetchImageAsBase64(imageProxiedUrl)
-    await cacheImage(imageBase64, imageProxiedUrl)
+
+  // 3. 更新生成的图像列表 (这将触发画廊更新)
+  // 此时缓存已准备好，画廊可以正确加载
+  if (result.imageUrls && result.imageUrls.length > 0) {
+    state.generatedImages.value = result.imageUrls
   }
 
   state.status.value = STATUS_MESSAGES.LOADED
@@ -106,27 +120,41 @@ async function generateWithTempMode(
 
   state.status.value = STATUS_MESSAGES.DOWNLOADING
 
-  // 更新生成的图像列表
-  if (result.imageUrls && result.imageUrls.length > 0) {
-    state.generatedImages.value = result.imageUrls
-  }
+  state.status.value = STATUS_MESSAGES.DOWNLOADING
 
-  // 将最新的一张图像发送到主画布
-  const latestImageUrl = result.imageUrls?.[0]
-  if (!latestImageUrl) {
+  const imageUrls = result.imageUrls || []
+  const proxyUrl = params.proxyUrl
+
+  // 1. 并行下载并缓存所有图片
+  // 这样可以避免多次请求同一张图片，并确保在更新 UI 前数据已准备好
+  const downloadPromises = imageUrls.map(async (imageUrl) => {
+    const imageProxiedUrl = proxyUrl ? buildProxyUrl(imageUrl, proxyUrl) : imageUrl
+    try {
+      const imageBase64 = await fetchImageAsBase64(imageProxiedUrl)
+      await cacheImage(imageBase64, imageProxiedUrl)
+      return { url: imageUrl, base64: imageBase64 }
+    } catch (error) {
+      console.warn(`Failed to download and cache image: ${imageUrl}`, error)
+      return null
+    }
+  })
+
+  const downloadedImages = await Promise.all(downloadPromises)
+  const validImages = downloadedImages.filter((img): img is { url: string, base64: string } => img !== null)
+
+  // 2. 将最新的一张图像发送到主画布
+  if (validImages.length > 0) {
+    const firstImage = validImages[0]
+    onImageGenerated && onImageGenerated(firstImage.base64)
+  } else if (imageUrls.length > 0) {
+    // 如果下载失败但有 URL，尝试抛出错误或只是警告
     throw new Error(ERROR_MESSAGES.NO_IMAGE_URL)
   }
-  const proxyUrl = params.proxyUrl
-  const proxiedUrl = proxyUrl ? buildProxyUrl(latestImageUrl, proxyUrl) : latestImageUrl
-  const base64 = await fetchImageAsBase64(proxiedUrl)
-  onImageGenerated && onImageGenerated(base64)
-  
-  // 缓存所有生成的图片到本地存储，防止 URL 失效
-  // 使用代理URL作为缓存key，确保与ImageGallery中的查询key一致
-  for (const imageUrl of result.imageUrls || []) {
-    const imageProxiedUrl = proxyUrl ? buildProxyUrl(imageUrl, proxyUrl) : imageUrl
-    const imageBase64 = await fetchImageAsBase64(imageProxiedUrl)
-    await cacheImage(imageBase64, imageProxiedUrl)
+
+  // 3. 更新生成的图像列表 (这将触发画廊更新)
+  // 此时缓存已准备好，画廊可以正确加载
+  if (result.imageUrls && result.imageUrls.length > 0) {
+    state.generatedImages.value = result.imageUrls
   }
 
   state.status.value = STATUS_MESSAGES.LOADED
