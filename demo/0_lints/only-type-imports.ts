@@ -5,7 +5,7 @@
  */
 export const ONLY_ALLOW_TYPE_IMPORTS = [
   {
-    selector: 'ImportDeclaration[importKind!="type"]:not([source.value=/(\\.utils|\\.guard|\\.code|\\.constants|\\.presets|\\.templates|\\.prompts|\\.ctx|\\imports|index)$/])',
+    selector: 'ImportDeclaration[importKind!="type"]:not([source.value=/(\\.utils|\\.guard|\\.code|\\.constants|\\.presets|\\.templates|\\.prompts|\\.ctx|\\imports|index|templates)$/])',
     message: `
       架构严令：禁止从业务文件进行"值导入" (Value Import)。
       ------------------------------------------------
