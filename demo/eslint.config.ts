@@ -23,6 +23,7 @@ import {
 } from './0_lints/combined-restrictions.ts'
 
 import { localRulesPlugin } from './0_lints/vue-custom-rules.ts'
+import { aiWorkerPlugin } from './0_lints/ai-worker-rules.ts' // 导入 AI Worker 插件
 import { 接口职责分离插件 } from './0_lints/interface-responsibility.ts'
 
 // ========================================================================
@@ -37,6 +38,19 @@ export default [
       '**/toread/**', '**/benchmark/**', '**/experimental/**', '**/plans/**',
       '**/.claude/**', '**/.cursor/**', '**/.roo/**', '**/.trashed/**', '**/代码规约/**'
     ]
+  },
+
+  // ========================================================================
+  // 2. AI Worker 协议 (全局应用)
+  // ========================================================================
+  {
+    files: ['**/*.ts', '**/*.tsx', '**/*.vue', '**/*.d.ts'],
+    plugins: {
+      'ai-worker': aiWorkerPlugin
+    },
+    rules: {
+      'ai-worker/detect-ai-todo': 'error'
+    }
   },
 
   // --- 基础插件与解析器设置 ---
