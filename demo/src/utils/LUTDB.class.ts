@@ -1,8 +1,5 @@
 import type { LUTItem } from './lutDb.types';
-
-const DB_NAME = 'SeamlessTextureGeneratorDB';
-const STORE_NAME = 'luts';
-const DB_VERSION = 1;
+import { DB_NAME, DB_VERSION, STORE_NAME } from './LUTDB.constants';
 
 export class LUTDB {
     private db: IDBDatabase | null = null;
@@ -17,8 +14,8 @@ export class LUTDB {
                 resolve();
             };
 
-            request.onupgradeneeded = (event) => {
-                const db = (event.target as IDBOpenDBRequest).result;
+            request.onupgradeneeded = () => {
+                const db = request.result;
                 if (!db.objectStoreNames.contains(STORE_NAME)) {
                     db.createObjectStore(STORE_NAME, { keyPath: 'id' });
                 }
@@ -76,14 +73,16 @@ export class LUTDB {
 
             getRequest.onsuccess = () => {
                 const data = getRequest.result as LUTItem;
-                if (data) {
-                    data.thumbnail = thumbnail;
-                    const updateRequest = store.put(data);
-                    updateRequest.onsuccess = () => resolve();
-                    updateRequest.onerror = () => reject(updateRequest.error);
-                } else {
+                // 卫语句：先处理异常情况
+                if (!data) {
                     reject(new Error('LUT not found'));
+                    return;
                 }
+                // 正常逻辑
+                data.thumbnail = thumbnail;
+                const updateRequest = store.put(data);
+                updateRequest.onsuccess = () => resolve();
+                updateRequest.onerror = () => reject(updateRequest.error);
             };
             getRequest.onerror = () => reject(getRequest.error);
         });
