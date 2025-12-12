@@ -1,50 +1,57 @@
-import type { ControlEvent, DehazeParams, ClarityParams, LuminanceAdjustmentParams, Component } from './imports'
-import type { HSLAdjustmentLayer } from '../adjustments/hsl/hslAdjustStep'
+import type { ControlEvent, ControlEventDetail } from './imports'
+import type { ControlEventHandlerOptions } from './controlEventHandler.types'
+import { BUTTON_ACTION, DATA_ACTION, EVENT_TYPE } from './controlEventHandler.constants'
 
-/**
- * 创建统一事件处理器的配置选项
- */
-export interface ControlEventHandlerOptions {
-  // 按钮点击动作处理器
-  onLoadSampleImage?: () => void
-  onProcessImage?: () => void
-  onToggleMagnifier?: () => void
-  onResetZoom?: () => void
-  onSaveResult?: () => void
-  onSaveOriginal?: () => void
-  onOpenSamplingEditor?: () => void
-  onToggleCamera?: () => void
-  onToggleLUT?: () => void
-  onClearLUT?: () => void
+export type { ControlEventHandlerOptions }
 
-  // 数据更新动作处理器
-  onImageUpload?: (event: Event) => void
-  onPhotoCaptured?: (imageData: string) => void
-  onCameraError?: (message: string) => void
-  onMaxResolution?: (value: number) => void
-  onBorderSize?: (value: number) => void
-  onSplitPosition?: (value: number) => void
-  onZoomLevel?: (value: number) => void
-  onLUTIntensity?: (value: number) => void
-  onLUTFileChange?: (file: File) => void
-  onMaskUpdate?: (maskGenerator: (() => Promise<Uint8Array | null>) | null) => void
-  // 预览覆盖层处理器
-  onSetPreviewOverlay?: (data: any, component: Component) => void
-  // HSL调整处理器 - 在这里添加
-  onGlobalHSLChange?: (layer: HSLAdjustmentLayer) => void
-  onAddHSLLayer?: (layer: any) => void
-  onUpdateHSLLayer?: (id: string, updates: any) => void
-  onRemoveHSLLayer?: (id: string) => void  // 曝光调整处理器
-  onExposureStrength?: (strength: number) => void
-  onExposureManual?: (params: { exposure: number; contrast: number; gamma: number }) => void
-  // 去雾调整处理器
-  onDehazeChange?: (params: DehazeParams) => void
-  // 清晰度调整处理器
-  onClarityAdjustment?: (params: ClarityParams) => void
-  // 亮度调整处理器
-  onLuminanceAdjustment?: (params: LuminanceAdjustmentParams) => void
-  // 设置图片
-  onSetImage?: (imageData: string) => void
+/** 按钮点击action到处理函数的映射 */
+const buttonClickHandlers: Record<string, (options: ControlEventHandlerOptions) => void> = {
+  [BUTTON_ACTION.LOAD_SAMPLE_IMAGE]: (o) => o.onLoadSampleImage?.(),
+  [BUTTON_ACTION.PROCESS_IMAGE]: (o) => o.onProcessImage?.(),
+  [BUTTON_ACTION.TOGGLE_MAGNIFIER]: (o) => o.onToggleMagnifier?.(),
+  [BUTTON_ACTION.RESET_ZOOM]: (o) => o.onResetZoom?.(),
+  [BUTTON_ACTION.SAVE_RESULT]: (o) => o.onSaveResult?.(),
+  [BUTTON_ACTION.SAVE_ORIGINAL]: (o) => o.onSaveOriginal?.(),
+  [BUTTON_ACTION.OPEN_SAMPLING_EDITOR]: (o) => o.onOpenSamplingEditor?.(),
+  [BUTTON_ACTION.TOGGLE_CAMERA]: (o) => o.onToggleCamera?.(),
+  [BUTTON_ACTION.TOGGLE_LUT]: (o) => o.onToggleLUT?.(),
+  [BUTTON_ACTION.CLEAR_LUT]: (o) => o.onClearLUT?.(),
+}
+
+/** 处理按钮点击事件 */
+function handleButtonClick(options: ControlEventHandlerOptions, action: string): void {
+  buttonClickHandlers[action]?.(options)
+}
+
+/** 处理数据更新事件 - 使用早返回模式保持类型安全 */
+function handleUpdateData(options: ControlEventHandlerOptions, detail: ControlEventDetail): void {
+  const { action, data } = detail
+
+  if (action === DATA_ACTION.IMAGE_UPLOAD) { options.onImageUpload?.(data); return }
+  if (action === DATA_ACTION.PHOTO_CAPTURED) { options.onPhotoCaptured?.(data); return }
+  if (action === DATA_ACTION.CAMERA_ERROR) { options.onCameraError?.(data); return }
+  if (action === DATA_ACTION.MAX_RESOLUTION) { options.onMaxResolution?.(data); return }
+  if (action === DATA_ACTION.BORDER_SIZE) { options.onBorderSize?.(data); return }
+  if (action === DATA_ACTION.SPLIT_POSITION) { options.onSplitPosition?.(data); return }
+  if (action === DATA_ACTION.ZOOM_LEVEL) { options.onZoomLevel?.(data); return }
+  if (action === DATA_ACTION.LUT_INTENSITY) { options.onLUTIntensity?.(data); return }
+  if (action === DATA_ACTION.LUT_FILE_CHANGE) { options.onLUTFileChange?.(data); return }
+  if (action === DATA_ACTION.MASK_UPDATE) { options.onMaskUpdate?.(data); return }
+  if (action === DATA_ACTION.SET_PREVIEW_OVERLAY && data && typeof data === 'object' && 'data' in data && 'component' in data) {
+    options.onSetPreviewOverlay?.(data.data, data.component)
+    return
+  }
+  if (action === DATA_ACTION.SET_PREVIEW_OVERLAY) { return }
+  if (action === DATA_ACTION.GLOBAL_HSL_CHANGE) { options.onGlobalHSLChange?.(data); return }
+  if (action === DATA_ACTION.ADD_HSL_LAYER) { options.onAddHSLLayer?.(data); return }
+  if (action === DATA_ACTION.UPDATE_HSL_LAYER) { options.onUpdateHSLLayer?.(data.id, data.updates); return }
+  if (action === DATA_ACTION.REMOVE_HSL_LAYER) { options.onRemoveHSLLayer?.(data); return }
+  if (action === DATA_ACTION.EXPOSURE_STRENGTH) { options.onExposureStrength?.(data); return }
+  if (action === DATA_ACTION.EXPOSURE_MANUAL) { options.onExposureManual?.(data); return }
+  if (action === DATA_ACTION.DEHAZE_CHANGE) { options.onDehazeChange?.(data); return }
+  if (action === DATA_ACTION.CLARITY_ADJUSTMENT) { options.onClarityAdjustment?.(data); return }
+  if (action === DATA_ACTION.LUMINANCE_ADJUSTMENT) { options.onLuminanceAdjustment?.(data); return }
+  if (action === DATA_ACTION.SET_IMAGE) { options.onSetImage?.(data); return }
 }
 
 /**
@@ -53,111 +60,14 @@ export interface ControlEventHandlerOptions {
  * @returns 事件处理函数
  */
 export function createControlEventHandler(options: ControlEventHandlerOptions) {
-  return (event: ControlEvent) => {
+  return (event: ControlEvent): void => {
     const { type, detail } = event
-
-    if (type === 'button-click') {
-      switch (detail.action) {
-        case 'load-sample-image':
-          options.onLoadSampleImage?.()
-          break
-        case 'process-image':
-          options.onProcessImage?.()
-          break
-        case 'toggle-magnifier':
-          options.onToggleMagnifier?.()
-          break
-        case 'reset-zoom':
-          options.onResetZoom?.()
-          break
-        case 'save-result':
-          options.onSaveResult?.()
-          break
-        case 'save-original':
-          options.onSaveOriginal?.()
-          break
-        case 'open-sampling-editor':
-          options.onOpenSamplingEditor?.()
-          break
-        case 'toggle-camera':
-          options.onToggleCamera?.()
-          break
-        case 'toggle-lut':
-          options.onToggleLUT?.()
-          break
-        case 'clear-lut':
-          options.onClearLUT?.()
-          break
-      }
-    } else if (type === 'update-data') {
-      switch (detail.action) {
-        case 'image-upload':
-          options.onImageUpload?.(detail.data)
-          break
-        case 'photo-captured':
-          options.onPhotoCaptured?.(detail.data)
-          break
-        case 'camera-error':
-          options.onCameraError?.(detail.data)
-          break
-        case 'max-resolution':
-          options.onMaxResolution?.(detail.data)
-          break
-        case 'border-size':
-          options.onBorderSize?.(detail.data)
-          break
-        case 'split-position':
-          options.onSplitPosition?.(detail.data)
-          break
-        case 'zoom-level':
-          options.onZoomLevel?.(detail.data)
-          break
-        case 'lut-intensity':
-          options.onLUTIntensity?.(detail.data)
-          break
-        case 'lut-file-change':
-          options.onLUTFileChange?.(detail.data)
-          break
-        case 'mask-update':
-          options.onMaskUpdate?.(detail.data)
-          break
-        case 'set-preview-overlay':
-          if (detail.data && typeof detail.data === 'object' && 'data' in detail.data && 'component' in detail.data) {
-            options.onSetPreviewOverlay?.(detail.data.data, detail.data.component)
-          }
-          break
-        // HSL事件处理 - 在这里添加
-        case 'global-hsl-change':
-          options.onGlobalHSLChange?.(detail.data)
-          break
-        case 'add-hsl-layer':
-          options.onAddHSLLayer?.(detail.data)
-          break
-        case 'update-hsl-layer':
-          options.onUpdateHSLLayer?.(detail.data.id, detail.data.updates)
-          break
-        case 'remove-hsl-layer':
-          options.onRemoveHSLLayer?.(detail.data)
-          break
-        case 'exposure-strength':
-          options.onExposureStrength?.(detail.data)
-          break
-        case 'exposure-manual':
-          options.onExposureManual?.(detail.data)
-          break
-        case 'dehaze-change':
-          options.onDehazeChange?.(detail.data)
-          break
-        case 'clarity-adjustment':
-          options.onClarityAdjustment?.(detail.data)
-          break
-        case 'luminance-adjustment':
-          options.onLuminanceAdjustment?.(detail.data)
-          break
-        case 'set-image':
-          options.onSetImage?.(detail.data)
-          break
-      }
+    if (type === EVENT_TYPE.BUTTON_CLICK) {
+      handleButtonClick(options, detail.action)
+      return
+    }
+    if (type === EVENT_TYPE.UPDATE_DATA) {
+      handleUpdateData(options, detail)
     }
   }
 }
