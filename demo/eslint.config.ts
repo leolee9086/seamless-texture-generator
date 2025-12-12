@@ -21,6 +21,7 @@ import {
 } from './0_lints/combined-restrictions.ts'
 
 import { localRulesPlugin } from './0_lints/vue-custom-rules.ts'
+import { 接口职责分离插件 } from './0_lints/interface-responsibility.ts'
 
 // ========================================================================
 // 3. ESLint 配置主体
@@ -162,7 +163,12 @@ export default [
   {
     files: ['src/**/*.types.ts', 'src/**/*.d.ts', 'src/**/types/**/*.ts', 'test/**/*.types.ts', 'test/**/*.d.ts', 'test/**/types/**/*.ts'],
     ignores: ['**/index.types.ts', '**/imports.ts'],
+    plugins: {
+      'interface-guard': 接口职责分离插件
+    },
     rules: {
+      'interface-guard/接口职责分离': 'error',
+      'interface-guard/禁止单属性接口': 'error',
       'no-restricted-syntax': [
         'error',
         ...GLOBAL_LOGIC_RESTRICTIONS,
