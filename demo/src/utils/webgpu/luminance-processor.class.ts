@@ -112,9 +112,9 @@ export async function processLuminanceAdjustment(
 ): Promise<void> {
     const processor = new WebGPULuminanceProcessor(device);
     await processor.initialize();
-    
+
     const commandEncoder = await processor.processImage(inputTexture, outputTexture, params);
     device.queue.submit([commandEncoder.finish()]);
-    
+
     processor.destroy();
 }
