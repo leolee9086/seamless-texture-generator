@@ -8,15 +8,15 @@
  */
 export const STRICT_IMPORT_RESTRICTIONS = [
     {
-        selector: 'ImportDeclaration[source.value=/^\\.\\.\\//]',
+        selector: 'ImportDeclaration[source.value=/^\\u002E\\u002E\\u002F/]',
         message: '禁止从父级目录导入 (../)。必须通过本目录同层级的 ./imports.ts 转发。'
     },
     {
-        selector: 'ExportNamedDeclaration[source.value=/^\\.\\.\\//]',
+        selector: 'ExportNamedDeclaration[source.value=/^\\u002E\\u002E\\u002F/]',
         message: '禁止从父级目录重导出 (../)。'
     },
     {
-        selector: 'ExportAllDeclaration[source.value=/^\\.\\.\\//]',
+        selector: 'ExportAllDeclaration[source.value=/^\\u002E\\u002E\\u002F/]',
         message: '禁止从父级目录全量重导出 (../)。'
     },
     {

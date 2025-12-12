@@ -291,7 +291,7 @@ export default [
         ...GLOBAL_LOGIC_RESTRICTIONS, // <-- Vue 组件禁止直接 fetch 或 import()
         ...STRICT_TYPE_RESTRICTIONS,
         {
-          selector: 'ImportDeclaration[source.value=/^\\.\\./]',
+          selector: 'ImportDeclaration[source.value=/^\\u002E\\u002E\\u002F/]',
           message: '禁止从父级目录导入 (../)。必须通过 ./imports.ts 转发。'
         }
       ]
