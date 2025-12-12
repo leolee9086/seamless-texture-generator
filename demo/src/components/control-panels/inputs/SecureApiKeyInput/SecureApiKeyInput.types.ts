@@ -4,10 +4,6 @@
 
 import type { Ref, ComputedRef } from './imports'
 
-// SecureKeyManager 相关类型
-export interface SecureKeyManagerOptions {
-  enableLogging?: boolean
-}
 
 export type KeyRequestFunction<T> = (apiKey: string) => Promise<T>
 
@@ -23,7 +19,7 @@ export interface SecureApiKeyInputProps {
   isMobile?: boolean
 }
 
-export interface SecureApiKeyInputReturn {
+export interface SecureApiKeyInputState {
   // 状态
   inputMode: Ref<'file' | 'temp'>
   fileName: Ref<string>
@@ -31,13 +27,17 @@ export interface SecureApiKeyInputReturn {
   hasKeyFile: ComputedRef<boolean>
   hasTempKey: ComputedRef<boolean>
   hasAnyKey: ComputedRef<boolean>
-  
+}
+
+export interface SecureApiKeyInputActions {
   // 方法
   selectKeyFile: () => Promise<void>
   clearKeyFile: () => void
   setInputMode: (mode: 'file' | 'temp') => void
   handleTempKeyChange: () => void
 }
+
+export type SecureApiKeyInputReturn = SecureApiKeyInputState & SecureApiKeyInputActions
 
 export type InputMode = 'file' | 'temp'
 
@@ -47,7 +47,7 @@ export interface UseSecureApiKeyInputParams {
   onKeyCleared?: () => void
 }
 
-export interface UseSecureApiKeyInputReturn extends SecureApiKeyInputReturn {}
+export type UseSecureApiKeyInputReturn = SecureApiKeyInputReturn
 
 /**
  * 密钥状态通知参数
