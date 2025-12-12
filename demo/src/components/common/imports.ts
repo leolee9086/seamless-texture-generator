@@ -1,3 +1,5 @@
 // Re-export utils
-export { horizontalScroll } from '../../utils/scroll'
-export { saveOriginalImage, saveProcessedImage } from '../../utils/download'
+import { horizontalScroll } from '../../utils/scroll'
+import { saveOriginalImage, saveProcessedImage } from '../../utils/download'
+
+export { horizontalScroll, saveOriginalImage, saveProcessedImage }

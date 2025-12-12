@@ -1,6 +1,12 @@
 // Re-export types from parent directory
-export type { 
-  PresetData, 
-  PresetSelectorProps, 
-  PresetSelectorEmits 
+import type {
+  PresetData,
+  PresetSelectorProps,
+  PresetSelectorEmits
 } from '../types'
+
+export type {
+  PresetData,
+  PresetSelectorProps,
+  PresetSelectorEmits
+}
