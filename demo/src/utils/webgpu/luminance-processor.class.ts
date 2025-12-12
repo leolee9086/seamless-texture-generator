@@ -3,8 +3,8 @@
  * Implements luminance-based adjustments (Shadows, Midtones, Highlights) using WebGPU
  */
 
-import type { LuminanceAdjustmentParams } from './luminance.types';
-import { luminanceComputeShader, createLuminanceParamsBuffer } from './luminance-shaders';
+import type { LuminanceAdjustmentParams, ProcessLuminanceOptions } from './luminance.types';
+import { luminanceComputeShader, createLuminanceParamsBuffer } from './luminance-shaders.utils';
 
 export class WebGPULuminanceProcessor {
     private device: GPUDevice;
@@ -25,7 +25,7 @@ export class WebGPULuminanceProcessor {
 
         // Load shader module
         const shaderModule = this.device.createShaderModule({
-            code: this.getShaderCode()
+            code: luminanceComputeShader
         });
 
         // Create compute pipeline
@@ -38,10 +38,7 @@ export class WebGPULuminanceProcessor {
         });
     }
 
-    private getShaderCode(): string {
-        // Use the imported shader code
-        return luminanceComputeShader;
-    }
+
 
     async processImage(
         inputTexture: GPUTexture,
@@ -103,13 +100,13 @@ export class WebGPULuminanceProcessor {
     }
 }
 
+
+
 // Process luminance adjustment using WebGPU
 export async function processLuminanceAdjustment(
-    device: GPUDevice,
-    inputTexture: GPUTexture,
-    outputTexture: GPUTexture,
-    params: LuminanceAdjustmentParams
+    options: ProcessLuminanceOptions
 ): Promise<void> {
+    const { device, inputTexture, outputTexture, params } = options;
     const processor = new WebGPULuminanceProcessor(device);
     await processor.initialize();
 

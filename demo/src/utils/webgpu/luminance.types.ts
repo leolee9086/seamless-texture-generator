@@ -21,3 +21,11 @@ export interface LuminanceAdjustmentParams {
     highlightStart: number; // 0.0 to 1.0, default 0.66
     softness: number;       // 0.0 to 1.0, default 0.1
 }
+
+/** processLuminanceAdjustment 的参数类型 */
+export interface ProcessLuminanceOptions {
+    device: GPUDevice;
+    inputTexture: GPUTexture;
+    outputTexture: GPUTexture;
+    params: LuminanceAdjustmentParams;
+}
