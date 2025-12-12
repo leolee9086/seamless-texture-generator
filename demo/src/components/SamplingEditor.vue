@@ -58,8 +58,8 @@
                             strokeWidth: 2 / groupConfig.scaleX,
                             draggable: true,
                             hitStrokeWidth: 20 / groupConfig.scaleX
-                        }" @dragmove="(e: any) => handlePointDragMoveWithScale(e, index)" @mouseenter="handleMouseEnter"
-                            @mouseleave="handleMouseLeave" />
+                        }" @dragmove="(e: any) => handlePointDragMoveWithScale(e, index)"
+                            @mouseenter="handleMouseEnter" @mouseleave="handleMouseLeave" />
                     </v-group>
                 </v-layer>
             </v-stage>
@@ -113,6 +113,10 @@ import {
     getCenter
 } from '../utils/geometry'
 import { useSamplingPoints } from '../composables/useSamplingPoints'
+/**@AITODO 
+*需要支持自由比例的矩形
+*需要支持在自由比例模式下,通过拖动边的中点来调整矩形的大小和比例
+*/
 const props = defineProps<{
     visible: boolean
     originalImage: string | null

@@ -15,16 +15,9 @@ export function handlePhotoCaptured(
 }
 
 /**
- * 处理摄像头错误
- * @param message 错误消息
- * @param onError 错误处理回调
+ * @AIDONE 这个函数已被消除，直接在调用处处理错误逻辑
+ * 原函数只是一个简单的包装器，没有提供额外价值，违反了DRY原则
  */
-export function handleCameraError(
-  message: string,
-  onError: (message: string) => void
-): void {
-  onError(message)
-}
 
 /**
  * 切换摄像头状态

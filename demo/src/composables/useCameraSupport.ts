@@ -1,4 +1,4 @@
-import { ref, onMounted, isMobileDevice, supportsNativeCamera, handlePhotoCaptured, handleCameraError, toggleCamera } from './imports'
+import { ref, onMounted, isMobileDevice, supportsNativeCamera, handlePhotoCaptured, toggleCamera } from './imports'
 import type { CameraSupport } from './useCameraSupport.types'
 
 /**
@@ -38,7 +38,8 @@ export function useCameraSupport(enableCamera: boolean = false): CameraSupport {
     /** 处理摄像头错误 */
     const handleCameraErrorWrapper = (message: string, onError: (msg: string) => void): void => {
         if (!enableCamera) return
-        handleCameraError(message, onError)
+        // 直接调用错误处理回调，消除不必要的中间层
+        onError(message)
     }
 
     return {

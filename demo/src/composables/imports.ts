@@ -1,15 +1,20 @@
 // Vue
 import { ref, onMounted } from 'vue'
-import type { Ref } from 'vue'
+import type { Ref, Component } from 'vue'
 
 // Utils
 import { isMobileDevice, supportsNativeCamera } from '../utils/deviceDetection'
-import { handlePhotoCaptured, handleCameraError, toggleCamera } from '../utils/device/cameraHandlers'
+import { handlePhotoCaptured, toggleCamera } from '../utils/device/cameraHandlers'
+import { createControlEventHandler } from '../utils/controlEventHandler'
+
+// Types
+import type { ControlEvent } from '../utils/imports'
 
 // Adjustments
 import type { DehazeParams } from '../adjustments/dehaze/types'
 import type { ClarityParams } from '../adjustments/clarityAdjustment'
 import type { LuminanceAdjustmentParams } from '../adjustments/imports'
+import type { HSLAdjustmentLayer } from '../utils/imports'
 
-export { ref, onMounted, isMobileDevice, supportsNativeCamera, handlePhotoCaptured, handleCameraError, toggleCamera }
-export type { Ref, DehazeParams, ClarityParams, LuminanceAdjustmentParams }
+export { ref, onMounted, isMobileDevice, supportsNativeCamera, handlePhotoCaptured, toggleCamera, createControlEventHandler }
+export type { Ref, Component, ControlEvent, DehazeParams, ClarityParams, LuminanceAdjustmentParams, HSLAdjustmentLayer }
