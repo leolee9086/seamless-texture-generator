@@ -27,6 +27,7 @@ import { useColorBlockSelector, type AdjustmentLayer } from '../../composables/u
 import { getHslBlockColor } from '../../utils/lut/getHslBlockColor'
 import type { RGBColor } from '../../utils/lut/colorQuantization'
 import type { HSLRange } from '../../utils/lut/hslMask'
+import { isHTMLInputElement } from '../../utils/imageHandlers.guard'
 
 // Vue Wrapper
 import { createComponentWrapper, withProps, withEmit, composeWrappers } from '../../utils/vue/wrapper'
@@ -51,6 +52,7 @@ export {
   useProceduralTextureState,
   useColorBlockSelector,
   getHslBlockColor,
+  isHTMLInputElement,
   createComponentWrapper,
   withProps,
   withEmit,

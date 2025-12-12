@@ -97,6 +97,11 @@ body {
     border-color: rgba(59, 130, 246, 0.5);
 }
 
+.glass-input option {
+    background-color: #242424;
+    color: white;
+}
+
 /* Glass button */
 .glass-btn {
     background: rgba(255, 255, 255, 0.05);

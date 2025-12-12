@@ -17,7 +17,9 @@ import {
   NO_MAGIC_STRINGS,
   RESTRICTION_NO_DYNAMIC_IMPORT,
   RESTRICTION_NO_NETWORK,
-  GLOBAL_LOGIC_RESTRICTIONS
+  GLOBAL_LOGIC_RESTRICTIONS,
+  NO_SINGLE_CHAR_VAR_RESTRICTIONS,
+  ID_LENGTH_RULE_CONFIG
 } from './0_lints/combined-restrictions.ts'
 
 import { localRulesPlugin } from './0_lints/vue-custom-rules.ts'
@@ -68,12 +70,15 @@ export default [
       'max-lines': ['error', { "max": 300, "skipBlankLines": true, "skipComments": true }],
       'max-lines-per-function': ['error', { "max": 50, "skipBlankLines": true, "skipComments": true, "IIFEs": true }],
       'class-methods-use-this': ['error', { "enforceForClassFields": true }],
+      // 禁止单字母变量名 (内置规则)
+      'id-length': ID_LENGTH_RULE_CONFIG,
 
       // 默认应用全局约束
       'no-restricted-syntax': [
         'error',
         ...GLOBAL_LOGIC_RESTRICTIONS,
-        ...STRICT_CLASS_RESTRICTIONS
+        ...STRICT_CLASS_RESTRICTIONS,
+        ...NO_SINGLE_CHAR_VAR_RESTRICTIONS
       ]
     },
   },
@@ -108,7 +113,8 @@ export default [
         ...STRICT_IMPORT_RESTRICTIONS,
         ...STRICT_CLASS_RESTRICTIONS,
         ...ONLY_ALLOW_TYPE_IMPORTS,
-        ...NO_MAGIC_STRINGS
+        ...NO_MAGIC_STRINGS,
+        ...NO_SINGLE_CHAR_VAR_RESTRICTIONS
       ]
     }
   },
@@ -194,7 +200,8 @@ export default [
         ...STRICT_CLASS_RESTRICTIONS,
         ...STRICT_TYPE_RESTRICTIONS.filter(r => !r.selector.includes('TSAsExpression') &&
           !r.selector.includes('TSTypePredicate')),
-        ...NO_MAGIC_STRINGS
+        ...NO_MAGIC_STRINGS,
+        ...NO_SINGLE_CHAR_VAR_RESTRICTIONS
       ]
     }
   },
@@ -228,7 +235,8 @@ export default [
         ...STRICT_TYPE_RESTRICTIONS,
         ...STRICT_IMPORT_RESTRICTIONS,
         ...ONLY_ALLOW_TYPE_IMPORTS,
-        ...NO_MAGIC_STRINGS
+        ...NO_MAGIC_STRINGS,
+        ...NO_SINGLE_CHAR_VAR_RESTRICTIONS
       ]
     }
   },
@@ -245,7 +253,8 @@ export default [
         ...STRICT_TYPE_RESTRICTIONS,
         ...STRICT_IMPORT_RESTRICTIONS,
         ...STRICT_CLASS_RESTRICTIONS,
-        ...NO_MAGIC_STRINGS
+        ...NO_MAGIC_STRINGS,
+        ...NO_SINGLE_CHAR_VAR_RESTRICTIONS
       ]
     }
   },
@@ -264,6 +273,7 @@ export default [
         'error',
         ...GLOBAL_LOGIC_RESTRICTIONS, // <-- 常量文件更不能有网络请求
         ...STRICT_CLASS_RESTRICTIONS,
+        ...NO_SINGLE_CHAR_VAR_RESTRICTIONS
       ]
     }
   },
@@ -316,6 +326,7 @@ export default [
         ...STRICT_TYPE_RESTRICTIONS,
         ...STRICT_CLASS_RESTRICTIONS,
         ...NO_MAGIC_STRINGS,
+        ...NO_SINGLE_CHAR_VAR_RESTRICTIONS,
 
         // 关键：这里只包含 "禁止网络" 规则，【不】包含 "禁止动态导入" 规则
         RESTRICTION_NO_NETWORK
@@ -335,6 +346,7 @@ export default [
         ...STRICT_TYPE_RESTRICTIONS,
         ...STRICT_CLASS_RESTRICTIONS,
         ...NO_MAGIC_STRINGS,
+        ...NO_SINGLE_CHAR_VAR_RESTRICTIONS,
 
         // 关键：这里只包含 "禁止动态导入" 规则，【不】包含 "禁止网络" 规则
         RESTRICTION_NO_DYNAMIC_IMPORT
@@ -355,7 +367,8 @@ export default [
         ...STRICT_IMPORT_RESTRICTIONS,
         ...STRICT_CLASS_RESTRICTIONS,
         // 注意：这里不包含 ONLY_ALLOW_TYPE_IMPORTS，允许 zod 的值导入
-        ...NO_MAGIC_STRINGS
+        ...NO_MAGIC_STRINGS,
+        ...NO_SINGLE_CHAR_VAR_RESTRICTIONS
       ]
     }
   }

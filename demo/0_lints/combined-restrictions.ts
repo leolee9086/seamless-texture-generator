@@ -11,6 +11,7 @@ import { STRICT_CLASS_RESTRICTIONS } from './strict-class.ts'
 import { ONLY_ALLOW_TYPE_IMPORTS } from './only-type-imports.ts'
 import { NO_MAGIC_STRINGS } from './no-magic-strings.ts'
 import { RESTRICTION_NO_DYNAMIC_IMPORT, RESTRICTION_NO_NETWORK } from './dynamic-network.ts'
+import { NO_SINGLE_CHAR_VAR_RESTRICTIONS, ID_LENGTH_RULE_CONFIG } from './no-single-char-vars.ts'
 
 /**
  * 全局默认逻辑约束 (包含所有禁令)
@@ -31,5 +32,7 @@ export {
     ONLY_ALLOW_TYPE_IMPORTS,
     NO_MAGIC_STRINGS,
     RESTRICTION_NO_DYNAMIC_IMPORT,
-    RESTRICTION_NO_NETWORK
+    RESTRICTION_NO_NETWORK,
+    NO_SINGLE_CHAR_VAR_RESTRICTIONS,
+    ID_LENGTH_RULE_CONFIG
 };

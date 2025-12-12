@@ -4,16 +4,7 @@
  */
 
 import type { LuminanceAdjustmentParams } from './imports';
-import type { LuminancePreset } from './luminanceAdjustment.types';
-
-// 预设项类型定义
-export interface LuminancePresetItem {
-    name: string;
-    params: LuminanceAdjustmentParams;
-}
-
-// 预设集合类型定义
-export type LuminancePresets = Record<LuminancePreset, LuminancePresetItem>;
+import type { LuminancePreset, LuminancePresets } from './luminanceAdjustment.types';
 
 // Default parameters for luminance adjustment
 export const DEFAULT_LUMINANCE_PARAMS: LuminanceAdjustmentParams = {

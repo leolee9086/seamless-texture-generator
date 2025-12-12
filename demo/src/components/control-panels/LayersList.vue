@@ -23,23 +23,15 @@
 
 <script setup lang="ts">
 import type { AdjustmentLayer } from './imports'
+import { isHTMLInputElement } from './imports'
+import type { LayersListProps, LayersListEmits } from './LayersList.types'
 
-interface Props {
-    layers: AdjustmentLayer[]
-    activeLayerId: string | null
-}
-
-interface Emits {
-    (e: 'select-layer', id: string): void
-    (e: 'remove-layer', id: string): void
-    (e: 'update-layer', id: string, updates: Partial<AdjustmentLayer>): void
-}
-
-const props = defineProps<Props>()
-const emit = defineEmits<Emits>()
+const props = defineProps<LayersListProps>()
+const emit = defineEmits<LayersListEmits>()
 
 const updateLayerVisible = (layer: AdjustmentLayer, event: Event) => {
-    const target = event.target as HTMLInputElement
-    emit('update-layer', layer.id, { visible: target.checked })
+    if (isHTMLInputElement(event.target)) {
+        emit('update-layer', layer.id, { visible: event.target.checked })
+    }
 }
 </script>
