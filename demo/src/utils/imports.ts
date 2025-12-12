@@ -4,14 +4,17 @@
  */
 
 // 类型导入转发 - 仅来自父级目录
-export type { ImageDownloadParams } from '../types/download.types'
-export type { ControlEvent } from '../types/controlEvents'
-export type { PipelineData, baseOptions, GeneralSynthesisPipelineStep } from '../types/PipelineData.type'
-export type { DehazeParams } from '../adjustments/dehaze/types'
-export type { ClarityParams } from '../adjustments/clarityAdjustment'
-export type { LuminanceAdjustmentParams } from '../adjustments/luminanceAdjustment'
-export type { HSLAdjustmentLayer } from '../adjustments/hsl/hslAdjustStep'
+import type { ImageDownloadParams } from '../types/download.types'
+import type { ControlEvent } from '../types/controlEvents'
+import type { PipelineData, baseOptions, GeneralSynthesisPipelineStep } from '../types/PipelineData.type'
+import type { DehazeParams } from '../adjustments/dehaze/types'
+import type { ClarityParams } from '../adjustments/clarityAdjustment'
+import type { LuminanceAdjustmentParams } from '../utils/webgpu/luminance.types'
+import type { HSLAdjustmentLayer } from '../adjustments/hsl/hslAdjust.utils'
 
 // 外部依赖导入转发
-export { z } from 'zod'
-export type { Component } from 'vue'
+import { z } from 'zod'
+import type { Component } from 'vue'
+
+export type { ImageDownloadParams, ControlEvent, PipelineData, baseOptions, GeneralSynthesisPipelineStep, DehazeParams, ClarityParams, LuminanceAdjustmentParams, HSLAdjustmentLayer, Component }
+export { z }

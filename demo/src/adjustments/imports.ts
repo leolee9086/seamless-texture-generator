@@ -4,5 +4,8 @@
  */
 
 // Re-export from parent directories
-export type { LuminanceAdjustmentParams, ZoneAdjustment } from '../utils/webgpu/luminance.types';
-export { WebGPULuminanceProcessor, processLuminanceAdjustment } from '../utils/webgpu/luminance-processor.class';
+import type { LuminanceAdjustmentParams, ZoneAdjustment } from '../utils/webgpu/luminance.types';
+import { WebGPULuminanceProcessor, processLuminanceAdjustment } from '../utils/webgpu/luminance-processor.class';
+
+export type { LuminanceAdjustmentParams, ZoneAdjustment }
+export { WebGPULuminanceProcessor, processLuminanceAdjustment }

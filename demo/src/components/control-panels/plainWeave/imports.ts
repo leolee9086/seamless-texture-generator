@@ -1,22 +1,22 @@
 // Re-export types from parent imports
-export type { SliderItem } from '../imports'
+import type { SliderItem } from '../imports'
 
 // Re-export Vue Wrapper utilities
-export { createComponentWrapper } from '../imports'
-export type { VueComponent } from '../imports'
+import { createComponentWrapper } from '../imports'
+import type { VueComponent } from '../imports'
 
 // Re-export Vue utilities
-export { computed, ref, watch } from 'vue'
-export type { ComputedRef } from 'vue'
+import { computed, ref, watch } from 'vue'
+import type { ComputedRef } from 'vue'
 
 // Re-export external components
-export { Slider } from '../imports'
+import { Slider } from '../imports'
 
 // Re-export composables
-export { useProceduralTextureState } from '../imports'
+import { useProceduralTextureState } from '../imports'
 
 // Re-export common components
-export {
+import {
   GradientEditor,
   CollapsiblePanel,
   SliderParameterGroup,
@@ -24,3 +24,19 @@ export {
   GenerateButton,
   generatePlainWeaveTexture
 } from '../imports'
+
+export type { SliderItem, VueComponent, ComputedRef }
+export {
+  createComponentWrapper,
+  computed,
+  ref,
+  watch,
+  Slider,
+  useProceduralTextureState,
+  GradientEditor,
+  CollapsiblePanel,
+  SliderParameterGroup,
+  PresetSelector,
+  GenerateButton,
+  generatePlainWeaveTexture
+}

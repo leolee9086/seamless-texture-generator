@@ -1,5 +1,5 @@
 // Re-export from parent imports
-export {
+import {
   fetchImageAsBase64,
   buildProxyUrl,
   computed,
@@ -13,12 +13,33 @@ export {
 } from '../imports'
 
 // Re-export SecureApiKeyInput components and utilities
-export { secureKeyManager } from '../SecureApiKeyInput/SecureApiKeyInput.ctx'
-export { API_KEY_PREFIX, EMPTY_API_KEY } from '../SecureApiKeyInput/SecureApiKeyInput.constants'
-export { hasValidApiKey } from '../SecureApiKeyInput/SecureApiKeyInput.utils'
+import { secureKeyManager } from '../SecureApiKeyInput/SecureApiKeyInput.ctx'
+import { API_KEY_PREFIX, EMPTY_API_KEY } from '../SecureApiKeyInput/SecureApiKeyInput.constants'
+import { hasValidApiKey } from '../SecureApiKeyInput/SecureApiKeyInput.utils'
 
 // Re-export components from parent directory
-export { default as ApiKeyInput } from '../SecureApiKeyInput/SecureApiKeyInput.vue'
-export { default as PromptInput } from '../PromptInput.vue'
-export { default as ParameterGrid } from '../ParameterGrid.vue'
-export { default as StatusDisplay } from '../StatusDisplay.vue'
+import { default as ApiKeyInput } from '../SecureApiKeyInput/SecureApiKeyInput.vue'
+import { default as PromptInput } from '../PromptInput.vue'
+import { default as ParameterGrid } from '../ParameterGrid.vue'
+import { default as StatusDisplay } from '../StatusDisplay.vue'
+
+export {
+  fetchImageAsBase64,
+  buildProxyUrl,
+  computed,
+  ref,
+  watch,
+  submitGenerationTask,
+  pollTaskUntilComplete,
+  Ref,
+  ComputedRef,
+  TaskStatusResponse,
+  secureKeyManager,
+  API_KEY_PREFIX,
+  EMPTY_API_KEY,
+  hasValidApiKey,
+  ApiKeyInput,
+  PromptInput,
+  ParameterGrid,
+  StatusDisplay
+}

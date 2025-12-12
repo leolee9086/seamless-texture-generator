@@ -4,4 +4,6 @@
  */
 
 // WebGPU相关导入
-export { getWebGPUDevice } from '../../../utils/webgpu/deviceCache/webgpuDevice'
+import { getWebGPUDevice } from '../../../utils/webgpu/deviceCache/webgpuDevice'
+
+export { getWebGPUDevice }
