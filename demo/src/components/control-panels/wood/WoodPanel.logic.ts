@@ -1,5 +1,5 @@
 import { ref, watch, generateWoodTexture, type Ref, type ComputedRef, type WoodParams } from './imports'
-import type { WoodPanelLogicReturn } from './woodPanel.types'
+import type { WoodPanelLogicReturn } from './types'
 
 // Wood Presets
 export const woodPresets = {

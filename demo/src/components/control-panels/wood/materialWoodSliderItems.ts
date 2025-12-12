@@ -7,7 +7,7 @@ import {
     ROUGHNESS_MAX_LABEL
 } from './woodSlider.constants'
 import { createWoodSliderItems } from './woodSlider.utils'
-import type { SliderConfig, ParamValueGetter } from './woodPanel.types'
+import type { SliderConfig, ParamValueGetter } from './types'
 import type { ProceduralTextureState } from './imports'
 
 // 滑块配置数组

@@ -1,5 +1,5 @@
 import { computed, type ComputedRef, type SliderItem, type ProceduralTextureState } from './imports'
-import type { SliderConfig, ParamValueGetter } from './woodPanel.types'
+import type { SliderConfig, ParamValueGetter } from './types'
 
 /**
  * 创建单个滑块项的工厂函数

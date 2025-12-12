@@ -18,7 +18,7 @@
 
 <script setup lang="ts">
 import type { WoodParams } from './imports'
-import type { WoodPanelSectionsEmits } from './woodPanel.types'
+import type { WoodPanelSectionsEmits } from './types'
 import { CollapsiblePanel, useProceduralTextureState } from './imports'
 import { woodPresets } from './WoodPanel.logic'
 

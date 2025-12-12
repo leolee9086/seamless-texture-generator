@@ -11,7 +11,7 @@
 
 <script setup lang="ts">
 import { CollapsiblePanel, Slider, useProceduralTextureState } from './imports'
-import type { WoodPanelParamsSectionProps, WoodPanelParamsSectionEmits } from './woodPanel.types'
+import type { WoodPanelParamsSectionProps, WoodPanelParamsSectionEmits } from './types'
 
 const props = defineProps<WoodPanelParamsSectionProps>()
 const emit = defineEmits<WoodPanelParamsSectionEmits>()

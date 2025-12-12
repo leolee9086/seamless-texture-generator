@@ -11,7 +11,7 @@
 </template>
 
 <script setup lang="ts">
-import type { WoodPanelProps, WoodPanelGenerateEmits } from './woodPanel.types'
+import type { WoodPanelProps, WoodPanelGenerateEmits } from './types'
 
 const props = defineProps<WoodPanelProps>()
 const emit = defineEmits<WoodPanelGenerateEmits>()

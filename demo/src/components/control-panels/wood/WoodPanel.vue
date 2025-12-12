@@ -15,7 +15,7 @@
 import { computed, useProceduralTextureState } from './imports'
 import { useWoodPanelLogic } from './WoodPanel.logic'
 import type { WoodParams } from './imports'
-import type { WoodPanelProps, WoodPanelEmits } from './woodPanel.types'
+import type { WoodPanelProps, WoodPanelEmits } from './types'
 import WoodPanelSections from './WoodPanelSections.vue'
 import WoodPanelGenerate from './WoodPanelGenerate.vue'
 
