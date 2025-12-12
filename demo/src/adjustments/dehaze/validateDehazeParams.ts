@@ -1,75 +1,100 @@
-import { DehazeParams } from './types';
+import type { DehazeParams, ValidationRule, ParamValidationConfig } from './types';
+import { DEHAZE_VALIDATION_ERROR_MESSAGES } from './templates';
+import { getParamValue } from './validateDehazeParams.guard';
+
+/**
+ * 通用参数验证函数
+ * @param value 参数值
+ * @param rule 验证规则
+ * @returns 错误消息或null（验证通过）
+ */
+function validateParam(value: number, rule: ValidationRule): string | null {
+  return rule.validate(value) ? null : rule.errorMessage;
+}
+
+/**
+ * 获取参数验证规则配置
+ * @returns 参数验证配置对象
+ */
+function getValidationConfig(): ParamValidationConfig {
+  return {
+    omega: {
+      validate: (value) => value >= 0.1 && value <= 0.99,
+      errorMessage: DEHAZE_VALIDATION_ERROR_MESSAGES.OMEGA_RANGE
+    },
+    t0: {
+      validate: (value) => value >= 0.01 && value <= 0.3,
+      errorMessage: DEHAZE_VALIDATION_ERROR_MESSAGES.T0_RANGE
+    },
+    windowSize: {
+      validate: (value) => value >= 3 && value <= 31 && value % 2 === 1,
+      errorMessage: DEHAZE_VALIDATION_ERROR_MESSAGES.WINDOW_SIZE_RANGE
+    },
+    topRatio: {
+      validate: (value) => value >= 0.01 && value <= 0.5,
+      errorMessage: DEHAZE_VALIDATION_ERROR_MESSAGES.TOP_RATIO_RANGE
+    },
+    adaptiveStrength: {
+      validate: (value) => value >= 0.1 && value <= 2.0,
+      errorMessage: DEHAZE_VALIDATION_ERROR_MESSAGES.ADAPTIVE_STRENGTH_RANGE
+    },
+    hazeWeight: {
+      validate: (value) => value >= 0.0 && value <= 1.0,
+      errorMessage: DEHAZE_VALIDATION_ERROR_MESSAGES.HAZE_WEIGHT_RANGE
+    },
+    atmosphericWeight: {
+      validate: (value) => value >= 0.0 && value <= 1.0,
+      errorMessage: DEHAZE_VALIDATION_ERROR_MESSAGES.ATMOSPHERIC_WEIGHT_RANGE
+    },
+    saturationEnhancement: {
+      validate: (value) => value >= 0.0 && value <= 2.0,
+      errorMessage: DEHAZE_VALIDATION_ERROR_MESSAGES.SATURATION_ENHANCEMENT_RANGE
+    },
+    contrastEnhancement: {
+      validate: (value) => value >= 0.5 && value <= 2.0,
+      errorMessage: DEHAZE_VALIDATION_ERROR_MESSAGES.CONTRAST_ENHANCEMENT_RANGE
+    },
+    brightnessEnhancement: {
+      validate: (value) => value >= 0.5 && value <= 2.0,
+      errorMessage: DEHAZE_VALIDATION_ERROR_MESSAGES.BRIGHTNESS_ENHANCEMENT_RANGE
+    }
+  };
+}
+
+/**
+ * 验证单个参数
+ * @param params 参数对象
+ * @param paramName 参数名
+ * @param validationConfig 验证配置
+ * @returns 错误消息或null
+ */
+function validateSingleParam(
+  params: Partial<DehazeParams>,
+  paramName: string,
+  validationConfig: ParamValidationConfig
+): string | null {
+  const paramValue = getParamValue(params, paramName);
+  return paramValue !== null
+    ? validateParam(paramValue, validationConfig[paramName])
+    : null;
+}
 
 /**
  * 验证去雾参数
  * @param params 去雾参数
  * @returns 验证结果
  */
-
 export function validateDehazeParams(params: Partial<DehazeParams>): {
   isValid: boolean;
   errors: string[];
 } {
   const errors: string[] = [];
-
-  if (params.omega !== undefined) {
-    if (params.omega < 0.1 || params.omega > 0.99) {
-      errors.push('去雾强度(omega)必须在0.1-0.99之间');
-    }
-  }
-
-  if (params.t0 !== undefined) {
-    if (params.t0 < 0.01 || params.t0 > 0.3) {
-      errors.push('最小透射率阈值(t0)必须在0.01-0.3之间');
-    }
-  }
-
-  if (params.windowSize !== undefined) {
-    if (params.windowSize < 0 || params.windowSize > 31 || params.windowSize % 2 === 0) {
-      errors.push('暗通道窗口大小必须是3-31之间的奇数');
-    }
-  }
-
-  if (params.topRatio !== undefined) {
-    if (params.topRatio < 0.01 || params.topRatio > 0.5) {
-      errors.push('大气光估计比例必须在0.01-0.5之间');
-    }
-  }
-
-  if (params.adaptiveStrength !== undefined) {
-    if (params.adaptiveStrength < 0.1 || params.adaptiveStrength > 2.0) {
-      errors.push('自适应调整强度必须在0.1-2.0之间');
-    }
-  }
-
-  if (params.hazeWeight !== undefined) {
-    if (params.hazeWeight < 0.0 || params.hazeWeight > 1.0) {
-      errors.push('雾强度权重必须在0.0-1.0之间');
-    }
-  }
-
-  if (params.atmosphericWeight !== undefined) {
-    if (params.atmosphericWeight < 0.0 || params.atmosphericWeight > 1.0) {
-      errors.push('大气光权重必须在0.0-1.0之间');
-    }
-  }
-
-  if (params.saturationEnhancement !== undefined) {
-    if (params.saturationEnhancement < 0.0 || params.saturationEnhancement > 2.0) {
-      errors.push('饱和度增强因子必须在0.0-2.0之间');
-    }
-  }
-
-  if (params.contrastEnhancement !== undefined) {
-    if (params.contrastEnhancement < 0.5 || params.contrastEnhancement > 2.0) {
-      errors.push('对比度增强因子必须在0.5-2.0之间');
-    }
-  }
-
-  if (params.brightnessEnhancement !== undefined) {
-    if (params.brightnessEnhancement < 0.5 || params.brightnessEnhancement > 2.0) {
-      errors.push('明度增强因子必须在0.5-2.0之间');
-    }
+  const validationConfig = getValidationConfig();
+  
+  // 使用for...of循环遍历所有参数进行验证
+  for (const paramName of Object.keys(validationConfig)) {
+    const error = validateSingleParam(params, paramName, validationConfig);
+    error && errors.push(error);
   }
 
   return {

@@ -210,8 +210,8 @@ export function validateLuminanceParams(params: LuminanceAdjustmentParams): {
     const errors: string[] = [];
 
     // Validate zone parameters
-    ['shadows', 'midtones', 'highlights'].forEach(zone => {
-        const zoneParams = params[zone as keyof LuminanceAdjustmentParams] as ZoneAdjustment;
+    for (const zone of ['shadows', 'midtones', 'highlights'] as const) {
+        const zoneParams = params[zone] as ZoneAdjustment;
 
         if (zoneParams.brightness < -1.0 || zoneParams.brightness > 1.0) {
             errors.push(`${zone} brightness must be between -1.0 and 1.0`);
@@ -236,7 +236,7 @@ export function validateLuminanceParams(params: LuminanceAdjustmentParams): {
         if (zoneParams.blue < -1.0 || zoneParams.blue > 1.0) {
             errors.push(`${zone} blue must be between -1.0 and 1.0`);
         }
-    });
+    }
 
     // Validate range parameters
     if (params.shadowEnd < 0.0 || params.shadowEnd > 1.0) {

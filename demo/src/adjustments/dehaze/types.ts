@@ -36,3 +36,20 @@ export interface DehazeParams {
  */
 export type DehazePreset = 'light' | 'medium' | 'heavy' | 'adaptive' | 'spatialAdaptive' | 'enhanced' | 'default'
 
+/**
+ * 参数验证规则接口
+ */
+export interface ValidationRule {
+  /** 验证函数，返回true表示验证通过 */
+  validate: (value: number) => boolean;
+  /** 错误消息 */
+  errorMessage: string;
+}
+
+/**
+ * 参数验证配置
+ */
+export interface ParamValidationConfig {
+  [key: string]: ValidationRule;
+}
+
