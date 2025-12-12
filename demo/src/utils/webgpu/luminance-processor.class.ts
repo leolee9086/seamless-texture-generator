@@ -4,7 +4,7 @@
  */
 
 import type { LuminanceAdjustmentParams, ProcessLuminanceOptions } from './luminance.types';
-import { luminanceComputeShader, createLuminanceParamsBuffer } from './luminance-shaders.utils';
+import { luminanceComputeShader, createLuminanceParamsBuffer } from './luminance-shaders';
 
 export class WebGPULuminanceProcessor {
     private device: GPUDevice;

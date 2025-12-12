@@ -11,7 +11,7 @@ export function useSamplingEditorState() {
     const stageConfig = ref({
         width: typeof window !== 'undefined' ? window.innerWidth : 800,
         height: typeof window !== 'undefined' ? window.innerHeight : 600,
-        draggable: true // Allow panning the whole stage
+        draggable: true // stage 可拖拽实现平移
     })
 
     const groupConfig = ref({

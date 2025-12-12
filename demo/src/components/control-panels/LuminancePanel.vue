@@ -127,7 +127,7 @@ import {
     createLuminanceAdjustmentEvent,
     getLuminancePreset
 } from '../../adjustments/luminanceAdjustment'
-import type { ZoneAdjustment } from '../../utils/webgpu/luminance-shaders.utils'
+import type { ZoneAdjustment } from '../../utils/webgpu/luminance-shaders'
 import type { ControlEvent } from '../../types/controlEvents'
 
 const props = defineProps<{

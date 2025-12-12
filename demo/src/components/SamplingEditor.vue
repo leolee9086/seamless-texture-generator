@@ -136,6 +136,9 @@ const emit = defineEmits<{
 const {
     isProcessing,
     // State
+    containerRef,
+    stageRef,
+    contentGroupRef,
     stageConfig,
     groupConfig,
     points,

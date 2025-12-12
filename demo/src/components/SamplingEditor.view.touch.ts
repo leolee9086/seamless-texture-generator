@@ -1,7 +1,10 @@
 import { Ref } from 'vue'
 import { getDistance, getCenter } from '../utils/geometry'
 
-export function useSamplingEditorTouch(stageRef: Ref<any>) {
+export function useSamplingEditorTouch(
+    stageRef: Ref<any>,
+    groupConfig: Ref<{ x: number, y: number, scaleX: number, scaleY: number, draggable?: boolean }>
+) {
     let lastCenter: { x: number, y: number } | null = null
     let lastDist = 0
 
@@ -10,8 +13,8 @@ export function useSamplingEditorTouch(stageRef: Ref<any>) {
         const touches = evt.touches
 
         if (touches.length === 2) {
-            const stage = stageRef.value.getStage()
-            stage.stopDrag()
+            const stage = stageRef.value?.getStage()
+            stage?.stopDrag()
 
             const p1 = { x: touches[0].clientX, y: touches[0].clientY }
             const p2 = { x: touches[1].clientX, y: touches[1].clientY }
@@ -28,29 +31,34 @@ export function useSamplingEditorTouch(stageRef: Ref<any>) {
         if (touches.length === 2 && lastCenter) {
             evt.preventDefault()
 
-            const stage = stageRef.value.getStage()
             const p1 = { x: touches[0].clientX, y: touches[0].clientY }
             const p2 = { x: touches[1].clientX, y: touches[1].clientY }
 
             const newCenter = getCenter(p1, p2)
             const newDist = getDistance(p1, p2)
 
+            const oldScale = groupConfig.value.scaleX
+            const newScale = oldScale * (newDist / lastDist)
+
+            // 计算触摸中心相对于 group 的坐标
             const pointTo = {
-                x: (lastCenter.x - stage.x()) / stage.scaleX(),
-                y: (lastCenter.y - stage.y()) / stage.scaleX()
+                x: (lastCenter.x - groupConfig.value.x) / oldScale,
+                y: (lastCenter.y - groupConfig.value.y) / oldScale
             }
 
-            const scale = stage.scaleX() * (newDist / lastDist)
-
-            stage.scale({ x: scale, y: scale })
-
+            // 计算新的 group 位置
             const newPos = {
-                x: newCenter.x - pointTo.x * scale,
-                y: newCenter.y - pointTo.y * scale
+                x: newCenter.x - pointTo.x * newScale,
+                y: newCenter.y - pointTo.y * newScale
             }
 
-            stage.position(newPos)
-            stage.batchDraw()
+            groupConfig.value = {
+                ...groupConfig.value,
+                x: newPos.x,
+                y: newPos.y,
+                scaleX: newScale,
+                scaleY: newScale
+            }
 
             lastDist = newDist
             lastCenter = newCenter
