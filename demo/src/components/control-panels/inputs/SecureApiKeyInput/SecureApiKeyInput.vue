@@ -37,10 +37,8 @@
 </template>
 
 <script setup lang="ts">
-import { ref, computed, onMounted, watch } from './imports'
 import { secureKeyManager } from './SecureKeyManager.class'
 import { useSecureApiKeyInput } from './SecureApiKeyInput.logic'
-import { EVENT_NAMES } from './SecureApiKeyInput.constants'
 import FileModeContent from './FileModeContent.vue'
 
 const props = defineProps<{
@@ -54,38 +52,8 @@ const emit = defineEmits<{
   'key-cleared': []
 }>()
 
-// 使用外部逻辑
+// 使用外部逻辑 (watch 和双向绑定已在 logic 内部处理)
 const { state, actions } = useSecureApiKeyInput(props, emit)
-const {
-  inputMode,
-  fileName,
-  tempApiKey,
-  hasKeyFile,
-  hasTempKey,
-  hasAnyKey
-} = state
-const {
-  selectKeyFile,
-  clearKeyFile,
-  setInputMode,
-  handleTempKeyChange
-} = actions
-
-// 处理临时API Key更新
-const handleTempApiKeyUpdate = (value: string) => {
-  tempApiKey.value = value
-  handleTempKeyChange()
-}
-
-// 监听 tempApiKey 变化，同步到 modelValue
-watch(tempApiKey, (newValue: string) => {
-  emit(EVENT_NAMES.UPDATE_MODEL_VALUE, newValue)
-})
-
-// 监听 modelValue 变化，同步到 tempApiKey
-watch(() => props.modelValue, (newValue: string | undefined) => {
-  if (newValue !== undefined && newValue !== tempApiKey.value) {
-    tempApiKey.value = newValue
-  }
-}, { immediate: true })
+const { inputMode, fileName, tempApiKey, hasKeyFile } = state
+const { selectKeyFile, clearKeyFile, setInputMode, handleTempApiKeyUpdate } = actions
 </script>

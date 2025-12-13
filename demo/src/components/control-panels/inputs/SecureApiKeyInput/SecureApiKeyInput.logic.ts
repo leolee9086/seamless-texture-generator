@@ -2,7 +2,7 @@
  * SecureApiKeyInput 组件逻辑
  */
 
-import { ref, computed, onMounted } from './imports'
+import { ref, computed, onMounted, watch } from './imports'
 import { secureKeyManager } from './SecureApiKeyInput.ctx'
 import type { SecureApiKeyInputEmits, SecureApiKeyInputState, SecureApiKeyInputActions } from './SecureApiKeyInput.types'
 import type { Ref, ComputedRef } from './imports'
@@ -123,7 +123,41 @@ function initializeComponent(
   })
 }
 
-export function useSecureApiKeyInput(props: { isMobile?: boolean }, emit: SecureApiKeyInputEmits): { state: SecureApiKeyInputState, actions: SecureApiKeyInputActions } {
+/**
+ * 处理临时API Key更新
+ */
+function createTempApiKeyUpdater(
+  tempApiKey: Ref<string>,
+  handleTempKeyChange: () => void
+): (value: string) => void {
+  return (value: string) => {
+    tempApiKey.value = value
+    handleTempKeyChange()
+  }
+}
+
+/**
+ * 设置双向绑定的 watch
+ */
+function setupModelValueSync(
+  tempApiKey: Ref<string>,
+  props: { modelValue?: string },
+  emit: SecureApiKeyInputEmits
+): void {
+  // 监听 tempApiKey 变化，同步到 modelValue
+  watch(tempApiKey, (newValue: string) => {
+    emit(EVENT_NAMES.UPDATE_MODEL_VALUE, newValue)
+  })
+
+  // 监听 modelValue 变化，同步到 tempApiKey
+  watch(() => props.modelValue, (newValue: string | undefined) => {
+    if (newValue !== undefined && newValue !== tempApiKey.value) {
+      tempApiKey.value = newValue
+    }
+  }, { immediate: true })
+}
+
+export function useSecureApiKeyInput(props: { modelValue?: string; isMobile?: boolean }, emit: SecureApiKeyInputEmits): { state: SecureApiKeyInputState, actions: SecureApiKeyInputActions & { handleTempApiKeyUpdate: (value: string) => void } } {
   const state = createSecureApiKeyInputState()
   const keyFileMethods = createKeyFileMethods(state.fileName, emit)
   const inputModeMethods = createInputModeMethods({
@@ -134,13 +168,23 @@ export function useSecureApiKeyInput(props: { isMobile?: boolean }, emit: Secure
     emit
   })
 
+  // 设置双向绑定
+  setupModelValueSync(state.tempApiKey, props, emit)
+
   initializeComponent(state.fileName, emit)
+
+  // 创建临时 API Key 更新处理器
+  const handleTempApiKeyUpdate = createTempApiKeyUpdater(
+    state.tempApiKey,
+    inputModeMethods.handleTempKeyChange
+  )
 
   return {
     state,
     actions: {
       ...keyFileMethods,
-      ...inputModeMethods
+      ...inputModeMethods,
+      handleTempApiKeyUpdate
     }
   }
 }
