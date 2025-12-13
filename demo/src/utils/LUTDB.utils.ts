@@ -1,46 +1,53 @@
-import { IndexDBFS } from '../infra/IndexDBFS.class';
-import type { LUTItem } from './lutDb.types';
-import { DB_NAME, DB_VERSION, STORE_NAME } from './LUTDB.constants';
+import type { IndexDBFS } from './imports';
+import type { LUTItem, LUTDB } from './lutDb.types';
+import { STORE_NAME, buildLutPath } from './LUTDB.constants';
 
-const fs = new IndexDBFS(DB_NAME, [STORE_NAME], DB_VERSION);
+//@AIDONE: fs对接适配器应该作为参数由调用方传入，而不是在模块内硬编码
+export function createLUTDB(fs: IndexDBFS): LUTDB {
 
-// Functional implementation of LUTDB
-// Eliminates unnecessary class wrapper
-
-export async function init(): Promise<void> {
-    // IndexDBFS 懒加载初始化，无需显式 init，保留该方法用于兼容性
-    try {
-        // 能够触发一次连接检查
-        await fs.list(STORE_NAME);
-    } catch (e) {
-        console.error('Failed to init LUTDB FS', e);
-        throw e;
+    async function init(): Promise<void> {
+        // IndexDBFS 懒加载初始化，无需显式 init，保留该方法用于兼容性
+        try {
+            // 能够触发一次连接检查
+            await fs.list(STORE_NAME);
+        } catch (error) {
+            console.error('Failed to init LUTDB FS', error);
+            throw error;
+        }
     }
-}
 
-export async function addLUT(lut: LUTItem): Promise<void> {
-    // 使用 lut.id 作为文件名
-    await fs.write(`${STORE_NAME}/${lut.id}`, lut);
-}
-
-export async function getAllLUTs(): Promise<LUTItem[]> {
-    const result = await fs.readdir<LUTItem>(STORE_NAME);
-    // Sort by createdAt desc
-    result.sort((a, b) => b.createdAt - a.createdAt);
-    return result;
-}
-
-export async function deleteLUT(id: string): Promise<void> {
-    await fs.delete(`${STORE_NAME}/${id}`);
-}
-
-export async function updateLUTThumbnail(id: string, thumbnail: string): Promise<void> {
-    const lut = await fs.read<LUTItem>(`${STORE_NAME}/${id}`);
-    if (!lut) {
-        throw new Error('LUT not found');
+    async function addLUT(lut: LUTItem): Promise<void> {
+        // 使用 lut.id 作为文件名
+        await fs.write(buildLutPath(lut.id), lut);
     }
-    lut.thumbnail = thumbnail;
-    await fs.write(`${STORE_NAME}/${id}`, lut);
+
+    async function getAllLUTs(): Promise<LUTItem[]> {
+        const result = await fs.readdir<LUTItem>(STORE_NAME);
+        // Sort by createdAt desc
+        result.sort((itemA, itemB) => itemB.createdAt - itemA.createdAt);
+        return result;
+    }
+
+    async function deleteLUT(id: string): Promise<void> {
+        await fs.delete(buildLutPath(id));
+    }
+
+    async function updateLUTThumbnail(id: string, thumbnail: string): Promise<void> {
+        const lut = await fs.read<LUTItem>(buildLutPath(id));
+        if (!lut) {
+            throw new Error('LUT not found');
+        }
+        lut.thumbnail = thumbnail;
+        await fs.write(buildLutPath(id), lut);
+    }
+
+    return {
+        init,
+        addLUT,
+        getAllLUTs,
+        deleteLUT,
+        updateLUTThumbnail
+    };
 }
 
 

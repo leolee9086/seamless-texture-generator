@@ -12,9 +12,12 @@ import type { ClarityParams } from '../adjustments/clarityAdjustment'
 import type { LuminanceAdjustmentParams } from '../utils/webgpu/luminance.types'
 import type { HSLAdjustmentLayer } from '../adjustments/hsl/hslAdjust.utils'
 
+// 类导入转发 - 来自父级目录
+import { IndexDBFS } from '../infra/IndexDBFS.class'
+
 // 外部依赖导入转发
 import { z } from 'zod'
 import type { Component } from 'vue'
 
 export type { ImageDownloadParams, ControlEvent, PipelineData, baseOptions, GeneralSynthesisPipelineStep, DehazeParams, ClarityParams, LuminanceAdjustmentParams, HSLAdjustmentLayer, Component }
-export { z }
+export { z, IndexDBFS }

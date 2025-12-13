@@ -14,18 +14,18 @@ export function handleImageUpload(event: Event, onImageLoaded: (imageData: strin
 
   if (file) {
     const reader = new FileReader()
-    reader.onload = (e: ProgressEvent<FileReader>): void => {
-      if (!isFileReader(e.target)) {
+    reader.onload = (progressEvent: ProgressEvent<FileReader>): void => {
+      if (!isFileReader(progressEvent.target)) {
         return
       }
       
-      const result = e.target.result
+      const result = progressEvent.target.result
       if (isFileReaderResultString(result)) {
         onImageLoaded(result)
       }
     }
     reader.onerror = (): void => {
-      console.error('文件读取失败')
+      console.error('文件读取失败', { fileName: file.name, fileSize: file.size })
     }
     reader.readAsDataURL(file)
   }
@@ -48,7 +48,7 @@ export function resetZoom(onZoomReset: () => void, viewerRef: { value?: { resetZ
  * @param image 图像URL
  * @param saveFunction 保存函数
  */
-export function saveImage(image: string | null, saveFunction: (img: string) => void): void {
+export function saveImage(image: string | null, saveFunction: (imageData: string) => void): void {
   if (!image) return
   saveFunction(image)
 }

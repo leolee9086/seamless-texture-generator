@@ -1,5 +1,3 @@
-import type * as LUTDBUtils from './LUTDB.utils';
-
 export interface LUTItem {
     id: string;
     name: string;
@@ -8,7 +6,14 @@ export interface LUTItem {
     createdAt: number;
 }
 
+// 定义 LUTDB 接口类型，提供明确的类型安全
+export interface LUTDB {
+    init(): Promise<void>;
+    addLUT(lut: LUTItem): Promise<void>;
+    getAllLUTs(): Promise<LUTItem[]>;
+    deleteLUT(id: string): Promise<void>;
+    updateLUTThumbnail(id: string, thumbnail: string): Promise<void>;
+}
+
 // For backward compatibility if someone used `new LUTDB()` (unlikely given it was a singleton usage pattern, but defining the type is good)
-export type LUTDBType = {
-    [K in keyof typeof LUTDBUtils]: ReturnType<typeof LUTDBUtils[K]>;
-};
+export type LUTDBType = LUTDB;

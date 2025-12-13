@@ -1,3 +1,12 @@
+import {
+    路径格式无效,
+    目录未找到,
+    目录无效,
+    操作失败,
+    数据库需要升级,
+    事务中止
+} from './IndexDBFS.templates';
+
 /**
  * IndexDBFS (IndexedDB File System)
  * 
@@ -47,9 +56,9 @@ export class IndexDBFS {
                 const request = store.get(key);
 
                 request.onsuccess = () => resolve(request.result || null);
-                request.onerror = () => reject(this.wrapError('Read failed', request.error));
+                request.onerror = () => reject(wrapError(操作失败, 'Read', request.error));
             } catch (e) {
-                reject(this.wrapError('Transaction failed', e));
+                reject(wrapError(操作失败, 'Transaction', e));
             }
         });
     }
@@ -81,9 +90,9 @@ export class IndexDBFS {
                 }
 
                 request.onsuccess = () => resolve();
-                request.onerror = () => reject(this.wrapError('Write failed', request.error));
+                request.onerror = () => reject(wrapError(操作失败, 'Write', request.error));
             } catch (e) {
-                reject(this.wrapError('Transaction failed', e));
+                reject(wrapError(操作失败, 'Transaction', e));
             }
         });
     }
@@ -104,9 +113,9 @@ export class IndexDBFS {
                 const request = store.delete(key);
 
                 request.onsuccess = () => resolve();
-                request.onerror = () => reject(this.wrapError('Delete failed', request.error));
+                request.onerror = () => reject(wrapError(操作失败, 'Delete', request.error));
             } catch (e) {
-                reject(this.wrapError('Transaction failed', e));
+                reject(wrapError(操作失败, 'Transaction', e));
             }
         });
     }
@@ -117,7 +126,7 @@ export class IndexDBFS {
      */
     async list(dir: string): Promise<IDBValidKey[]> {
         if (!this.storeNames.has(dir)) {
-            throw new Error(`Directory (Store) not found: ${dir}`);
+            throw new Error(目录未找到(dir));
         }
         const db = await this.ensureDB();
 
@@ -128,9 +137,9 @@ export class IndexDBFS {
                 const request = store.getAllKeys();
 
                 request.onsuccess = () => resolve(request.result);
-                request.onerror = () => reject(this.wrapError('List failed', request.error));
+                request.onerror = () => reject(wrapError(操作失败, 'List', request.error));
             } catch (e) {
-                reject(this.wrapError('Transaction failed', e));
+                reject(wrapError(操作失败, 'Transaction', e));
             }
         });
     }
@@ -141,7 +150,7 @@ export class IndexDBFS {
      */
     async readdir<T>(dir: string): Promise<T[]> {
         if (!this.storeNames.has(dir)) {
-            throw new Error(`Directory (Store) not found: ${dir}`);
+            throw new Error(目录未找到(dir));
         }
         const db = await this.ensureDB();
 
@@ -152,9 +161,9 @@ export class IndexDBFS {
                 const request = store.getAll();
 
                 request.onsuccess = () => resolve(request.result as T[]);
-                request.onerror = () => reject(this.wrapError('ReadDir failed', request.error));
+                request.onerror = () => reject(wrapError(操作失败, 'ReadDir', request.error));
             } catch (e) {
-                reject(this.wrapError('Transaction failed', e));
+                reject(wrapError(操作失败, 'Transaction', e));
             }
         });
     }
@@ -165,7 +174,7 @@ export class IndexDBFS {
      */
     async clear(dir: string): Promise<void> {
         if (!this.storeNames.has(dir)) {
-            throw new Error(`Directory (Store) not found: ${dir}`);
+            throw new Error(目录未找到(dir));
         }
         const db = await this.ensureDB();
 
@@ -176,9 +185,9 @@ export class IndexDBFS {
                 const request = store.clear();
 
                 request.onsuccess = () => resolve();
-                request.onerror = () => reject(this.wrapError('Clear failed', request.error));
+                request.onerror = () => reject(wrapError(操作失败, 'Clear', request.error));
             } catch (e) {
-                reject(this.wrapError('Transaction failed', e));
+                reject(wrapError(操作失败, 'Transaction', e));
             }
         });
     }
@@ -199,12 +208,12 @@ export class IndexDBFS {
             try {
                 const tx = db.transaction(stores, mode);
 
-                tx.oncomplete = () => {
+                tx.oncomplete = (): void => {
                     // Transaction auto-commits, but we rely on resolve(result) from inside.
                     // This is just a lifecycle hook.
                 };
-                tx.onerror = () => reject(this.wrapError('Transaction error', tx.error));
-                tx.onabort = () => reject(new Error('Transaction aborted'));
+                tx.onerror = () => reject(wrapError(操作失败, 'Transaction', tx.error));
+                tx.onabort = () => reject(new Error(事务中止()));
 
                 try {
                     const result = await callback(tx);
@@ -219,7 +228,7 @@ export class IndexDBFS {
                     reject(err);
                 }
             } catch (e) {
-                reject(this.wrapError('Create transaction failed', e));
+                reject(wrapError(操作失败, 'Create transaction', e));
             }
         });
     }
@@ -235,7 +244,7 @@ export class IndexDBFS {
 
             request.onerror = () => {
                 this.openPromise = null;
-                reject(this.wrapError('Open DB failed', request.error));
+                reject(wrapError(操作失败, 'Open DB', request.error));
             };
 
             request.onsuccess = () => {
@@ -244,7 +253,7 @@ export class IndexDBFS {
                     this.db?.close();
                     this.db = null;
                     this.openPromise = null;
-                    console.warn(`Database ${this.dbName} needs upgrade. Connection closed.`);
+                    console.warn(数据库需要升级(this.dbName));
                 };
                 resolve(this.db);
             };
@@ -267,21 +276,28 @@ export class IndexDBFS {
     private parsePath(path: string): { storeName: string, key: string } {
         const parts = path.split('/');
         if (parts.length < 2) {
-            throw new Error(`Invalid path format: "${path}". Expected "storeName/key".`);
+            throw new Error(路径格式无效(path));
         }
         const storeName = parts[0];
         const key = parts.slice(1).join('/'); // Allow keys to have slashes? Maybe. For now, join rest.
 
         if (!this.storeNames.has(storeName)) {
-            throw new Error(`Directory (Store) not valid: "${storeName}". Available: ${Array.from(this.storeNames).join(', ')}`);
+            throw new Error(目录无效(storeName, Array.from(this.storeNames)));
         }
 
         return { storeName, key };
     }
 
-    private wrapError(msg: string, cause: any): Error {
-        const err = new Error(`${msg}: ${cause?.message || cause}`);
-        (err as any).cause = cause;
-        return err;
-    }
+
 }
+
+function wrapError(
+    模板函数: (操作名: string, 原因: string) => string,
+    操作名: string,
+    cause: any
+): Error {
+    const err = new Error(模板函数(操作名, cause?.message || cause));
+    (err as any).cause = cause;
+    return err;
+}
+

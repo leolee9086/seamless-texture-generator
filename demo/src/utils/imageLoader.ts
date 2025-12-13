@@ -2,6 +2,13 @@
  * 图像处理相关的工具函数
  */
 
+import {
+    INVALID_MAX_RESOLUTION_ERROR,
+    CANVAS_CONTEXT_ERROR,
+    INVALID_IMAGE_SOURCE_ERROR,
+    IMAGE_LOAD_ERROR_TEMPLATE
+} from './imageLoader.constants';
+
 /**
  * 缩放图像到指定最大分辨率
  * @param img 要缩放的图像元素
@@ -9,8 +16,17 @@
  * @returns 包含缩放后图像的canvas元素
  */
 export const scaleImageToMaxResolution = (img: HTMLImageElement, maxRes: number): HTMLCanvasElement => {
+    // 验证输入参数
+    if (maxRes <= 0) {
+        throw new Error(INVALID_MAX_RESOLUTION_ERROR)
+    }
+    
     const canvas = document.createElement('canvas')
-    const ctx = canvas.getContext('2d')!
+    const ctx = canvas.getContext('2d')
+    
+    if (!ctx) {
+        throw new Error(CANVAS_CONTEXT_ERROR)
+    }
 
     const maxDimension = Math.max(img.width, img.height)
 
@@ -42,11 +58,17 @@ export const scaleImageToMaxResolution = (img: HTMLImageElement, maxRes: number)
  * @returns Promise<HTMLImageElement>
  */
 export const loadImage = (src: string): Promise<HTMLImageElement> => {
-    return new Promise((resolve, reject) => {
+    return new Promise<HTMLImageElement>((resolve, reject) => {
+        // 验证输入参数
+        if (!src || typeof src !== 'string') {
+            reject(new Error(INVALID_IMAGE_SOURCE_ERROR))
+            return
+        }
+        
         const img = new Image()
         img.crossOrigin = 'anonymous'
-        img.onload = () => resolve(img)
-        img.onerror = reject
+        img.onload = (): void => resolve(img)
+        img.onerror = (): void => reject(new Error(IMAGE_LOAD_ERROR_TEMPLATE.replace('{src}', src)))
         img.src = src
     })
 }
