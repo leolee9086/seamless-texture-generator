@@ -2,7 +2,28 @@ import type { DehazePanelContext, ParamUpdateData } from './dehazePanel.types'
 import { DEFAULT_DEHAZE_PARAMS, getDehazePreset, DehazeParams, DEHAZE_PRESETS, validateDehazeParams, createUpdateDataEvent } from './imports'
 import { isValidDehazeParamKey } from './dehazeParams.guard'
 import { INVALID_PARAM_KEY_WARNING_TEMPLATE, VALIDATION_FAILED_WARNING } from './dehazePanel.templates'
-import { DEHAZE_CHANGE_EVENT, CONTROL_EVENT } from './dehazePanel.constants'
+import {
+    DEHAZE_CHANGE_EVENT,
+    CONTROL_EVENT,
+    EMPTY_STATE_MOBILE_CLASS,
+    EMPTY_STATE_DESKTOP_CLASS,
+    CONTENT_CONTAINER_MOBILE_CLASS,
+    CONTENT_CONTAINER_DESKTOP_CLASS
+} from './dehazePanel.constants'
+
+/**
+ * 获取空状态容器的样式类
+ * @param isMobile 是否为移动端
+ */
+export const emptyStateClass = (isMobile?: boolean): string =>
+    isMobile ? EMPTY_STATE_MOBILE_CLASS : EMPTY_STATE_DESKTOP_CLASS
+
+/**
+ * 获取内容容器的样式类
+ * @param isMobile 是否为移动端
+ */
+export const contentContainerClass = (isMobile?: boolean): string =>
+    isMobile ? CONTENT_CONTAINER_MOBILE_CLASS : CONTENT_CONTAINER_DESKTOP_CLASS
 
 /**
  * 处理基础滑块更新
