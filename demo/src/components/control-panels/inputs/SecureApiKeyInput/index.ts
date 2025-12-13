@@ -24,6 +24,7 @@ import type {
   SecureApiKeyInputState,
   SecureApiKeyInputActions,
   InputMode,
+  UseSecureApiKeyInputParamsActions,
   UseSecureApiKeyInputParams,
   UseSecureApiKeyInputReturn
 } from './SecureApiKeyInput.types'
@@ -59,6 +60,7 @@ export type {
   SecureApiKeyInputState,
   SecureApiKeyInputActions,
   InputMode,
+  UseSecureApiKeyInputParamsActions,
   UseSecureApiKeyInputParams,
   UseSecureApiKeyInputReturn
 }

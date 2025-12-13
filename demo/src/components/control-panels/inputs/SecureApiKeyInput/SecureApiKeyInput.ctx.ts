@@ -62,7 +62,9 @@ function createSecureApiKeyComputed(state: ReturnType<typeof createSecureApiKeyS
  * 通知密钥状态变化
  */
 function notifyKeyStatus(params: NotifyKeyStatusParams): void {
-  const { mode, hasKeyFile, hasTempKey, onKeyReady } = params
+  const { state, actions } = params
+  const { mode, hasKeyFile, hasTempKey } = state
+  const { onKeyReady } = actions
 
   if (mode === INPUT_MODE.TEMP) {
     onKeyReady?.(hasTempKey.value)
@@ -89,7 +91,8 @@ function createSecureApiKeyMethods(
 } {
   const { fileName, inputMode } = state
   const { hasKeyFile, hasTempKey } = computed
-  const { onKeyReady, onKeyCleared } = params
+  const onKeyReady = params.actions?.onKeyReady
+  const onKeyCleared = params.actions?.onKeyCleared
 
   const selectKeyFile = async (): Promise<void> => {
     try {
@@ -116,7 +119,7 @@ function createSecureApiKeyMethods(
       state.tempApiKey.value = EMPTY_STRING
     }
     inputMode.value = mode
-    notifyKeyStatus({ mode, hasKeyFile, hasTempKey, onKeyReady })
+    notifyKeyStatus({ state: { mode, hasKeyFile, hasTempKey }, actions: { onKeyReady } })
   }
 
   const handleTempKeyChange = (): void => {
@@ -157,7 +160,7 @@ export function useSecureApiKeyInput(params: UseSecureApiKeyInputParams): UseSec
   const methods = createSecureApiKeyMethods(state, computed, params)
 
   // 初始化组件挂载时的密钥状态
-  initializeKeyStatus(state.fileName, params.onKeyReady)
+  initializeKeyStatus(state.fileName, params.actions?.onKeyReady)
 
   return {
     state: {

@@ -41,10 +41,21 @@ export interface SecureApiKeyInputActions {
 
 export type InputMode = 'file' | 'temp'
 
-export interface UseSecureApiKeyInputParams {
-  isMobile?: boolean
+/**
+ * useSecureApiKeyInput 参数 - 行为部分
+ */
+export interface UseSecureApiKeyInputParamsActions {
   onKeyReady?: (hasKey: boolean) => void
   onKeyCleared?: () => void
+}
+
+/**
+ * useSecureApiKeyInput 参数 - 包装器 (符合 ECS 原则)
+ * 注：isMobile 直接内联，避免单属性接口冗余
+ */
+export interface UseSecureApiKeyInputParams {
+  isMobile?: boolean
+  actions?: UseSecureApiKeyInputParamsActions
 }
 
 export interface UseSecureApiKeyInputReturn {
@@ -53,13 +64,21 @@ export interface UseSecureApiKeyInputReturn {
 }
 
 /**
- * 密钥状态通知参数
+ * 密钥状态通知参数 - 数据部分
  */
-export interface NotifyKeyStatusParams {
+export interface NotifyKeyStatusParamsState {
   mode: InputMode
   hasKeyFile: ComputedRef<boolean>
   hasTempKey: ComputedRef<boolean>
-  onKeyReady?: (hasKey: boolean) => void
+}
+
+/**
+ * 密钥状态通知参数 - 包装器 (符合 ECS 原则)
+ * 行为部分复用 UseSecureApiKeyInputParamsActions，避免单属性类型冗余
+ */
+export interface NotifyKeyStatusParams {
+  state: NotifyKeyStatusParamsState
+  actions: UseSecureApiKeyInputParamsActions
 }
 
 // File System Access API 类型定义
