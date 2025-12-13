@@ -19,16 +19,16 @@ export const handleParamUpdate = (
         console.warn(INVALID_PARAM_KEY_WARNING_TEMPLATE(data.id))
         return
     }
-    
+
     const updates: Partial<ClarityParams> = {}
     updates[data.id] = data.value
-    Object.assign(ctx.clarityParams.value, updates)
+    Object.assign(ctx.state.clarityParams.value, updates)
 
     // 清除当前预设
-    ctx.currentPreset.value = null
+    ctx.state.currentPreset.value = null
 
     // 发送更新事件
-    ctx.emit('controlEvent', createClarityAdjustmentEvent(ctx.clarityParams.value))
+    ctx.emit('controlEvent', createClarityAdjustmentEvent(ctx.state.clarityParams.value))
 }
 
 /**
@@ -36,7 +36,7 @@ export const handleParamUpdate = (
  * @param ctx 清晰度面板上下文
  */
 export const handleImportParams = (ctx: ClarityPanelContext): void => {
-    importParams(ctx.clarityParams, ctx.currentPreset, ctx.emit)
+    importParams(ctx.state.clarityParams, ctx.state.currentPreset, ctx.emit)
 }
 
 /**
@@ -44,7 +44,7 @@ export const handleImportParams = (ctx: ClarityPanelContext): void => {
  * @param ctx 清晰度面板上下文
  */
 export const handleExportParams = (ctx: ClarityPanelContext): void => {
-    exportParams(ctx.clarityParams.value)
+    exportParams(ctx.state.clarityParams.value)
 }
 
 /**
@@ -52,9 +52,9 @@ export const handleExportParams = (ctx: ClarityPanelContext): void => {
  * @param ctx 清晰度面板上下文
  */
 export const resetParams = (ctx: ClarityPanelContext): void => {
-    ctx.clarityParams.value = { ...DEFAULT_CLARITY_PARAMS }
-    ctx.currentPreset.value = null
-    ctx.emit('controlEvent', createClarityAdjustmentEvent(ctx.clarityParams.value))
+    ctx.state.clarityParams.value = { ...DEFAULT_CLARITY_PARAMS }
+    ctx.state.currentPreset.value = null
+    ctx.emit('controlEvent', createClarityAdjustmentEvent(ctx.state.clarityParams.value))
 }
 
 /**
@@ -66,7 +66,7 @@ export const applyPreset = (
     ctx: ClarityPanelContext,
     presetKey: keyof typeof CLARITY_PRESETS
 ): void => {
-    ctx.clarityParams.value = { ...getClarityPreset(presetKey) }
-    ctx.currentPreset.value = presetKey
-    ctx.emit('controlEvent', createClarityAdjustmentEvent(ctx.clarityParams.value))
+    ctx.state.clarityParams.value = { ...getClarityPreset(presetKey) }
+    ctx.state.currentPreset.value = presetKey
+    ctx.emit('controlEvent', createClarityAdjustmentEvent(ctx.state.clarityParams.value))
 }

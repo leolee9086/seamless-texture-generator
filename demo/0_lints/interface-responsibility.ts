@@ -114,6 +114,7 @@ export const 接口职责分离插件 = {
 1. 分离类型定义:
    ① 创建纯数据接口: interface ${接口名}State { /* 只放属性 */ }
    ② 创建纯行为接口: interface ${接口名}Actions { /* 只放方法 */ }
+   注意,分离后的类型定义如果只有一个属性,那么也是不被允许的,应该采用更加合适的方式来表达。
 
 2. 若原类型被用作函数返回值 (常见于 composable):
    ❌ 错误: type Return = State & Actions  // 合并后仍是混合类型!
@@ -169,6 +170,7 @@ export const 接口职责分离插件 = {
 1. 分离类型定义:
    ① 创建纯数据类型: interface ${类型名}State { /* 只放属性 */ }
    ② 创建纯行为类型: interface ${类型名}Actions { /* 只放方法 */ }
+   注意,分离后的类型定义如果只有一个属性,那么也是不被允许的,应该采用更加合适的方式来表达。
 
 2. 若原类型是 State & Actions 的组合:
    ❌ 错误: type Return = State & Actions  // 交叉类型仍是混合!

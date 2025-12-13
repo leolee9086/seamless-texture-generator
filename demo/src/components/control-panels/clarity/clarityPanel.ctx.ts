@@ -23,8 +23,10 @@ export function useClarityPanelState(
 
     // 创建上下文
     const ctx: ClarityPanelContext = {
-        clarityParams,
-        currentPreset,
+        state: {
+            clarityParams,
+            currentPreset
+        },
         emit
     }
 
