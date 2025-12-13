@@ -1,7 +1,6 @@
 import { ref } from './imports'
 import type { DehazeParams, ClarityParams, LuminanceAdjustmentParams } from './imports'
-import type { HSLAdjustmentLayer } from './useAdjustmentParams.hsl.types'
-import type { AdjustmentParams } from './useAdjustmentParams.types'
+import type { HSLAdjustmentLayer, AdjustmentParams } from './useAdjustmentParams.types'
 
 /** 去雾参数默认值 */
 export const 默认去雾参数: DehazeParams = {

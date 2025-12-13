@@ -46,3 +46,26 @@ export interface ColorBlockSelectorState {
  * 色块选择器上下文接口 (兼容旧接口)
  */
 export type ColorBlockSelectorCtx = ColorBlockSelectorState
+
+/**
+ * 色块选择器返回类型（组合状态与方法）
+ */
+export interface ColorBlockSelectorActions {
+    // from useColorBlockGenerator
+    generateColorBlocks: (input: File | string) => Promise<void>
+    // from useLayerManager
+    addColorLayer: (color: import('../utils/lut/colorQuantization').RGBColor) => void
+    addHslLayer: (hslBlock: HSLRange) => void
+    removeLayer: (id: string) => void
+    selectLayer: (id: string) => void
+    updateLayer: (id: string, updates: Partial<AdjustmentLayer>) => void
+    toggleColorBlock: (blockId: string, color: import('../utils/lut/colorQuantization').RGBColor) => void
+    toggleHslBlock: (blockId: string, hslBlock: HSLRange) => void
+    // from useColorBlockMask
+    generateColorBlockMask: (originalImage: string) => Promise<Uint8Array | null>
+    // from useMaskPreview
+    updateMaskPreview: (originalImage: string, canvas?: HTMLCanvasElement) => Promise<void>
+    generateMaskPreviewImageDataUrl: (originalImage: string) => Promise<string | null>
+}
+
+export type ColorBlockSelectorReturn = ColorBlockSelectorState & ColorBlockSelectorActions
