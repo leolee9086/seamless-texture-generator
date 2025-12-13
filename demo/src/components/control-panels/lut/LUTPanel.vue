@@ -185,22 +185,15 @@ const activeMobileTab = ref<string>('lut')
 const maskPreviewPanelRef = ref<InstanceType<typeof MaskPreviewPanel> | null>(null)
 
 // Color Block Selector Logic
-const {
-    quantizedColorBlocks,
-    commonHslBlocks,
-    layers,
-    activeLayerId,
-    maskOptions,
-    generateColorBlocks,
-    addColorLayer,
-    addHslLayer,
-    removeLayer,
-    selectLayer,
-    updateLayer,
-    generateColorBlockMask,
-    updateMaskPreview,
-    generateMaskPreviewImageDataUrl
-} = useColorBlockSelector()
+const colorBlockSelector = useColorBlockSelector()
+const { states, generator, layerManager, maskGen, preview } = colorBlockSelector
+
+// 从子模块解构常用引用，供模板使用
+const { quantizedColorBlocks, commonHslBlocks, layers, activeLayerId, maskOptions } = states
+const { generateColorBlocks } = generator
+const { addColorLayer, addHslLayer, removeLayer, selectLayer, updateLayer } = layerManager
+const { generateColorBlockMask } = maskGen
+const { updateMaskPreview, generateMaskPreviewImageDataUrl } = preview
 
 // Computed
 const lutEnabled = computed(() => !!props.lutFileName)

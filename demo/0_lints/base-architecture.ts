@@ -22,7 +22,42 @@ export const BASE_ARCHITECTURE_RESTRICTIONS = [
         message: `
         函数参数不能超过3个。请使用对象参数模式 (Object Pattern)。
         或者使用合适的ctx类型。
-        请注意ctx类型
+        请注意ctx类型应该是一个业务领域的抽象。
+        仔细设计它而不是简单地为每一个函数调用创建一个新的参数集。
+        正面例：
+        function drawRectangle(ctx: DrawContext) {
+            // 使用 ctx.width, ctx.height, ctx.color 等等
+        }
+        反面例：
+        function drawRectangle(width: number, height: number, color: string, borderWidth: number) {
+            // 过多的参数使得函数调用复杂且难以维护
+        }
+        创建参数集类型的负面例，多个同一领域上下文的函数没有共享参数类型而是各自定义：
+        interface DrawRectangleParams {
+            width: number;
+            height: number;
+        }
+        interface DrawCircleParams {
+            radius: number;
+        }
+        function drawRectangle(params: DrawRectangleParams) { ... }
+        function drawCircle(params: DrawCircleParams) { ... }
+        这种方式会导致代码重复且难以维护。
+        正确的方式是创建一个共享的上下文类型：
+        interface DrawContext {
+            width?: number;
+            height?: number;
+            radius?: number;
+            color?: string;
+            borderWidth?: number;
+        }
+        function drawRectangle(ctx: DrawContext) { ... }
+        function drawCircle(ctx: DrawContext) { ... }
+        这样可以确保所有绘图函数都使用相同的上下文类型，减少重复代码并提高可维护性。
+        即使需要对领域中可选参数进行区分，也应通过文档和命名约定来明确，而不是创建多个类似的参数类型。
+        这种情况下，一定的性能开销是可以接受的。
+        可以通过统一的上下文类型和管线式调度来中和这种开销。
+        允许创建的具体参数集类型应该是根据领域上下文收窄而不是扩展。
         `
     },
     {

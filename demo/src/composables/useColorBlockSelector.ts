@@ -2,7 +2,7 @@ import { ref, shallowRef } from 'vue'
 import { AdjustmentRangeMaskManager } from '../utils/lut/adjustmentRangeMask'
 import { RGBColor } from '../utils/lut/colorQuantization'
 import { HSLRange } from '../utils/lut/hslMask'
-import { AdjustmentLayer, ColorBlockSelectorReturn } from './useColorBlockSelector.types'
+import type { AdjustmentLayer, ColorBlockSelectorReturn } from './useColorBlockSelector.types'
 import { useLayerManager } from './useLayerManager'
 import { useColorBlockMask } from './useColorBlockMask'
 import { useMaskPreview } from './useMaskPreview'
@@ -24,7 +24,16 @@ export const useColorBlockSelector = (): ColorBlockSelectorReturn => {
     const maskPreviewCanvas = ref<HTMLCanvasElement | null>(null)
     const layers = ref<AdjustmentLayer[]>([])
     const activeLayerId = ref<string | null>(null)
-
+    const colorBlockSelectorStates = {
+        quantizedColorBlocks,
+        commonHslBlocks,
+        selectedColorBlocks,
+        maskOptions,
+        maskManager,
+        maskPreviewCanvas,
+        layers,
+        activeLayerId
+    }
     // 组合子模块
     const layerManager = useLayerManager(layers, activeLayerId)
     const maskGen = useColorBlockMask(layers, maskManager, maskOptions)
@@ -32,10 +41,10 @@ export const useColorBlockSelector = (): ColorBlockSelectorReturn => {
     const generator = useColorBlockGenerator(quantizedColorBlocks, commonHslBlocks, maskManager)
 
     return {
-        // 状态
-        quantizedColorBlocks, commonHslBlocks, selectedColorBlocks,
-        maskOptions, maskManager, maskPreviewCanvas, layers, activeLayerId,
-        // 方法
-        ...generator, ...layerManager, ...maskGen, ...preview
+        states: colorBlockSelectorStates,
+        generator,
+        layerManager,
+        maskGen,
+        preview
     }
 }
