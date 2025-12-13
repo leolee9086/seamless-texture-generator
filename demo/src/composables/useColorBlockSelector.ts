@@ -2,7 +2,7 @@ import { Ref, ref } from 'vue'
 import { AdjustmentRangeMaskManager } from '../utils/lut/adjustmentRangeMask'
 import { RGBColor } from '../utils/lut/colorQuantization'
 import { HSLRange } from '../utils/lut/hslMask'
-import { 从URL创建图片并等待加载完成, 获取imgeData } from '../utils/lut/image/load'
+import { 从URL创建图片并等待加载完成, 获取ImageData } from '../utils/lut/image/load'
 import { upscaleMask } from '../utils/lut/scalar'
 import { 生成全白RGBA图像数据 } from '../utils/lut/mask/filledMask'
 import { 将ImageData绘制到Canvas } from '../utils/lut/canvas/draw'
@@ -77,7 +77,7 @@ export const useColorBlockSelector = () => {
             // 创建图像元素获取图像数据
             const img = await 从URL创建图片并等待加载完成(url)
             // 创建canvas获取ImageData
-            const imageData = 获取imgeData(img)
+            const imageData = 获取ImageData(img)
 
             // 生成量化色块（降采样到合理大小）
             const maxDimension = 512

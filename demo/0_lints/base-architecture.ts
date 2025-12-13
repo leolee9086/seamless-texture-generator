@@ -19,7 +19,11 @@ export const BASE_ARCHITECTURE_RESTRICTIONS = [
     },
     {
         selector: "FunctionDeclaration[params.length>3], ArrowFunctionExpression[params.length>3], FunctionExpression[params.length>3]",
-        message: `函数参数不能超过3个。请使用对象参数模式 (Object Pattern)。\n或者使用合适的ctx类型。`
+        message: `
+        函数参数不能超过3个。请使用对象参数模式 (Object Pattern)。
+        或者使用合适的ctx类型。
+        请注意ctx类型
+        `
     },
     {
         selector: 'CallExpression[callee.property.name="forEach"]',
