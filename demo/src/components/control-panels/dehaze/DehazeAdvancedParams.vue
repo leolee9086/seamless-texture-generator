@@ -17,27 +17,14 @@
 
             <!-- 自适应选项 -->
             <div class="space-y-3">
-                <div class="flex items-center justify-between">
-                    <label class="text-xs text-white/70">自适应模式</label>
-                    <input type="checkbox" :checked="adaptiveMode"
-                        @change="$emit('update:adaptiveMode', ($event.target as HTMLInputElement).checked)"
-                        class="w-4 h-4 rounded border-white/20 bg-white/10 text-white/60 focus:ring-white/20">
-                </div>
+                <LabeledCheckbox label="自适应模式" :modelValue="adaptiveMode"
+                    @update:modelValue="$emit('update:adaptiveMode', $event)" />
 
-                <div class="flex items-center justify-between">
-                    <label class="text-xs text-white/70">空间自适应</label>
-                    <input type="checkbox" :checked="spatialAdaptiveMode"
-                        @change="$emit('update:spatialAdaptiveMode', ($event.target as HTMLInputElement).checked)"
-                        :disabled="!adaptiveMode"
-                        class="w-4 h-4 rounded border-white/20 bg-white/10 text-white/60 focus:ring-white/20">
-                </div>
+                <LabeledCheckbox label="空间自适应" :modelValue="spatialAdaptiveMode"
+                    @update:modelValue="$emit('update:spatialAdaptiveMode', $event)" :disabled="!adaptiveMode" />
 
-                <div class="flex items-center justify-between">
-                    <label class="text-xs text-white/70">增强功能</label>
-                    <input type="checkbox" :checked="enableEnhancement"
-                        @change="$emit('update:enableEnhancement', ($event.target as HTMLInputElement).checked)"
-                        class="w-4 h-4 rounded border-white/20 bg-white/10 text-white/60 focus:ring-white/20">
-                </div>
+                <LabeledCheckbox label="增强功能" :modelValue="enableEnhancement"
+                    @update:modelValue="$emit('update:enableEnhancement', $event)" />
             </div>
         </div>
     </div>
@@ -45,6 +32,7 @@
 
 <script setup lang="ts">
 import { Slider } from '@leolee9086/slider-component'
+import LabeledCheckbox from './LabeledCheckbox.vue'
 import type { SliderItem } from './imports'
 
 defineProps<{
