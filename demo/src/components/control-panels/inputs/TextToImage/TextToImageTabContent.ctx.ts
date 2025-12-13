@@ -11,9 +11,33 @@ import {
   ERROR_MESSAGES,
   DEFAULTS,
 } from './TextToImageTabContent.constants'
+import { PROXY_CHECK } from './ProxyWarningModal.constants'
 import { cacheImage } from './TextToImageTabContent.cache'
 import type { UseTextToImageReturn, TextToImageParams } from './TextToImageTabContent.types'
 import { secureKeyManager, API_KEY_PREFIX, EMPTY_API_KEY } from './imports'
+
+/**
+ * 检测代理是否可用
+ */
+async function checkProxyAvailable(proxyUrl: string): Promise<boolean> {
+  try {
+    // 构建测试URL：通过代理访问一个简单的HTTP状态检测服务
+    const testUrl = `${proxyUrl}?target=${encodeURIComponent(PROXY_CHECK.TEST_TARGET)}`
+
+    const controller = new AbortController()
+    const timeoutId = setTimeout(() => controller.abort(), PROXY_CHECK.TIMEOUT)
+
+    const response = await fetch(testUrl, {
+      method: 'HEAD',
+      signal: controller.signal,
+    })
+
+    clearTimeout(timeoutId)
+    return response.ok
+  } catch {
+    return false
+  }
+}
 
 /**
  * 检查是否使用文件模式
@@ -181,6 +205,24 @@ function createGenerate(
       return
     }
 
+    // 检测代理可用性（使用默认代理时）
+    const currentProxyUrl = state.proxyUrl.value || DEFAULTS.PROXY_URL
+    const isDefaultProxy = currentProxyUrl === DEFAULTS.PROXY_URL
+
+    if (isDefaultProxy) {
+      state.status.value = PROXY_CHECK.STATUS.CHECKING
+      const isProxyAvailable = await checkProxyAvailable(currentProxyUrl)
+
+      if (!isProxyAvailable) {
+        // 显示警告弹窗并等待用户响应
+        const shouldContinue = await state.showProxyWarningAndWait()
+        if (!shouldContinue) {
+          state.status.value = DEFAULTS.EMPTY_STRING
+          return
+        }
+      }
+    }
+
     state.isGenerating.value = true
     state.error.value = DEFAULTS.EMPTY_STRING
     state.status.value = STATUS_MESSAGES.SUBMITTING
@@ -239,6 +281,8 @@ export function useTextToImage(onImageGenerated?: (base64: string) => void): Use
     status: state.status,
     generatedImages: state.generatedImages,
     apiKeyValid: state.apiKeyValid,
+    showProxyWarning: state.showProxyWarning,
+    handleProxyWarningResponse: state.handleProxyWarningResponse,
     generate,
     reset
   }

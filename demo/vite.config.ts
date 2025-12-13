@@ -40,7 +40,7 @@ export default defineConfig(() => {
               res.end(JSON.stringify({ error: 'Proxy Error', details: err.message }));
             }
           });
-          server.middlewares.use('/api/common-proxy', (req, res, next) => {
+          server.middlewares.use('/api/common', (req, res, next) => {
             try {
               const urlObj = new URL(req.url!, 'http://localhost');
               const targetParam = urlObj.searchParams.get('target');
@@ -87,7 +87,7 @@ export default defineConfig(() => {
       // 代理配置
       proxy: {
 
-        '/api/common-proxy': {
+        '/api/proxy': {
           // Fallback，实际上会被 router 覆盖
           target: 'http://localhost',
           changeOrigin: true,

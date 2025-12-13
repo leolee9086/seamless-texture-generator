@@ -74,6 +74,9 @@ export type UseTextToImageStateReturn = {
   status: Ref<string>
   generatedImages: Ref<string[]>
   apiKeyValid: Ref<boolean>
+  showProxyWarning: Ref<boolean>
+  showProxyWarningAndWait: () => Promise<boolean>
+  handleProxyWarningResponse: (continueGeneration: boolean) => void
 }
 
 export type UseTextToImageReturn = {
@@ -91,6 +94,8 @@ export type UseTextToImageReturn = {
   status: Ref<string>
   generatedImages: Ref<string[]>
   apiKeyValid: Ref<boolean>
+  showProxyWarning: Ref<boolean>
+  handleProxyWarningResponse: (continueGeneration: boolean) => void
   generate: () => Promise<void>
   reset: () => void
 }

@@ -22,6 +22,10 @@
 
     <!-- Generated Images Gallery -->
     <ImageGallery :image-urls="proxiedUrls" :on-image-click="handleImageClick" />
+
+    <!-- Proxy Warning Modal -->
+    <ProxyWarningModal :show="showProxyWarning" @continue="handleProxyWarningResponse(true)"
+      @cancel="handleProxyWarningResponse(false)" />
   </div>
 </template>
 
@@ -32,8 +36,9 @@ import { ApiKeyInput, PromptInput, ParameterGrid, StatusDisplay } from './import
 import AdvancedParameters from './AdvancedParameters.vue'
 import GenerateButton from './GenerateButton.vue'
 import ImageGallery from './ImageGallery.vue'
+import ProxyWarningModal from './ProxyWarningModal.vue'
 
-const props = defineProps<{
+defineProps<{
   isMobile?: boolean
 }>()
 
@@ -56,7 +61,9 @@ const {
   status,
   apiKeyValid,
   generate,
-  generatedImages
+  generatedImages,
+  showProxyWarning,
+  handleProxyWarningResponse
 } = useTextToImage((base64: string) => {
   emit('set-image', base64)
 })

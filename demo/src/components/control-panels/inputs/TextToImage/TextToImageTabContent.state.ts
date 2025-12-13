@@ -24,8 +24,34 @@ export function useTextToImageState(): UseTextToImageStateReturn {
   const status = ref('')
   const generatedImages = ref<string[]>([])
 
+  // 代理警告弹窗状态
+  const showProxyWarning = ref(false)
+  // 用于等待用户对代理警告的响应
+  let proxyWarningResolve: ((continueGeneration: boolean) => void) | null = null
+
   // 检查 API Key 是否有效（支持临时输入和文件模式）
   const apiKeyValid = computed(() => hasValidApiKey(apiKey.value))
+
+  /**
+   * 显示代理警告并等待用户响应
+   */
+  function showProxyWarningAndWait(): Promise<boolean> {
+    return new Promise((resolve) => {
+      proxyWarningResolve = resolve
+      showProxyWarning.value = true
+    })
+  }
+
+  /**
+   * 处理用户对代理警告的响应
+   */
+  function handleProxyWarningResponse(continueGeneration: boolean): void {
+    showProxyWarning.value = false
+    if (proxyWarningResolve) {
+      proxyWarningResolve(continueGeneration)
+      proxyWarningResolve = null
+    }
+  }
 
   return {
     apiKey,
@@ -41,6 +67,9 @@ export function useTextToImageState(): UseTextToImageStateReturn {
     error,
     status,
     generatedImages,
-    apiKeyValid
+    apiKeyValid,
+    showProxyWarning,
+    showProxyWarningAndWait,
+    handleProxyWarningResponse
   }
 }
