@@ -1,105 +1,39 @@
 /**
- * IndexedDB 图片缓存工具类
+ * IndexedDB 图片缓存工具类 (Powered by IndexDBFS)
  */
-
+import { IndexDBFS } from '../../../../infra/IndexDBFS.class'
 import { IMAGE_CACHE, INDEXED_DB } from './TextToImageTabContent.constants'
-import { isIDBOpenDBRequest, isIDBDatabase } from './TextToImageTabContent.indexedDB.guard'
+import type { ImageCacheItem, UrlListMeta } from './TextToImageTabContent.indexedDB.types'
 
-// 数据库实例
-let db: IDBDatabase | null = null
-
-/**
- * 初始化 IndexedDB 数据库
- */
-async function initDB(): Promise<IDBDatabase> {
-  return new Promise((resolve, reject) => {
-    const request = indexedDB.open(INDEXED_DB.DB_NAME, INDEXED_DB.DB_VERSION)
-
-    request.onerror = (): void => {
-      reject(new Error(INDEXED_DB.ERROR_MESSAGES.FAILED_TO_OPEN))
-    }
-
-    request.onsuccess = (): void => {
-      if (!isIDBDatabase(request.result)) {
-        reject(new Error(INDEXED_DB.ERROR_MESSAGES.FAILED_TO_OPEN))
-        return
-      }
-      db = request.result
-      resolve(db)
-    }
-
-    request.onupgradeneeded = (event): void => {
-      if (!isIDBOpenDBRequest(event.target)) {
-        reject(new Error(INDEXED_DB.ERROR_MESSAGES.FAILED_TO_OPEN))
-        return
-      }
-      
-      const database = request.result
-
-      // 创建图片缓存存储
-      if (!database.objectStoreNames.contains(INDEXED_DB.STORE_NAME)) {
-        database.createObjectStore(INDEXED_DB.STORE_NAME, { keyPath: INDEXED_DB.KEY_PATH.URL })
-      }
-
-      // 创建 URL 列表存储
-      if (!database.objectStoreNames.contains(INDEXED_DB.URL_LIST_STORE_NAME)) {
-        database.createObjectStore(INDEXED_DB.URL_LIST_STORE_NAME, { keyPath: INDEXED_DB.KEY_PATH.ID })
-      }
-    }
-  })
-}
-
-/**
- * 获取数据库实例
- */
-async function getDB(): Promise<IDBDatabase> {
-  if (db) {
-    return db
-  }
-  return initDB()
-}
+// 初始化 FS 实例
+// 注意：这里我们使用统一的数据库，或者沿用之前常量定义的名称
+const fs = new IndexDBFS(
+  INDEXED_DB.DB_NAME,
+  [INDEXED_DB.STORE_NAME, INDEXED_DB.URL_LIST_STORE_NAME],
+  INDEXED_DB.DB_VERSION
+)
 
 /**
  * 缓存图片到 IndexedDB
  */
 export async function cacheImage(base64: string, url: string): Promise<void> {
-  if (!url) {
-    return
-  }
+  if (!url) return
 
   try {
-    // 先获取 URL 列表，避免在事务中创建新事务
-    const urlList = await getUrlList()
-    const database = await getDB()
-    
-    // 创建事务
-    const transaction = database.transaction([INDEXED_DB.STORE_NAME, INDEXED_DB.URL_LIST_STORE_NAME], INDEXED_DB.TRANSACTION_MODE.READWRITE)
-    
-    // 缓存图片数据
-    const imageStore = transaction.objectStore(INDEXED_DB.STORE_NAME)
-    await new Promise<void>((resolve, reject) => {
-      const request = imageStore.put({ url, base64, timestamp: Date.now() })
-      request.onsuccess = (): void => resolve()
-      request.onerror = (): void => reject(request.error)
-    })
+    // 写入图片数据
+    const item: ImageCacheItem = { url, base64, timestamp: Date.now() }
+    await fs.write(`${INDEXED_DB.STORE_NAME}/${url}`, item)
 
-    // 更新 URL 列表
-    const urlListStore = transaction.objectStore(INDEXED_DB.URL_LIST_STORE_NAME)
+    // 更新 URL 列表 (MetaData)
+    // 这是一个非原子操作，但在 FS 模拟层下这也是可接受的 trade-off
+    const urlList = await getUrlList()
+
     if (!urlList.includes(url)) {
       const updatedUrlList = [...urlList, url]
-      await new Promise<void>((resolve, reject) => {
-        const request = urlListStore.put({ id: INDEXED_DB.URL_LIST_ID, urls: updatedUrlList })
-        request.onsuccess = (): void => resolve()
-        request.onerror = (): void => reject(request.error)
-      })
+      await saveUrlList(updatedUrlList)
     }
 
-    // 等待事务完成后再清理旧缓存
-    await new Promise<void>((resolve, reject) => {
-      transaction.oncomplete = (): void => resolve()
-      transaction.onerror = (): void => reject(transaction.error)
-    })
-
+    // 清理旧缓存
     await cleanupOldCache()
   } catch (error) {
     console.warn(IMAGE_CACHE.ERROR_MESSAGES.CACHE_FAILED, error)
@@ -110,42 +44,27 @@ export async function cacheImage(base64: string, url: string): Promise<void> {
  * 清理旧的缓存
  */
 async function cleanupOldCache(): Promise<void> {
-  const urlList = await getUrlList()
-  
+  let urlList = await getUrlList()
+
   if (urlList.length <= IMAGE_CACHE.MAX_COUNT) {
     return
   }
-  
+
   // 移除超出限制的最旧的 URL
   const urlsToRemove = urlList.slice(0, urlList.length - IMAGE_CACHE.MAX_COUNT)
   const updatedUrlList = urlList.slice(urlList.length - IMAGE_CACHE.MAX_COUNT)
-  
-  const database = await getDB()
-  const transaction = database.transaction([INDEXED_DB.STORE_NAME, INDEXED_DB.URL_LIST_STORE_NAME], INDEXED_DB.TRANSACTION_MODE.READWRITE)
-  
-  // 删除旧图片
-  const imageStore = transaction.objectStore(INDEXED_DB.STORE_NAME)
+
+  // 更新列表
+  await saveUrlList(updatedUrlList)
+
+  // 删除文件
   for (const url of urlsToRemove) {
-    await new Promise<void>((resolve, reject) => {
-      const request = imageStore.delete(url)
-      request.onsuccess = (): void => resolve()
-      request.onerror = (): void => reject(request.error)
-    })
+    try {
+      await fs.delete(`${INDEXED_DB.STORE_NAME}/${url}`)
+    } catch (err) {
+      console.warn(`Failed to delete cache ${url}`, err)
+    }
   }
-  
-  // 更新 URL 列表
-  const urlListStore = transaction.objectStore(INDEXED_DB.URL_LIST_STORE_NAME)
-  await new Promise<void>((resolve, reject) => {
-    const request = urlListStore.put({ id: INDEXED_DB.URL_LIST_ID, urls: updatedUrlList })
-    request.onsuccess = (): void => resolve()
-    request.onerror = (): void => reject(request.error)
-  })
-  
-  // 等待事务完成
-  await new Promise<void>((resolve, reject) => {
-    transaction.oncomplete = (): void => resolve()
-    transaction.onerror = (): void => reject(transaction.error)
-  })
 }
 
 /**
@@ -154,22 +73,16 @@ async function cleanupOldCache(): Promise<void> {
 export async function getCachedImages(): Promise<string[]> {
   try {
     const urlList = await getUrlList()
-    const database = await getDB()
-    const transaction = database.transaction([INDEXED_DB.STORE_NAME], INDEXED_DB.TRANSACTION_MODE.READONLY)
-    const imageStore = transaction.objectStore(INDEXED_DB.STORE_NAME)
-    
     const images: string[] = []
+
+    // 按顺序读取
     for (const url of urlList) {
-      const base64 = await new Promise<string | null>((resolve, reject) => {
-        const request = imageStore.get(url)
-        request.onsuccess = (): void => resolve(request.result?.base64 || null)
-        request.onerror = (): void => reject(request.error)
-      })
+      const base64 = await getCachedImageByUrl(url)
       if (base64) {
         images.push(base64)
       }
     }
-    
+
     return images
   } catch (error) {
     console.warn(INDEXED_DB.ERROR_MESSAGES.FAILED_TO_GET_IMAGES, error)
@@ -181,20 +94,11 @@ export async function getCachedImages(): Promise<string[]> {
  * 根据 URL 获取缓存的图片
  */
 export async function getCachedImageByUrl(url: string): Promise<string | null> {
-  if (!url) {
-    return null
-  }
+  if (!url) return null
 
   try {
-    const database = await getDB()
-    const transaction = database.transaction([INDEXED_DB.STORE_NAME], INDEXED_DB.TRANSACTION_MODE.READONLY)
-    const imageStore = transaction.objectStore(INDEXED_DB.STORE_NAME)
-    
-    return new Promise((resolve, reject) => {
-      const request = imageStore.get(url)
-      request.onsuccess = (): void => resolve(request.result?.base64 || null)
-      request.onerror = (): void => reject(request.error)
-    })
+    const item = await fs.read<ImageCacheItem>(`${INDEXED_DB.STORE_NAME}/${url}`)
+    return item?.base64 || null
   } catch (error) {
     console.warn(INDEXED_DB.ERROR_MESSAGES.FAILED_TO_GET_IMAGE, error)
     return null
@@ -206,19 +110,17 @@ export async function getCachedImageByUrl(url: string): Promise<string | null> {
  */
 async function getUrlList(): Promise<string[]> {
   try {
-    const database = await getDB()
-    const transaction = database.transaction([INDEXED_DB.URL_LIST_STORE_NAME], INDEXED_DB.TRANSACTION_MODE.READONLY)
-    const urlListStore = transaction.objectStore(INDEXED_DB.URL_LIST_STORE_NAME)
-    
-    return new Promise((resolve, reject) => {
-      const request = urlListStore.get(INDEXED_DB.URL_LIST_ID)
-      request.onsuccess = (): void => resolve(request.result?.urls || [])
-      request.onerror = (): void => reject(request.error)
-    })
+    const meta = await fs.read<UrlListMeta>(`${INDEXED_DB.URL_LIST_STORE_NAME}/${INDEXED_DB.URL_LIST_ID}`)
+    return meta?.urls || []
   } catch (error) {
     console.warn(INDEXED_DB.ERROR_MESSAGES.FAILED_TO_GET_URL_LIST, error)
     return []
   }
+}
+
+async function saveUrlList(urls: string[]): Promise<void> {
+  const meta: UrlListMeta = { id: INDEXED_DB.URL_LIST_ID, urls }
+  await fs.write(`${INDEXED_DB.URL_LIST_STORE_NAME}/${INDEXED_DB.URL_LIST_ID}`, meta)
 }
 
 /**
@@ -226,24 +128,8 @@ async function getUrlList(): Promise<string[]> {
  */
 export async function clearAllCache(): Promise<void> {
   try {
-    const database = await getDB()
-    const transaction = database.transaction([INDEXED_DB.STORE_NAME, INDEXED_DB.URL_LIST_STORE_NAME], INDEXED_DB.TRANSACTION_MODE.READWRITE)
-    
-    // 清空图片缓存
-    const imageStore = transaction.objectStore(INDEXED_DB.STORE_NAME)
-    await new Promise<void>((resolve, reject) => {
-      const request = imageStore.clear()
-      request.onsuccess = (): void => resolve()
-      request.onerror = (): void => reject(request.error)
-    })
-    
-    // 清空 URL 列表
-    const urlListStore = transaction.objectStore(INDEXED_DB.URL_LIST_STORE_NAME)
-    await new Promise<void>((resolve, reject) => {
-      const request = urlListStore.clear()
-      request.onsuccess = (): void => resolve()
-      request.onerror = (): void => reject(request.error)
-    })
+    await fs.clear(INDEXED_DB.STORE_NAME)
+    await fs.clear(INDEXED_DB.URL_LIST_STORE_NAME)
   } catch (error) {
     console.warn(INDEXED_DB.ERROR_MESSAGES.FAILED_TO_CLEAR_CACHE, error)
   }

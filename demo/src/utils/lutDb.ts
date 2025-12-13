@@ -1,5 +1,11 @@
-import { LUTDB } from './LUTDB.class';
+import * as LUTDBFunctions from './LUTDB.class';
 
 export * from './lutDb.types';
-export { LUTDB };
-export const lutDb = new LUTDB();
+// Export as object to mimic class instance
+export const lutDb = {
+    ...LUTDBFunctions
+};
+
+// For backward compatibility if someone used `new LUTDB()` (unlikely given it was a singleton usage pattern, but defining the type is good)
+export type LUTDBType = typeof lutDb;
+
