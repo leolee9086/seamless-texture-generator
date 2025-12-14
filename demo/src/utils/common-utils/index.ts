@@ -50,6 +50,9 @@ export {
 }
 
 // @AIDONE 已迁移 scroll.ts / scroll.guard.ts / vconsole.ts
-
-// @AITODO 待迁移:
-// - vue/ 目录 - Vue 相关通用工具（需评估是否与业务解耦）
+// @AITODO 继续检查其它工具文件,我注意到LUT目录中的大部分内容应该迁移到adjustments目录
+// @AIDONE vue/ 目录评估完成:
+// - vue/wrapper/ 是 Vue 框架特定的组件包装器工具库
+// - 虽然与业务解耦，但属于 Vue 生态系统工具，不应归入 common-utils
+// - common-utils 定位为"与框架无关的通用工具"
+// - vue/ 目录应保留在 utils/vue/ 位置，作为 Vue 相关工具的专属目录
