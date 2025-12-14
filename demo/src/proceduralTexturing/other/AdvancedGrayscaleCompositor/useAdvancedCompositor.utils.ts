@@ -63,7 +63,7 @@ export function createTextureFromBitmap(device: GPUDevice, bitmap: ImageBitmap):
     const texture = device.createTexture({
         size: [bitmap.width, bitmap.height],
         format: 'rgba8unorm',
-        usage: GPUTextureUsage.TEXTURE_BINDING | GPUTextureUsage.COPY_DST | GPUTextureUsage.RENDER_ATTACHMENT
+        usage: GPUTextureUsage.TEXTURE_BINDING | GPUTextureUsage.COPY_DST | GPUTextureUsage.RENDER_ATTACHMENT | GPUTextureUsage.COPY_SRC
     });
     device.queue.copyExternalImageToTexture(
         { source: bitmap },

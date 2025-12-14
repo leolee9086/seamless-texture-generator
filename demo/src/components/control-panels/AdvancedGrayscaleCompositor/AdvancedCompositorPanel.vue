@@ -76,9 +76,10 @@
                     :key="layer.id"
                     :layer="layer"
                     :is-active="activeLayerId === layer.id"
+                    :base-palette="basePalette"
                     @toggle-expand="activeLayerId = activeLayerId === layer.id ? null : layer.id"
-                    @toggle-visibility="toggleLayerVisibility"
-                    @delete="deleteLayer"
+                    @toggle-visibility="layer.visible = !layer.visible; requestUpdate()"
+                    @delete="handleRemoveLayer"
                     @update="requestUpdate"
                     @add-rule="addRuleToLayer"
                     @remove-rule="removeRule"
@@ -103,6 +104,7 @@ import AdvancedCompositorLayerItem from './AdvancedCompositorLayerItem.vue'
 const { 
     init, 
     baseImage, 
+    basePalette,
     setBaseImage,
     addLayer, 
     removeLayer, 
@@ -124,11 +126,22 @@ onMounted(async () => {
     await init()
 })
 
+const emit = defineEmits<{
+    (e: 'set-image', imageData: string): void
+}>()
+
 const requestUpdate = () => {
     if (debounceTimer) clearTimeout(debounceTimer)
-    debounceTimer = setTimeout(() => {
+    debounceTimer = setTimeout(async () => {
         if (canvasRef.value) {
-            forceUpdate(canvasRef.value)
+            await forceUpdate(canvasRef.value)
+            // Emit result to main app
+            try {
+                const dataUrl = canvasRef.value.toDataURL('image/png')
+                emit('set-image', dataUrl)
+            } catch (e) {
+                console.warn("Failed to export canvas image", e)
+            }
         }
     }, 50)
 }

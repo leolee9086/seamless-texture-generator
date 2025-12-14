@@ -8,6 +8,7 @@ export function useAdvancedCompositor(): {
 
     // State
     baseImage: import("vue").Ref<string | null>;
+    basePalette: import("vue").Ref<{ h: number, s: number, l: number }[]>;
     layers: import("vue").Ref<CompositorLayer[]>;
     isProcessing: import("vue").Ref<boolean>;
     error: import("vue").Ref<string | null>;
@@ -31,6 +32,7 @@ export function useAdvancedCompositor(): {
 
     // State
     const baseImage = ref<string | null>(null)
+    const basePalette = ref<{ h: number, s: number, l: number }[]>([])
     const layers = ref<CompositorLayer[]>([])
     const isProcessing = ref(false)
     const error = ref<string | null>(null)
@@ -61,6 +63,15 @@ export function useAdvancedCompositor(): {
             const res = await loadAndResizeImage(url); // use original size
             outputSize.value = { width: res.width, height: res.height };
             baseImage.value = url;
+
+            // Analyze Colors (Client-side)
+            try {
+                // Dynamically import and call analyzeImageColors
+                basePalette.value = await import('./useAdvancedCompositor.utils').then(m => m.analyzeImageColors(url));
+            } catch (e) {
+                console.warn("Base color analysis failed", e);
+                basePalette.value = [];
+            }
 
             // Create Base Texture
             if (baseTexture.value) baseTexture.value.destroy();
@@ -164,7 +175,7 @@ export function useAdvancedCompositor(): {
 
     return {
         init,
-        baseImage, layers, isProcessing, error,
+        baseImage, basePalette, layers, isProcessing, error,
         setBaseImage, addLayer, removeLayer,
         updateLayerRule, removeLayerRule,
         forceUpdate

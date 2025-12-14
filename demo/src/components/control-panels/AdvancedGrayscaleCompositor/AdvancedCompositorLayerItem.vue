@@ -63,15 +63,32 @@
             </div>
 
             <!-- Suggested Colors Palette -->
-            <div v-if="layer.layerPalette && layer.layerPalette.length > 0" class="mb-3">
+            <div v-if="(layer.layerPalette && layer.layerPalette.length > 0) || (basePalette && basePalette.length > 0)" class="mb-3">
                 <label class="text-[10px] text-white/50 block mb-1">Suggested Colors</label>
-                <div class="flex gap-1 flex-wrap">
+                
+                <!-- Layer Colors -->
+                <div v-if="layer.layerPalette && layer.layerPalette.length > 0" class="flex gap-1 flex-wrap mb-2">
+                    <div class="text-[9px] text-white/30 w-full mb-0.5">Self</div>
                     <button 
                         v-for="(color, cIdx) in layer.layerPalette" 
-                        :key="cIdx"
+                        :key="`l-${cIdx}`"
                         class="w-6 h-6 rounded-full border border-white/20 hover:border-white transition-all transform hover:scale-110 focus:outline-none focus:ring-1 focus:ring-blue-500"
                         :style="{ backgroundColor: `hsl(${color.h}, ${color.s}%, ${color.l}%)` }"
-                        :title="`H:${Math.round(color.h)} S:${Math.round(color.s)} L:${Math.round(color.l)}`"
+                        :title="`Self - H:${Math.round(color.h)} S:${Math.round(color.s)} L:${Math.round(color.l)}`"
+                        @click.stop="$emit('add-rule-from-color', layer.id, color)"
+                    >
+                    </button>
+                </div>
+
+                <!-- Base Colors -->
+                <div v-if="basePalette && basePalette.length > 0" class="flex gap-1 flex-wrap">
+                    <div class="text-[9px] text-white/30 w-full mb-0.5">Base</div>
+                    <button 
+                        v-for="(color, cIdx) in basePalette" 
+                        :key="`b-${cIdx}`"
+                        class="w-6 h-6 rounded-full border border-white/20 hover:border-white transition-all transform hover:scale-110 focus:outline-none focus:ring-1 focus:ring-blue-500"
+                        :style="{ backgroundColor: `hsl(${color.h}, ${color.s}%, ${color.l}%)` }"
+                        :title="`Base - H:${Math.round(color.h)} S:${Math.round(color.s)} L:${Math.round(color.l)}`"
                         @click.stop="$emit('add-rule-from-color', layer.id, color)"
                     >
                     </button>
@@ -158,6 +175,7 @@ import { CompositorLayer, HSLRule } from '../../../proceduralTexturing/other/Adv
 defineProps<{
     layer: CompositorLayer;
     isActive: boolean;
+    basePalette?: {h: number, s: number, l: number}[];
 }>();
 
 defineEmits<{
