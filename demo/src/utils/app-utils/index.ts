@@ -3,10 +3,36 @@
  * 与图像处理应用高度相关的工具函数
  */
 
+// 图像处理守卫
+import {
+    isFileReaderResultString,
+    isFileReader,
+    isHTMLInputElement
+} from './imageHandlers.guard'
+
+// 图像处理工具
+import {
+    handleImageUpload,
+    resetZoom,
+    saveImage
+} from './imageHandlers'
+
+export {
+    // 图像处理守卫
+    isFileReaderResultString,
+    isFileReader,
+    isHTMLInputElement,
+    // 图像处理工具
+    handleImageUpload,
+    resetZoom,
+    saveImage
+}
+
+// @AIDONE 已迁移 imageHandlers.ts / imageHandlers.guard.ts
+
 // @AITODO 待迁移:
 // - geometry.ts - 几何计算（用于图像变换）
 // - homography.ts - 透视变换
-// - imageHandlers.ts / imageHandlers.guard.ts - 图像上传处理
 // - imageLoader.ts / imageLoader.constants.ts - 图像加载
 // - imageWatcher.ts - 图像监听
 // - download.ts - 图像下载

@@ -27,7 +27,7 @@ import { useColorBlockSelector, type AdjustmentLayer } from '../../composables/u
 import { getHslBlockColor } from '../../utils/lut/getHslBlockColor'
 import type { RGBColor } from '../../utils/lut/colorQuantization'
 import type { HSLRange } from '../../utils/lut/hslMask'
-import { isHTMLInputElement } from '../../utils/imageHandlers.guard'
+import { isHTMLInputElement } from '../../utils/app-utils'
 
 // Vue Wrapper
 import { createComponentWrapper, withProps, withEmit, composeWrappers } from '../../utils/vue/wrapper'

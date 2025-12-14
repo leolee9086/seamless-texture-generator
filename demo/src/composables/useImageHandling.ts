@@ -1,5 +1,5 @@
 import { type Ref } from 'vue'
-import { handleImageUpload as uploadHandler, resetZoom as resetZoomFunc, saveImage } from '../utils/imageHandlers'
+import { handleImageUpload as uploadHandler, resetZoom as resetZoomFunc, saveImage } from '../utils/app-utils'
 import { watchImageChanges } from '../utils/imageWatcher'
 import { saveOriginalImage, saveProcessedImage } from '../utils/download'
 
