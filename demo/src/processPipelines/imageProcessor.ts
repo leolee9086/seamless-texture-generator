@@ -1,5 +1,5 @@
 import { loadAndScaleImage } from './imageLoad.utils'
-import { executeLUTProcess } from './lut.utils'
+import { executeLUTProcess } from '../adjustments/lut'
 import { executeTileableProcess } from './tileable.utils'
 import { convertToDataURL } from './output.utils'
 import { allMiddlewares, type MiddlewareContext } from './nodes/index'

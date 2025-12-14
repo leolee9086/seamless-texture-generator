@@ -50,7 +50,9 @@ export {
 }
 
 // @AIDONE 已迁移 scroll.ts / scroll.guard.ts / vconsole.ts
-// @AITODO 继续检查其它工具文件,我注意到LUT目录中的大部分内容应该迁移到adjustments目录
+// @AIDONE LUT 文件评估完成:
+// - utils/LUTDB.* 是存储工具，保留在 utils/
+// - processPipelines/lut.* 是管线处理逻辑，已迁移到 adjustments/lut/
 // @AIDONE vue/ 目录评估完成:
 // - vue/wrapper/ 是 Vue 框架特定的组件包装器工具库
 // - 虽然与业务解耦，但属于 Vue 生态系统工具，不应归入 common-utils
