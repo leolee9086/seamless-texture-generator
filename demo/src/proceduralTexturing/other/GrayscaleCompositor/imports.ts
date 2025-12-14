@@ -7,3 +7,5 @@
 import { getWebGPUDevice } from '../../../utils/webgpu/deviceCache/webgpuDevice'
 
 export { getWebGPUDevice }
+import * as AdvancedCompositor from '../AdvancedGrayscaleCompositor'
+export { AdvancedCompositor }

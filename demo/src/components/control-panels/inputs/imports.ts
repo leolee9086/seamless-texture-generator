@@ -30,6 +30,7 @@ import { default as VelvetPanel } from '../VelvetPanel.vue'
 import { default as TuringPanel } from '../MultiscaleTuringPanel.vue'
 import { default as GrayScottTuringPanel } from '../GrayScottTuringPanel.vue'
 import { default as GrayscaleCompositorPanel } from '../GrayscaleCompositorPanel.vue'
+import { default as AdvancedCompositorPanel } from '../AdvancedGrayscaleCompositor/AdvancedCompositorPanel.vue'
 
 // Re-export ModelScope API
 import { submitGenerationTask, pollTaskUntilComplete } from '../../../api/modelscope.api'
@@ -63,6 +64,7 @@ export {
   TuringPanel,
   GrayScottTuringPanel,
   GrayscaleCompositorPanel,
+  AdvancedCompositorPanel,
   submitGenerationTask,
   pollTaskUntilComplete,
   fetchImageAsBase64,

@@ -33,6 +33,10 @@
     <!-- Grayscale Compositor Panel -->
     <GrayscaleCompositorPanel v-if="proceduralType === 'Compositor'" :is-generating="isGenerating"
       @set-image="$emit('set-image', $event)" />
+
+    <!-- Advanced Grayscale Compositor Panel -->
+    <AdvancedCompositorPanel v-if="proceduralType === 'Advanced Compositor'"
+      @set-image="$emit('set-image', $event)" />
   </div>
 </template>
 
@@ -46,6 +50,7 @@ import {
   TuringPanel,
   GrayScottTuringPanel,
   GrayscaleCompositorPanel,
+  AdvancedCompositorPanel,
   createZeroBindingPlainWeavePanel,
   createZeroBindingPlainWeaveAdvancedPanel,
   isValidImageDataArg
