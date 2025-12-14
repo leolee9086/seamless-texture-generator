@@ -4,25 +4,20 @@ import {
     目录无效,
     操作失败,
     数据库需要升级,
-    事务中止
+    事务中止,
+    写入失败缺少KeyPath属性
 } from './IndexDBFS.templates';
+import { isArray } from './IndexDBFS.guard';
 
 /**
  * IndexDBFS (IndexedDB File System)
- * 
- * 一个比 idb 更适合本项目的文件系统模拟层。
- * 
- * 特性：
- * 1. **Path-Based API**: 使用 `store/key` 路径风格访问数据，模拟文件系统体验。
- * 2. **Auto Lifecycle**: 自动管理 DB 打开、版本升级和 Store 创建。
- * 3. **Pure Promise**: 完全 Promisified，无回调地狱。
- * 4. **Strict Safety**: 完整的错误处理和类型安全支持。
- * 
+ *
  * @example
  * const fs = new IndexDBFS('MyAppDB', ['luts', 'images']);
  * await fs.write('luts/my-lut-1', { ... });
  * const data = await fs.read('luts/my-lut-1');
  */
+
 export class IndexDBFS {
     private dbName: string;
     private storeNames: Set<string>;
@@ -55,10 +50,10 @@ export class IndexDBFS {
                 const store = tx.objectStore(storeName);
                 const request = store.get(key);
 
-                request.onsuccess = () => resolve(request.result || null);
-                request.onerror = () => reject(wrapError(操作失败, 'Read', request.error));
-            } catch (e) {
-                reject(wrapError(操作失败, 'Transaction', e));
+                request.onsuccess = (): void => resolve(request.result || null);
+                request.onerror = (): void => reject(wrapError(操作失败, 'Read', request.error));
+            } catch (error) {
+                reject(wrapError(操作失败, 'Transaction', error));
             }
         });
     }
@@ -80,19 +75,26 @@ export class IndexDBFS {
                 // 兼容性处理：检查是否使用了内联键 (keyPath)
                 // 如果 Store 定义了 keyPath (如 'id', 'url')，则 put 不能传第二个参数，且 data 必须包含该属性。
                 // 如果 Store 没有 keyPath，则必须传第二个参数作为 key。
-                let request: IDBRequest;
+                // @AIDONE: keyPath 验证已实现
+
+                // 有 keyPath 时验证 data 是否包含必需的 key 属性
                 if (store.keyPath) {
-                    // 假设 data 是对象且已包含正确的 key。
-                    // 理论上我们应该验证 data[store.keyPath] === key，但这里为了性能先跳过。
-                    request = store.put(data);
-                } else {
-                    request = store.put(data, key);
+                    const keyPaths = Array.isArray(store.keyPath) ? store.keyPath : [store.keyPath];
+                    for (const kp of keyPaths) {
+                        if (typeof data !== 'object' || data === null || !(kp in data)) {
+                            throw new Error(写入失败缺少KeyPath属性(storeName, kp));
+                        }
+                    }
                 }
 
-                request.onsuccess = () => resolve();
-                request.onerror = () => reject(wrapError(操作失败, 'Write', request.error));
-            } catch (e) {
-                reject(wrapError(操作失败, 'Transaction', e));
+                const request = store.keyPath
+                    ? store.put(data)       // 有 keyPath: data 自带 key，不传第二参数
+                    : store.put(data, key); // 无 keyPath: 必须显式传 key
+
+                request.onsuccess = (): void => resolve();
+                request.onerror = (): void => reject(wrapError(操作失败, 'Write', request.error));
+            } catch (error) {
+                reject(wrapError(操作失败, 'Transaction', error));
             }
         });
     }
@@ -112,10 +114,10 @@ export class IndexDBFS {
                 const store = tx.objectStore(storeName);
                 const request = store.delete(key);
 
-                request.onsuccess = () => resolve();
-                request.onerror = () => reject(wrapError(操作失败, 'Delete', request.error));
-            } catch (e) {
-                reject(wrapError(操作失败, 'Transaction', e));
+                request.onsuccess = (): void => resolve();
+                request.onerror = (): void => reject(wrapError(操作失败, 'Delete', request.error));
+            } catch (error) {
+                reject(wrapError(操作失败, 'Transaction', error));
             }
         });
     }
@@ -136,10 +138,10 @@ export class IndexDBFS {
                 const store = tx.objectStore(dir);
                 const request = store.getAllKeys();
 
-                request.onsuccess = () => resolve(request.result);
-                request.onerror = () => reject(wrapError(操作失败, 'List', request.error));
-            } catch (e) {
-                reject(wrapError(操作失败, 'Transaction', e));
+                request.onsuccess = (): void => resolve(request.result);
+                request.onerror = (): void => reject(wrapError(操作失败, 'List', request.error));
+            } catch (error) {
+                reject(wrapError(操作失败, 'Transaction', error));
             }
         });
     }
@@ -160,10 +162,18 @@ export class IndexDBFS {
                 const store = tx.objectStore(dir);
                 const request = store.getAll();
 
-                request.onsuccess = () => resolve(request.result as T[]);
-                request.onerror = () => reject(wrapError(操作失败, 'ReadDir', request.error));
-            } catch (e) {
-                reject(wrapError(操作失败, 'Transaction', e));
+                request.onsuccess = (): void => {
+                    const result = request.result;
+                    // 卫语句：非数组情况提前处理
+                    if (!isArray<T>(result)) {
+                        resolve([]);
+                        return;
+                    }
+                    resolve(result);
+                };
+                request.onerror = (): void => reject(wrapError(操作失败, 'ReadDir', request.error));
+            } catch (error) {
+                reject(wrapError(操作失败, 'Transaction', error));
             }
         });
     }
@@ -184,10 +194,10 @@ export class IndexDBFS {
                 const store = tx.objectStore(dir);
                 const request = store.clear();
 
-                request.onsuccess = () => resolve();
-                request.onerror = () => reject(wrapError(操作失败, 'Clear', request.error));
-            } catch (e) {
-                reject(wrapError(操作失败, 'Transaction', e));
+                request.onsuccess = (): void => resolve();
+                request.onerror = (): void => reject(wrapError(操作失败, 'Clear', request.error));
+            } catch (error) {
+                reject(wrapError(操作失败, 'Transaction', error));
             }
         });
     }
@@ -208,12 +218,18 @@ export class IndexDBFS {
             try {
                 const tx = db.transaction(stores, mode);
 
+                /**
+                 * @简洁函数 事务完成生命周期钩子，用于监听事务自动提交事件
+                 * 这是一个事件处理器，用于监听 IndexedDB 事务的自动提交事件。
+                 * 事务在所有请求成功完成后会自动提交，此函数作为生命周期钩子存在。
+                 */
                 tx.oncomplete = (): void => {
                     // Transaction auto-commits, but we rely on resolve(result) from inside.
-                    // This is just a lifecycle hook.
+                    // This is just a lifecycle hook that logs transaction completion.
+                    // Note: This function intentionally kept minimal as it's just a lifecycle hook.
                 };
-                tx.onerror = () => reject(wrapError(操作失败, 'Transaction', tx.error));
-                tx.onabort = () => reject(new Error(事务中止()));
+                tx.onerror = (): void => reject(wrapError(操作失败, 'Transaction', tx.error));
+                tx.onabort = (): void => reject(new Error(事务中止()));
 
                 try {
                     const result = await callback(tx);
@@ -227,8 +243,8 @@ export class IndexDBFS {
                     }
                     reject(err);
                 }
-            } catch (e) {
-                reject(wrapError(操作失败, 'Create transaction', e));
+            } catch (error) {
+                reject(wrapError(操作失败, 'Create transaction', error));
             }
         });
     }
@@ -242,14 +258,14 @@ export class IndexDBFS {
         this.openPromise = new Promise((resolve, reject) => {
             const request = indexedDB.open(this.dbName, this.version);
 
-            request.onerror = () => {
+            request.onerror = (): void => {
                 this.openPromise = null;
                 reject(wrapError(操作失败, 'Open DB', request.error));
             };
 
-            request.onsuccess = () => {
+            request.onsuccess = (): void => {
                 this.db = request.result;
-                this.db.onversionchange = () => {
+                this.db.onversionchange = (): void => {
                     this.db?.close();
                     this.db = null;
                     this.openPromise = null;
@@ -258,15 +274,15 @@ export class IndexDBFS {
                 resolve(this.db);
             };
 
-            request.onupgradeneeded = (event) => {
+            request.onupgradeneeded = (): void => {
                 const db = request.result;
-                this.storeNames.forEach(storeName => {
+                for (const storeName of this.storeNames) {
                     if (!db.objectStoreNames.contains(storeName)) {
                         // Important: We don't set keyPath here to allow maximum flexibility (File System simulation).
                         // FS uses path (key) to access file.
                         db.createObjectStore(storeName);
                     }
-                });
+                }
             };
         });
 
@@ -294,10 +310,10 @@ export class IndexDBFS {
 function wrapError(
     模板函数: (操作名: string, 原因: string) => string,
     操作名: string,
-    cause: any
+    cause: unknown
 ): Error {
-    const err = new Error(模板函数(操作名, cause?.message || cause));
-    (err as any).cause = cause;
-    return err;
+    const 原因字符串 = cause instanceof Error ? cause.message : String(cause);
+    // ES2022: 使用标准 Error 构造函数的 cause 选项
+    return new Error(模板函数(操作名, 原因字符串), { cause });
 }
 

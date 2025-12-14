@@ -73,13 +73,43 @@ const EXEMPT_COMMENT = '@简洁函数';
 function hasExemptComment(node: any, sourceCode: any): boolean {
     // 检查函数本身前的注释
     const comments = sourceCode.getCommentsBefore(node);
-    const hasInComments = comments.some((comment: any) => comment.value.includes(EXEMPT_COMMENT));
-    if (hasInComments) return true;
+    if (comments.some((comment: any) => comment.value.includes(EXEMPT_COMMENT))) return true;
 
-    // 对于 export function，注释可能在 ExportNamedDeclaration 上
-    if (node.parent && node.parent.type === 'ExportNamedDeclaration') {
-        const parentComments = sourceCode.getCommentsBefore(node.parent);
-        return parentComments.some((comment: any) => comment.value.includes(EXEMPT_COMMENT));
+    // 检查父节点
+    if (node.parent) {
+        // 对于 export function，注释可能在 ExportNamedDeclaration 上
+        if (node.parent.type === 'ExportNamedDeclaration') {
+            const parentComments = sourceCode.getCommentsBefore(node.parent);
+            if (parentComments.some((comment: any) => comment.value.includes(EXEMPT_COMMENT))) return true;
+        }
+
+        // 检查 AssignmentExpression (例如: tx.oncomplete = () => {})
+        // 结构通常是: ExpressionStatement -> AssignmentExpression -> ArrowFunctionExpression
+        if (node.parent.type === 'AssignmentExpression') {
+            const parentComments = sourceCode.getCommentsBefore(node.parent);
+            if (parentComments.some((comment: any) => comment.value.includes(EXEMPT_COMMENT))) return true;
+
+            // 如果是 ExpressionStatement 的一部分
+            if (node.parent.parent && node.parent.parent.type === 'ExpressionStatement') {
+                const grandParentComments = sourceCode.getCommentsBefore(node.parent.parent);
+                if (grandParentComments.some((comment: any) => comment.value.includes(EXEMPT_COMMENT))) return true;
+            }
+        }
+
+        // 检查 VariableDeclarator (例如: const foo = () => {})
+        // 结构通常是: VariableDeclaration -> VariableDeclarator -> ArrowFunctionExpression
+        if (node.parent.type === 'VariableDeclarator') {
+            if (node.parent.parent && node.parent.parent.type === 'VariableDeclaration') {
+                const grandParentComments = sourceCode.getCommentsBefore(node.parent.parent);
+                if (grandParentComments.some((comment: any) => comment.value.includes(EXEMPT_COMMENT))) return true;
+            }
+        }
+
+        // 检查 Property (例如在对象字面量中: { foo: () => {} })
+        if (node.parent.type === 'Property') {
+            const parentComments = sourceCode.getCommentsBefore(node.parent);
+            if (parentComments.some((comment: any) => comment.value.includes(EXEMPT_COMMENT))) return true;
+        }
     }
 
     return false;
