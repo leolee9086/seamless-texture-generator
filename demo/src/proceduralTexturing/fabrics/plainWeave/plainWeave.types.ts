@@ -44,3 +44,22 @@ export interface PlainWeaveParams {
     threadHeightScale: number;  // 纱线高度缩放 (0.5-2.0)
     threadShadowStrength: number; // 纱线交叉处阴影强度 (0.0-1.0)
 }
+
+export interface PlainWeaveResources {
+    pipeline: GPURenderPipeline;
+    bindGroup: GPUBindGroup;
+}
+
+export interface RenderPlainWeaveParams {
+    texture: GPUTexture;
+    pipeline: GPURenderPipeline;
+    bindGroup: GPUBindGroup;
+    vertexBuffer: GPUBuffer;
+}
+
+export interface TextureExportConfig {
+    device: GPUDevice;
+    texture: GPUTexture;
+    width: number;
+    height: number;
+}
