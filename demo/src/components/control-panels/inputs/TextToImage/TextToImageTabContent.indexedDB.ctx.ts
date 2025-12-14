@@ -44,7 +44,7 @@ export async function cacheImage(base64: string, url: string): Promise<void> {
  * 清理旧的缓存
  */
 async function cleanupOldCache(): Promise<void> {
-  let urlList = await getUrlList()
+  const urlList = await getUrlList()
 
   if (urlList.length <= IMAGE_CACHE.MAX_COUNT) {
     return

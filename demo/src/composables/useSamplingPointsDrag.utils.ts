@@ -99,7 +99,7 @@ export function useSamplingPointsDrag(deps: DragDeps) {
     }
 
     /** 处理点拖动 - 入口函数 */
-    const handlePointDragMove = (e: any, index: number, _groupScale: number) => {
+    const handlePointDragMove = (e: any, index: number) => {
         const node = e.target
         const newPos = { x: node.x(), y: node.y() }
 

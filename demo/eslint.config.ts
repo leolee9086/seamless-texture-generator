@@ -36,7 +36,8 @@ export default [
     ignores: [
       '**/node_modules/**', '**/dist/**', '**/coverage/**', '**/*.js', '**/*.mjs',
       '**/toread/**', '**/benchmark/**', '**/experimental/**', '**/plans/**',
-      '**/.claude/**', '**/.cursor/**', '**/.roo/**', '**/.trashed/**', '**/代码规约/**'
+      '**/.claude/**', '**/.cursor/**', '**/.roo/**', '**/.trashed/**', '**/代码规约/**',
+      '**/0_lints/**'  // lint 规则定义文件本身不需要被扫描
     ]
   },
 

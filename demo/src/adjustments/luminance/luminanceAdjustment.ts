@@ -2,7 +2,7 @@
  * Luminance Adjustment Utilities
  * Provides functions for managing luminance-based adjustments (Shadows, Midtones, Highlights)
  */
-
+// @AIDONE 已整理为管线模块，文件移至 luminance 目录
 import type { LuminanceAdjustmentParams } from './imports';
 import { 验证错误消息 } from './luminanceAdjustment.templates';
 import { DEFAULT_LUMINANCE_PARAMS, LUMINANCE_PRESETS, getLuminancePreset } from './luminanceAdjustment.presets';

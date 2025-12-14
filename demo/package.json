@@ -13,7 +13,7 @@
     "check-type": "tsc --noEmit",
     "lint": "eslint . --ext .ts,.tsx --max-warnings 0",
     "lint:fix": "eslint . --ext .ts,.tsx --fix --max-warnings 0",
-    "lint:file": "eslint . --ext .ts,.tsx --output-file lint-result.txt"
+    "lint:file": "eslint . --ext .ts,.tsx --output-file lint-result.txt --no-color"
   },
   "dependencies": {
     "@eslint/js": "^9.39.1",

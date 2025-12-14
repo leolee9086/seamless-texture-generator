@@ -1,0 +1,31 @@
+﻿
+> seamless-texture-demo@0.0.0 lint:file D:\dev\seamless-texture-generator\demo
+> eslint . --ext .ts,.tsx --output-file lint-result.txt --no-color
+
+node.exe : There was a problem writing the output file:
+所在位置 C:\Users\al765\AppData\Roaming\npm\pnpm.ps1:24 字符: 5
++     & "node$exe"  "$basedir/node_modules/pnpm/bin/pnpm.cjs" $args
++     ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+    + CategoryInfo          : NotSpecified: (There was a pro...he ou
+tput file    ::String) [], RemoteException
+    + FullyQualifiedErrorId : NativeCommandError
+ 
+Error: EBUSY: resource busy or locked, open 'D:\dev\seamless-texture
+-generator\demo\lint-result.txt'
+    at async open (node:internal/fs/promises:641:25)
+    at async writeFile (node:internal/fs/promises:1215:14)
+    at async printResults (D:\dev\seamless-texture-generator\demo\no
+de_modules\.pnpm\eslint@9.39.1_jiti@2.6.1\node_modules\eslint\lib\cl
+i.js:138:4)
+    at async Object.execute (D:\dev\seamless-texture-generator\demo\
+node_modules\.pnpm\eslint@9.39.1_jiti@2.6.1\node_modules\eslint\lib\
+cli.js:509:4)
+    at async main (D:\dev\seamless-texture-generator\demo\node_modul
+es\.pnpm\eslint@9.39.1_jiti@2.6.1\node_modules\eslint\bin\eslint.js:
+175:19) {
+  errno: -4082,
+  code: 'EBUSY',
+  syscall: 'open',
+  path: 'D:\\dev\\seamless-texture-generator\\demo\\lint-result.txt'
+}
+鈥塃LIFECYCLE鈥?Command failed with exit code 2.

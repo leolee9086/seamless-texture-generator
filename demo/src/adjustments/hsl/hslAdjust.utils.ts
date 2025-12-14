@@ -135,11 +135,11 @@ export async function executeHSLAdjust(
 
         try {
             // 创建两个临时纹理用于叠加处理
-            let tempTexture1 = device.createTexture({
+            const tempTexture1 = device.createTexture({
                 ...textureDescriptor,
                 label: 'HSL Temp Texture 1'
             })
-            let tempTexture2 = device.createTexture({
+            const tempTexture2 = device.createTexture({
                 ...textureDescriptor,
                 label: 'HSL Temp Texture 2'
             })

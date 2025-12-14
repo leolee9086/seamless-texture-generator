@@ -10,8 +10,8 @@ import type { DehazeParams } from '../../adjustments/dehaze/types'
 // 值导入转发 - 来自父级目录的业务逻辑
 import { applyDehazeAdjustment, DEFAULT_DEHAZE_PARAMS } from '../../adjustments/dehaze'
 import { processClarityAdjustment } from '../../adjustments/clarityAdjustment'
-import { adjustExposure, adjustExposureManual } from '../../adjustments/exposureAdjustment'
-import { applyLuminanceAdjustmentToImageData } from '../../adjustments/luminanceAdjustment'
+import { adjustExposure, adjustExposureManual } from '../../adjustments/exposure'
+import { applyLuminanceAdjustmentToImageData } from '../../adjustments/luminance'
 import { gpuBufferToImageData } from '../../utils/webgpu/convert/gpuBufferToImageData'
 
 export type { PipelineData, baseOptions, DehazeParams }

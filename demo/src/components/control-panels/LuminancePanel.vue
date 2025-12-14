@@ -126,7 +126,7 @@ import {
     validateLuminanceParams,
     createLuminanceAdjustmentEvent,
     getLuminancePreset
-} from '../../adjustments/luminanceAdjustment'
+} from '../../adjustments/luminance'
 import type { ZoneAdjustment } from '../../utils/webgpu/luminance-shaders'
 import type { ControlEvent } from '../../types/controlEvents'
 

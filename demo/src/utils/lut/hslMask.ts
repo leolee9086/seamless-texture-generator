@@ -328,7 +328,7 @@ export class HSLMaskGenerator {
         const mask = new Uint8Array(width * height);
 
         // 创建目标颜色映射
-        const targetColorSet = new Set(targetColors.map(c => `${c.r},${c.g},${c.b}`));
+        const _targetColorSet = new Set(targetColors.map(c => `${c.r},${c.g},${c.b}`));
 
         for (let i = 0; i < data.length; i += 4) {
             const r = data[i];

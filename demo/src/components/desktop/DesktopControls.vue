@@ -89,7 +89,7 @@ import './DesktopControls.css'
 import { useControlsLogic } from '../../composables/useControlsLogic'
 import type { DehazeParams } from '../../adjustments/dehaze/types'
 import type { ClarityParams } from '../../adjustments/clarityAdjustment'
-import type { LuminanceAdjustmentParams } from '../../adjustments/luminanceAdjustment'
+import type { LuminanceAdjustmentParams } from '../../adjustments/luminance'
 import ContactPanel from '../control-panels/ContactPanel.vue'
 import { createZeroBindingInputsPanel } from '../control-panels/inputs/InputsPanel.wrapper.utils'
 import CropPanel from '../control-panels/CropPanel.vue'
@@ -155,9 +155,9 @@ const {
 // 创建零绑定包装后的 InputsPanel 组件
 const wrappedInputsPanel = createZeroBindingInputsPanel({
   props: {
-    isProcessing:props.isProcessing,
-    originalImage:props.originalImage,
-    inputSliderItems:props.inputSliderItems
+    isProcessing: props.isProcessing,
+    originalImage: props.originalImage,
+    inputSliderItems: props.inputSliderItems
   },
   emits: {
     'load-sample': loadSampleImage,
@@ -169,4 +169,3 @@ const wrappedInputsPanel = createZeroBindingInputsPanel({
 
 
 </script>
-

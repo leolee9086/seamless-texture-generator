@@ -23,7 +23,7 @@ export const ID_LENGTH_RULE_CONFIG = [
         // 允许的例外
         exceptions: [
             // 数学/几何常用变量 - 仅在明确的数学上下文中使用
-            'x', 'y', 'z', 'w',
+            'x', 'y', 'z', 'w', 'i', 'j', 'k',
             // 时间相关
             't',
             // 忽略参数的占位符

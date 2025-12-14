@@ -2,91 +2,18 @@
  * 清晰度调整工具函数
  * 基于Guided Filter算法实现图像清晰度增强 (WebGPU版)
  */
-
 import type { ControlEvent } from '../types/controlEvents'
 import { createUpdateDataEvent } from '../types/controlEvents'
-// @ts-ignore
+// @ts-expect-error - 模块类型定义缺失
 import { executeGuidedFilter } from '@leolee9086/clarity-enhancement/src/algorithms/guided-filter.js'
 
-// 清晰度调整参数接口
-export interface ClarityParams {
-  sigma: number          // 滤波强度 [1.0, 16.0]
-  epsilon: number        // 正则化参数 [0.01, 0.1]
-  radius: number         // 窗口半径 [4, 32]
-  blockSize: number      // 线程组大小 [8, 32]
-  detailStrength: number  // 细节强度 [0.1, 20.0]
-  enhancementStrength: number // 增强强度 [0.1, 10.0]
-  macroEnhancement: number // 宏观增强 [0.0, 2.0]
-  contrastBoost: number   // 对比度增强 [1.0, 3.0]
-}
+// 类型从独立文件导入
+import type { ClarityParams, ClarityPresetConfig, ClarityPresetsCollection } from './clarityAdjustment.types'
+export type { ClarityParams, ClarityPresetConfig, ClarityPresetsCollection }
 
-// 默认清晰度参数
-export const DEFAULT_CLARITY_PARAMS: ClarityParams = {
-  sigma: 8.0,
-  epsilon: 0.04,
-  radius: 8,
-  blockSize: 16,
-  detailStrength: 2.0,
-  enhancementStrength: 1.0,
-  macroEnhancement: 0.0,
-  contrastBoost: 1.2
-}
-
-// 预设配置
-export const CLARITY_PRESETS = {
-  subtle: {
-    name: '轻微',
-    params: {
-      sigma: 6.0,
-      epsilon: 0.03,
-      radius: 6,
-      blockSize: 16,
-      detailStrength: 1.5,
-      enhancementStrength: 0.8,
-      macroEnhancement: 0.0,
-      contrastBoost: 1.1
-    } as ClarityParams
-  },
-  moderate: {
-    name: '适中',
-    params: {
-      sigma: 8.0,
-      epsilon: 0.04,
-      radius: 8,
-      blockSize: 16,
-      detailStrength: 2.0,
-      enhancementStrength: 1.0,
-      macroEnhancement: 0.0,
-      contrastBoost: 1.2
-    } as ClarityParams
-  },
-  strong: {
-    name: '强烈',
-    params: {
-      sigma: 10.0,
-      epsilon: 0.05,
-      radius: 10,
-      blockSize: 16,
-      detailStrength: 3.0,
-      enhancementStrength: 1.5,
-      macroEnhancement: 0.2,
-      contrastBoost: 1.4
-    } as ClarityParams
-  },
-  aggressive: {
-    name: '激进',
-    params: {
-      sigma: 12.0,
-      epsilon: 0.06,
-      radius: 12,
-      blockSize: 16,
-      detailStrength: 4.0,
-      enhancementStrength: 2.0,
-      macroEnhancement: 0.3,
-      contrastBoost: 1.6
-    } as ClarityParams
-  }
-}
+// 预设和常量从独立文件导入（允许从 .presets.ts 进行值导入）
+import { DEFAULT_CLARITY_PARAMS, CLARITY_PRESETS, 默认清晰度参数, 清晰度预设 } from './clarityAdjustment.presets'
+export { DEFAULT_CLARITY_PARAMS, CLARITY_PRESETS, 默认清晰度参数, 清晰度预设 }
 
 /**
  * 从 ImageData 创建纹理
