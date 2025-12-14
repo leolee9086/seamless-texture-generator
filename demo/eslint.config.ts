@@ -25,6 +25,7 @@ import {
 import { localRulesPlugin } from './0_lints/vue-custom-rules.ts'
 import { aiWorkerPlugin } from './0_lints/ai-worker-rules.ts' // 导入 AI Worker 插件
 import { 接口职责分离插件 } from './0_lints/interface-responsibility.ts'
+import { functionMinLinesPlugin } from './0_lints/function-min-lines.ts' // 导入函数最小行数检查插件
 
 // ========================================================================
 // 3. ESLint 配置主体
@@ -47,10 +48,12 @@ export default [
   {
     files: ['**/*.ts', '**/*.tsx', '**/*.vue', '**/*.d.ts'],
     plugins: {
-      'ai-worker': aiWorkerPlugin
+      'ai-worker': aiWorkerPlugin,
+      'function-min-lines': functionMinLinesPlugin
     },
     rules: {
-      'ai-worker/detect-ai-todo': 'error'
+      'ai-worker/detect-ai-todo': 'error',
+      'function-min-lines/function-min-lines': 'error'
     }
   },
 
