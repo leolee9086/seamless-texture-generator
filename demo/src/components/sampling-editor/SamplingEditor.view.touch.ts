@@ -1,5 +1,5 @@
-import { Ref } from 'vue'
-import { getDistance, getCenter } from '../utils/geometry'
+import type { Ref } from './imports'
+import { getDistance, getCenter } from './imports'
 
 export function useSamplingEditorTouch(
     stageRef: Ref<any>,

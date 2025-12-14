@@ -1,4 +1,4 @@
-import { ref } from 'vue'
+import { ref } from './imports'
 
 export function useSamplingEditorState() {
     const containerRef = ref<HTMLDivElement | null>(null)

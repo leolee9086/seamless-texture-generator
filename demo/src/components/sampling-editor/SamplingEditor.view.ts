@@ -1,4 +1,4 @@
-import { Ref } from 'vue'
+import type { Ref } from './imports'
 import { useSamplingEditorViewConfig } from './SamplingEditor.view.config'
 import { useSamplingEditorTouch } from './SamplingEditor.view.touch'
 import { useSamplingEditorViewManipulation } from './SamplingEditor.view.manipulation'

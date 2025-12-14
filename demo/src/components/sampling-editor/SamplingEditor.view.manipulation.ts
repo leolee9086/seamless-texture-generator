@@ -1,4 +1,4 @@
-import { Ref } from 'vue'
+import type { Ref } from './imports'
 
 export function useSamplingEditorViewManipulation(
     stageRef: Ref<any>,

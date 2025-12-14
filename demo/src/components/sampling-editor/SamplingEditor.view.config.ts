@@ -1,4 +1,4 @@
-import { computed, Ref } from 'vue'
+import { computed, type Ref } from './imports'
 
 export function useSamplingEditorViewConfig(
     imageObj: Ref<HTMLImageElement | null>,

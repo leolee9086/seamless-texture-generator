@@ -1,7 +1,5 @@
-import { Ref } from 'vue'
-import { warpPerspective } from '../utils/homography'
-import { getDistance } from '../utils/geometry'
-
+import { Ref, warpPerspective, getDistance } from './imports'
+//@AIDONE 采样区域编辑组件(裁切组件)已整理到 sampling-editor 文件夹
 export function useSamplingEditorActions(
     imageObj: Ref<HTMLImageElement | null>,
     points: Ref<{ x: number, y: number }[]>,

@@ -1,4 +1,4 @@
-import { watch, nextTick } from 'vue'
+import { watch, nextTick } from './imports'
 import { useSamplingPoints } from './imports'
 import { useSamplingEditorState } from './SamplingEditor.state'
 import { useSamplingEditorView } from './SamplingEditor.view'

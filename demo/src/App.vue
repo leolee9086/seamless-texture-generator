@@ -10,11 +10,9 @@
         <MobileControls :is-processing="isProcessing" :original-image="originalImage" :processed-image="processedImage"
           :max-resolution="maxResolution" :border-size="borderSize" :split-position="splitPosition"
           :magnifier-enabled="magnifierEnabled" :zoom-level="zoomLevel" :lut-enabled="lutEnabled"
-          :lut-intensity="lutIntensity" :lut-file-name="lutFileName" :lut-file="lutFile"
-          :global-hsl="globalHSL" :hsl-layers="hslLayers"
-          :exposure-strength="exposureStrength" :exposure-manual="exposureManual"
-          :dehaze-params="dehazeParams" :clarity-params="clarityParams"
-          :luminance-params="luminanceParams"
+          :lut-intensity="lutIntensity" :lut-file-name="lutFileName" :lut-file="lutFile" :global-hsl="globalHSL"
+          :hsl-layers="hslLayers" :exposure-strength="exposureStrength" :exposure-manual="exposureManual"
+          :dehaze-params="dehazeParams" :clarity-params="clarityParams" :luminance-params="luminanceParams"
           @control-event="handleControlEvent" class="pointer-events-auto h-full" />
       </div>
 
@@ -42,7 +40,7 @@
 <script setup lang="ts">
 import MobileControls from './components/mobile/MobileControls.vue'
 import Viewer from './components/Viewer.vue'
-import SamplingEditor from './components/SamplingEditor.vue'
+import { SamplingEditor } from './components/sampling-editor'
 import { useTextureGenerator } from './composables/useTextureGenerator'
 
 // 使用共享逻辑，禁用摄像头功能（移动端）
@@ -80,4 +78,3 @@ const {
   initialBorderSize: 0,
 })
 </script>
-

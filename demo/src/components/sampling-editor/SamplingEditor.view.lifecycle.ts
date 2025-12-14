@@ -1,4 +1,4 @@
-import { onMounted, onUnmounted, Ref } from 'vue'
+import { onMounted, onUnmounted, type Ref } from './imports'
 
 export function useSamplingEditorViewLifecycle(
     containerRef: Ref<HTMLElement | null>,
