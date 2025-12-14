@@ -59,7 +59,7 @@
 
 <script setup lang="ts">
 import { ref, computed, onMounted, onUnmounted } from 'vue'
-import { initVConsole, destroyVConsole, toggleVConsole, getVConsoleVisibility } from '../utils/vconsole'
+import { initVConsole, destroyVConsole, toggleVConsole, getVConsoleVisibility } from '../utils/common-utils'
 
 // 响应式数据
 const isConsoleActive = ref(false)

@@ -12,7 +12,7 @@ import { Slider } from '../imports'
 import { useProceduralTextureState } from '../imports'
 
 // Re-export utils
-import { horizontalScroll } from '../../../utils/scroll'
+import { horizontalScroll } from '../../../utils/common-utils'
 
 // Re-export common components
 import { default as horizontalScrollButtons } from '../../common/horizontalScrollButtons.vue'

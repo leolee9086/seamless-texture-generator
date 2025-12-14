@@ -4,8 +4,7 @@
     ]">
         <!-- Add Button -->
         <div class="aspect-square bg-white/5 hover:bg-white/10 border border-white/10 rounded-lg flex flex-col items-center justify-center cursor-pointer transition-colors group"
-            :class="[isMobile ? 'w-24 h-24' : '']"
-            @click="$emit('trigger-upload')">
+            :class="[isMobile ? 'w-24 h-24' : '']" @click="$emit('trigger-upload')">
             <div class="i-carbon-add text-2xl text-white/50 group-hover:text-white/80 transition-colors"></div>
             <span class="text-xs text-white/40 mt-1 group-hover:text-white/70">Add LUT</span>
         </div>
@@ -50,7 +49,7 @@
 <script setup lang="ts">
 import { ref, computed } from 'vue'
 import type { LUTItem } from '../../../utils/lutDb'
-import { isMobileDevice } from '../../../utils/deviceDetection'
+import { isMobileDevice } from '../../../utils/common-utils/deviceDetection'
 
 defineProps<{
     luts: LUTItem[]
@@ -98,12 +97,14 @@ const handleImageError = (id: string) => {
     display: flex;
     flex-wrap: nowrap;
     scrollbar-width: thin;
-    -webkit-overflow-scrolling: touch; /* iOS 平滑滚动 */
-    padding-bottom: 8px; /* 为滚动条留出空间 */
+    -webkit-overflow-scrolling: touch;
+    /* iOS 平滑滚动 */
+    padding-bottom: 8px;
+    /* 为滚动条留出空间 */
 }
 
 /* 确保移动端项目不会缩小 */
-.flex > * {
+.flex>* {
     flex: 0 0 auto;
     min-width: 0;
 }

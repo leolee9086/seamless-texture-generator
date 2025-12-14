@@ -3,7 +3,7 @@ import { ref, onMounted } from 'vue'
 import type { Ref, Component } from 'vue'
 
 // Utils
-import { isMobileDevice, supportsNativeCamera } from '../utils/deviceDetection'
+import { isMobileDevice, supportsNativeCamera } from '../utils/common-utils/deviceDetection'
 import { handlePhotoCaptured, toggleCamera } from '../utils/device/cameraHandlers'
 import { createControlEventHandler } from '../utils/controlEventHandler'
 
