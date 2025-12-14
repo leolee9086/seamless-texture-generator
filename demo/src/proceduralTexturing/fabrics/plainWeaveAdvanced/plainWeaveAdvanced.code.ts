@@ -34,7 +34,12 @@ struct Uniforms {
     threadHeightScale : f32,
     threadShadowStrength : f32,
     padding1: f32,
+    
+    backgroundColor: vec4<f32>,
+    backgroundOpacity: f32,
     padding2: f32,
+    padding3: f32,
+    padding4: f32,
 };
 
 @group(0) @binding(0) var<uniform> u : Uniforms;
@@ -234,6 +239,35 @@ fn fs_main(in : VertexOutput) -> @location(0) vec4<f32> {
     
     let finalColor = albedo * (0.3 + 0.7 * diff) + vec3<f32>(spec * 0.6);
     
-    return vec4<f32>(finalColor, 1.0);
+    // Mix with background color
+    // Calculate thread coverage/opacity based on density and thread gaps
+    // A simple approximation: if density is high, we see thread. If low, we might see background.
+    // However, the current 'density' model is more like ambient occlusion + albedo factor.
+    // We strictly defined h=0 where there is no thread? 
+    // In threadProfile, if abs(centered)>1.0 return 0.0. 
+    // In getPlainWeaveDetail logic:
+    // if (noWarp && noWeft) h = 0.0.
+    
+    // Let's use h (height) to determine opacity. 
+    // If h is very small, it's a hole.
+    
+    let threadAlpha = smoothstep(0.0, 0.2, height); // Soft transition at edges
+    
+    // Also consider background opacity parameter
+    let bgBase = u.backgroundColor.rgb;
+    let bgAlpha = u.backgroundOpacity; // This is the opacity OF THE BACKGROUND layer itself? 
+    // Usually "background opacity" means valid alpha in output if we want transparent PNGs.
+    // Or it means "opacity of background color" blended over black?
+    // Assuming the user wants to control the alpha of the FINAL image in the gaps.
+    
+    // If we want the background ITSELF to be transparent:
+    // finalAlpha = mix(bgAlpha, 1.0, threadAlpha);
+    // output color = mix(bgBase, threadColor, threadAlpha);
+    
+    // Combine thread color (finalColor) with background
+    let outColor = mix(bgBase, finalColor, threadAlpha);
+    let outAlpha = mix(bgAlpha, 1.0, threadAlpha);
+    
+    return vec4<f32>(outColor, outAlpha);
 }
 `;

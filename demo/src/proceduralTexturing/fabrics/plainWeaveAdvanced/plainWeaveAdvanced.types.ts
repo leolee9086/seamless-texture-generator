@@ -22,6 +22,8 @@ export interface PlainWeaveAdvancedParams {
     // 独立的颜色控制 (Hex String)
     warpColor: string;          // 经线颜色
     weftColor: string;          // 纬线颜色
+    backgroundColor: string;    // 背景颜色
+    backgroundOpacity: number;  // 背景不透明度 (0.0-1.0)
 
     // 高级噪声控制
     fbmOctaves: number;         // FBM 噪声的 octaves 数量 (1-5)

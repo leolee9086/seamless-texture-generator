@@ -116,6 +116,17 @@ export function createPlainWeaveAdvancedUniformBuffer(device: GPUDevice, params:
     uniformData[45] = params.threadHeightScale;
     uniformData[46] = params.threadShadowStrength;
 
+    // Padding at 47 is automatically 0
+
+    const backgroundColor = hexToRgb(params.backgroundColor);
+    uniformData[48] = backgroundColor[0];
+    uniformData[49] = backgroundColor[1];
+    uniformData[50] = backgroundColor[2];
+    uniformData[51] = backgroundColor[3]; // Alpha included in vec4, though we might control opacity separately
+
+    uniformData[52] = params.backgroundOpacity;
+
+
     const uniformBuffer = device.createBuffer({
         size: uniformData.byteLength,
         usage: GPUBufferUsage.UNIFORM | GPUBufferUsage.COPY_DST,

@@ -61,6 +61,14 @@ export const useBasicWeaveSliderItems = (): ComputedRef<SliderItem[]> => {
         step: 1.0
       }),
       createSliderItem({
+        id: SLIDER_IDS.BACKGROUND_OPACITY,
+        label: SLIDER_LABELS.BACKGROUND_OPACITY,
+        value: params.backgroundOpacity,
+        min: SLIDER_RANGES.BACKGROUND_OPACITY.MIN,
+        max: SLIDER_RANGES.BACKGROUND_OPACITY.MAX,
+        step: SLIDER_STEPS.DEFAULT
+      }),
+      createSliderItem({
         id: SLIDER_IDS.THREAD_THICKNESS,
         label: SLIDER_LABELS.THREAD_THICKNESS,
         value: params.threadThickness,

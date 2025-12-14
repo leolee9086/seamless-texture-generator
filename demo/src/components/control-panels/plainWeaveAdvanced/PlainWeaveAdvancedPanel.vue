@@ -18,6 +18,15 @@
             <span class="text-xs text-gray-400 font-mono">{{ fullState.plainWeaveAdvancedParams.weftColor }}</span>
           </div>
         </div>
+        <div class="flex items-center justify-between">
+          <label class="text-gray-300 text-sm font-medium">Background Color</label>
+          <div class="flex items-center gap-2">
+            <input type="color" v-model="fullState.plainWeaveAdvancedParams.backgroundColor" @change="debouncedGenerate"
+              class="w-8 h-8 cursor-pointer border-none bg-transparent" />
+            <span class="text-xs text-gray-400 font-mono">{{ fullState.plainWeaveAdvancedParams.backgroundColor
+              }}</span>
+          </div>
+        </div>
       </div>
     </CollapsiblePanel>
 

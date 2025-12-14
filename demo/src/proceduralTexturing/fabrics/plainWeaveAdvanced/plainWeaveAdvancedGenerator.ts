@@ -32,6 +32,8 @@ export const defaultPlainWeaveAdvancedParams: PlainWeaveAdvancedParams = {
     // 独立的颜色控制
     warpColor: '#D4C8B8', // 经线颜色
     weftColor: '#F0E8DC', // 纬线颜色
+    backgroundColor: '#000000', // 背景颜色
+    backgroundOpacity: 1.0,     // 背景不透明度
 
     // 高级噪声控制
     fbmOctaves: 3,

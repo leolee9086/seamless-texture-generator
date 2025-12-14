@@ -28,7 +28,9 @@ import {
 
 import { generatePlainWeaveAdvancedTexture, defaultPlainWeaveAdvancedParams } from '../../../proceduralTexturing/fabrics/plainWeaveAdvanced/plainWeaveAdvancedGenerator'
 import type { PlainWeaveAdvancedParams } from '../../../proceduralTexturing/fabrics/plainWeaveAdvanced/plainWeaveAdvanced.types'
-
+/**
+ * @AIDONE 检查高级平纹材质实现,布料的背景色应该可以调节并且可以设置背景透明度
+ */
 export type { SliderItem, VueComponent, ComputedRef, PlainWeaveAdvancedParams }
 export {
   createComponentWrapper,
