@@ -21,6 +21,8 @@ import { default as horizontalScrollButtons } from '../../common/horizontalScrol
 import { default as WoodPanel } from '../wood/WoodPanel.vue'
 import { default as PlainWeavePanel } from '../plainWeave/PlainWeavePanel.vue'
 import { createZeroBindingPlainWeavePanel } from '../plainWeave/PlainWeavePanel.wrapper.utils'
+import { default as PlainWeaveAdvancedPanel } from '../plainWeaveAdvanced/PlainWeaveAdvancedPanel.vue'
+import { createZeroBindingPlainWeaveAdvancedPanel } from '../plainWeaveAdvanced/PlainWeaveAdvancedPanel.wrapper.utils'
 import { isValidImageDataArg } from '../plainWeave/PlainWeavePanel.guard'
 import { default as LeatherPanel } from '../LeatherPanel.vue'
 import { default as TwillWeavePanel } from '../TwillWeavePanel.vue'
@@ -52,6 +54,8 @@ export {
   WoodPanel,
   PlainWeavePanel,
   createZeroBindingPlainWeavePanel,
+  PlainWeaveAdvancedPanel,
+  createZeroBindingPlainWeaveAdvancedPanel,
   isValidImageDataArg,
   LeatherPanel,
   TwillWeavePanel,

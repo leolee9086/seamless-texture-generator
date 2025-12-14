@@ -71,7 +71,7 @@ const emit = defineEmits<{
 
 // 使用持久化状态管理
 const { state } = useProceduralTextureState()
-const textureTypes = ['Wood', 'Plain Weave', 'Leather', 'Twill Weave', 'Velvet', 'Turing', 'Gray-Scott', 'Compositor'] as const
+const textureTypes = ['Wood', 'Plain Weave', 'Plain Weave Advanced', 'Leather', 'Twill Weave', 'Velvet', 'Turing', 'Gray-Scott', 'Compositor'] as const
 const tabs = [INPUTS_PANEL_TABS.UPLOAD, INPUTS_PANEL_TABS.PROCEDURAL, INPUTS_PANEL_TABS.TEXT_TO_IMAGE] as const
 const isGenerating = ref(false)
 

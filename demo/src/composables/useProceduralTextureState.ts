@@ -1,61 +1,19 @@
-import {  reactive, watch } from 'vue'
-import { defaultWoodParams, type WoodParams } from '../proceduralTexturing/wood/woodGeneratorPipeline'
-
-// 定义所有程序化纹理类型的参数接口
-export interface ProceduralTextureState {
-  // 通用状态
-  activeTab: 'Upload' | 'Procedural' | 'Text-to-Image'
-  proceduralType: string
-  
-  // 木纹参数
-  woodParams: WoodParams
-  
-  // 其他纹理参数（未来扩展）
-  plainWeaveParams?: any
-  leatherParams?: any
-  twillWeaveParams?: any
-  velvetParams?: any
-  turingParams?: any
-  grayScottParams?: any
-  compositorParams?: any
-  
-  // 文本生成图像参数
-  textToImageParams?: {
-    prompt: string
-    size: string
-    n: number
-    numInferenceSteps: number
-    model: string
-  }
-  
-  // UI 状态
-  uiState: {
-    woodPanel: {
-      showColors: boolean
-      showBasicParams: boolean
-      showPoreParams: boolean
-      showAdvancedParams: boolean
-      showMaterialParams: boolean
-      showPresets: boolean
-    },
-    plainWeavePanel?: any,
-    leatherPanel?: any,
-    twillWeavePanel?: any,
-    velvetPanel?: any,
-    turingPanel?: any,
-    grayScottPanel?: any,
-    compositorPanel?: any,
-    textToImagePanel?: any
-  }
-}
+import {
+  reactive,
+  watch,
+  defaultWoodParams,
+  defaultPlainWeaveAdvancedParams
+} from './imports'
+import type { ProceduralTextureState } from './useProceduralTextureState.types'
+import { PROCEDURAL_STORAGE_KEY, TEXTURE_TYPES, TAB_NAMES, DEFAULT_COLORS, PROCEDURAL_STATE_ERRORS } from './constants'
 
 // 默认状态
 const defaultState: ProceduralTextureState = {
-  activeTab: 'Upload',
-  proceduralType: 'Wood',
+  activeTab: TAB_NAMES.UPLOAD,
+  proceduralType: TEXTURE_TYPES.WOOD,
   woodParams: { ...defaultWoodParams },
-  
-  // 平纹织物默认参数
+
+  // 平纹织物默认参数 - legacy
   plainWeaveParams: {
     tileSize: 1.0,
     threadDensity: 20.0,
@@ -68,8 +26,8 @@ const defaultState: ProceduralTextureState = {
     threadUnevenness: 0.15,
     weaveImperfection: 0.1,
     gradientStops: [
-      { offset: 0.0, color: '#D4C8B8' },
-      { offset: 1.0, color: '#F0E8DC' }
+      { offset: 0.0, color: DEFAULT_COLORS.PLAIN_WEAVE_WARP },
+      { offset: 1.0, color: DEFAULT_COLORS.PLAIN_WEAVE_WEFT }
     ],
     warpSheen: 0.3,
     weftSheen: 0.25,
@@ -83,7 +41,10 @@ const defaultState: ProceduralTextureState = {
     roughnessMin: 0.3,
     roughnessMax: 0.8
   },
-  
+
+  // Advanced Plain Weave Params
+  plainWeaveAdvancedParams: { ...defaultPlainWeaveAdvancedParams },
+
   // 斜纹织物默认参数
   twillWeaveParams: {
     tileSize: 1.0,
@@ -100,9 +61,9 @@ const defaultState: ProceduralTextureState = {
     threadUnevenness: 0.15,
     weaveImperfection: 0.1,
     gradientStops: [
-      { offset: 0.0, color: '#1a1a2e' },
-      { offset: 0.3, color: '#e0e0d0' },
-      { offset: 0.6, color: '#2c3e50' }
+      { offset: 0.0, color: DEFAULT_COLORS.TWILL_WEAVE_STOP_0 },
+      { offset: 0.3, color: DEFAULT_COLORS.TWILL_WEAVE_STOP_1 },
+      { offset: 0.6, color: DEFAULT_COLORS.TWILL_WEAVE_STOP_2 }
     ],
     warpSheen: 0.4,
     weftSheen: 0.25,
@@ -116,7 +77,7 @@ const defaultState: ProceduralTextureState = {
     noiseFrequency: 3.0,
     colorVariation: 0.15
   },
-  
+
   // 丝绒默认参数
   velvetParams: {
     tileSize: 1.0,
@@ -130,15 +91,15 @@ const defaultState: ProceduralTextureState = {
     sheenDirection: 0.0,
     colorVariation: 0.1,
     gradientStops: [
-      { offset: 0.0, color: '#2a0845' },
-      { offset: 0.5, color: '#5a3a7a' },
-      { offset: 1.0, color: '#8a6a9a' }
+      { offset: 0.0, color: DEFAULT_COLORS.VELVET_STOP_0 },
+      { offset: 0.5, color: DEFAULT_COLORS.VELVET_STOP_1 },
+      { offset: 1.0, color: DEFAULT_COLORS.VELVET_STOP_2 }
     ],
     roughnessMin: 0.1,
     roughnessMax: 0.9,
     normalStrength: 5.0
   },
-  
+
   uiState: {
     woodPanel: {
       showColors: true,
@@ -149,6 +110,14 @@ const defaultState: ProceduralTextureState = {
       showPresets: false
     },
     plainWeavePanel: {
+      showColors: true,
+      showBasicParams: true,
+      showThreadParams: false,
+      showAdvancedParams: false,
+      showMaterialParams: false,
+      showPresets: false
+    },
+    plainWeaveAdvancedPanel: {
       showColors: true,
       showBasicParams: true,
       showThreadParams: false,
@@ -177,67 +146,52 @@ const defaultState: ProceduralTextureState = {
   }
 }
 
-// 本地存储键名
-const STORAGE_KEY = 'procedural-texture-state'
-
 // 从本地存储加载状态
-const loadState = (): ProceduralTextureState => {
+function loadState(): ProceduralTextureState {
   try {
-    const stored = localStorage.getItem(STORAGE_KEY)
-    if (stored) {
-      const parsedState = JSON.parse(stored)
-      // 合并默认状态，确保新增的属性有默认值
-      return {
-        ...defaultState,
-        ...parsedState,
-        woodParams: {
-          ...defaultState.woodParams,
-          ...parsedState.woodParams
+    const stored = localStorage.getItem(PROCEDURAL_STORAGE_KEY)
+    if (!stored) {
+      return { ...defaultState }
+    }
+
+    const parsedState = JSON.parse(stored)
+    // 合并默认状态，确保新增的属性有默认值
+    return {
+      ...defaultState,
+      ...parsedState,
+      woodParams: { ...defaultState.woodParams, ...parsedState.woodParams },
+      plainWeaveParams: { ...defaultState.plainWeaveParams, ...parsedState.plainWeaveParams },
+      // Ensure plainWeaveAdvancedParams is correctly merged with defaults
+      plainWeaveAdvancedParams: {
+        ...defaultState.plainWeaveAdvancedParams,
+        ...(parsedState.plainWeaveAdvancedParams || {})
+      },
+      twillWeaveParams: { ...defaultState.twillWeaveParams, ...parsedState.twillWeaveParams },
+      velvetParams: { ...defaultState.velvetParams, ...parsedState.velvetParams },
+      uiState: {
+        woodPanel: { ...defaultState.uiState.woodPanel, ...parsedState.uiState?.woodPanel },
+        plainWeavePanel: { ...defaultState.uiState.plainWeavePanel, ...parsedState.uiState?.plainWeavePanel },
+        plainWeaveAdvancedPanel: {
+          ...defaultState.uiState.plainWeaveAdvancedPanel,
+          ...(parsedState.uiState?.plainWeaveAdvancedPanel || {})
         },
-        plainWeaveParams: {
-          ...defaultState.plainWeaveParams,
-          ...parsedState.plainWeaveParams
-        },
-        twillWeaveParams: {
-          ...defaultState.twillWeaveParams,
-          ...parsedState.twillWeaveParams
-        },
-        velvetParams: {
-          ...defaultState.velvetParams,
-          ...parsedState.velvetParams
-        },
-        uiState: {
-          woodPanel: {
-            ...defaultState.uiState.woodPanel,
-            ...parsedState.uiState?.woodPanel
-          },
-          plainWeavePanel: {
-            ...defaultState.uiState.plainWeavePanel,
-            ...parsedState.uiState?.plainWeavePanel
-          },
-          twillWeavePanel: {
-            ...defaultState.uiState.twillWeavePanel,
-            ...parsedState.uiState?.twillWeavePanel
-          },
-          velvetPanel: {
-            ...defaultState.uiState.velvetPanel,
-            ...parsedState.uiState?.velvetPanel
-          }
-        }
+        twillWeavePanel: { ...defaultState.uiState.twillWeavePanel, ...parsedState.uiState?.twillWeavePanel },
+        velvetPanel: { ...defaultState.uiState.velvetPanel, ...parsedState.uiState?.velvetPanel }
       }
     }
+
   } catch (error) {
-    console.warn('Failed to load procedural texture state from localStorage:', error)
+    console.warn(PROCEDURAL_STATE_ERRORS.LOAD_FAILED, error)
+    return { ...defaultState }
   }
-  return { ...defaultState }
 }
 
-// 保存状态到本地存储
-const saveState = (state: ProceduralTextureState) => {
+/** @简洁函数 监听状态变化并自动保存 */
+const saveState = (stateToSave: ProceduralTextureState): void => {
   try {
-    localStorage.setItem(STORAGE_KEY, JSON.stringify(state))
+    localStorage.setItem(PROCEDURAL_STORAGE_KEY, JSON.stringify(stateToSave))
   } catch (error) {
-    console.warn('Failed to save procedural texture state to localStorage:', error)
+    console.warn(PROCEDURAL_STATE_ERRORS.SAVE_FAILED, error)
   }
 }
 
@@ -253,34 +207,47 @@ watch(
   { deep: true }
 )
 
-// 重置状态到默认值
-const resetState = () => {
+/** @简洁函数 重置状态 */
+const resetState = (): void => {
   Object.assign(state, defaultState)
   saveState(state)
 }
 
-// 重置特定纹理类型的参数
-const resetTextureParams = (textureType: string) => {
-  switch (textureType) {
-    case 'Wood':
-      state.woodParams = { ...defaultWoodParams }
-      break
-    case 'PlainWeave':
-      state.plainWeaveParams = { ...defaultState.plainWeaveParams }
-      break
-    case 'TwillWeave':
-      state.twillWeaveParams = { ...defaultState.twillWeaveParams }
-      break
-    case 'Velvet':
-      state.velvetParams = { ...defaultState.velvetParams }
-      break
-    default:
-      console.warn(`Unknown texture type: ${textureType}`)
+// 参数重置映射
+const resetHandlers: Record<string, () => void> = {
+  [TEXTURE_TYPES.WOOD]: () => {
+    state.woodParams = { ...defaultWoodParams }
+  },
+  [TEXTURE_TYPES.PLAIN_WEAVE]: () => {
+    state.plainWeaveParams = { ...defaultState.plainWeaveParams }
+  },
+  [TEXTURE_TYPES.PLAIN_WEAVE_ADVANCED]: () => {
+    state.plainWeaveAdvancedParams = { ...defaultPlainWeaveAdvancedParams }
+  },
+  [TEXTURE_TYPES.TWILL_WEAVE]: () => {
+    state.twillWeaveParams = { ...defaultState.twillWeaveParams }
+  },
+  [TEXTURE_TYPES.VELVET]: () => {
+    state.velvetParams = { ...defaultState.velvetParams }
   }
 }
 
+// 重置特定纹理类型的参数
+const resetTextureParams = (textureType: string): void => {
+  const handler = resetHandlers[textureType]
+  if (!handler) {
+    console.warn(`${PROCEDURAL_STATE_ERRORS.UNKNOWN_TYPE} ${textureType}`)
+    return
+  }
+  handler()
+}
+
 // 导出状态和操作函数
-export function useProceduralTextureState() {
+export function useProceduralTextureState(): {
+  state: ProceduralTextureState
+  resetState: () => void
+  resetTextureParams: (textureType: string) => void
+} {
   return {
     state,
     resetState,

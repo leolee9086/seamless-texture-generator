@@ -7,6 +7,9 @@
     <!-- Plain Weave Panel -->
     <component :is="wrappedPlainWeavePanel" v-if="proceduralType === 'Plain Weave'" />
 
+    <!-- Plain Weave Advanced Panel -->
+    <component :is="wrappedPlainWeaveAdvancedPanel" v-if="proceduralType === 'Plain Weave Advanced'" />
+
     <!-- Leather Panel -->
     <LeatherPanel v-if="proceduralType === 'Leather'" :is-generating="isGenerating"
       @set-image="$emit('set-image', $event)" />
@@ -37,7 +40,6 @@
 import { computed } from 'vue'
 import {
   WoodPanel,
-  PlainWeavePanel,
   LeatherPanel,
   TwillWeavePanel,
   VelvetPanel,
@@ -45,6 +47,7 @@ import {
   GrayScottTuringPanel,
   GrayscaleCompositorPanel,
   createZeroBindingPlainWeavePanel,
+  createZeroBindingPlainWeaveAdvancedPanel,
   isValidImageDataArg
 } from './imports'
 
@@ -57,19 +60,25 @@ const emit = defineEmits<{
   'set-image': [imageData: string]
 }>()
 
-// 创建零绑定包装后的 PlainWeavePanel 组件
-const wrappedPlainWeavePanel = computed(() => {
-  return createZeroBindingPlainWeavePanel({
-    props: {
-      isGenerating: props.isGenerating
-    },
-    emits: {
-      'set-image': (...args: unknown[]) => {
-        if (isValidImageDataArg(args)) {
-          emit('set-image', args[0])
-        }
+const createPanelConfig = () => ({
+  props: {
+    isGenerating: props.isGenerating
+  },
+  emits: {
+    'set-image': (...args: unknown[]) => {
+      if (isValidImageDataArg(args)) {
+        emit('set-image', args[0])
       }
     }
-  })
+  }
 })
+
+// 创建零绑定包装后的组件
+const wrappedPlainWeavePanel = computed(() =>
+  createZeroBindingPlainWeavePanel(createPanelConfig())
+)
+
+const wrappedPlainWeaveAdvancedPanel = computed(() =>
+  createZeroBindingPlainWeaveAdvancedPanel(createPanelConfig())
+)
 </script>

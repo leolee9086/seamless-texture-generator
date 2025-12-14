@@ -1,5 +1,5 @@
 // Vue
-import { ref, onMounted } from 'vue'
+import { ref, onMounted, reactive, watch } from 'vue'
 import type { Ref, Component } from 'vue'
 
 // Utils
@@ -16,5 +16,34 @@ import type { ClarityParams } from '../adjustments/clarity'
 import type { LuminanceAdjustmentParams } from '../adjustments/imports'
 import type { HSLAdjustmentLayer } from '../utils/imports'
 
-export { ref, onMounted, isMobileDevice, supportsNativeCamera, handlePhotoCaptured, toggleCamera, createControlEventHandler }
-export type { Ref, Component, ControlEvent, DehazeParams, ClarityParams, LuminanceAdjustmentParams, HSLAdjustmentLayer }
+
+// Procedural Textures
+import { defaultWoodParams, type WoodParams } from '../proceduralTexturing/wood/woodGeneratorPipeline'
+import { defaultPlainWeaveAdvancedParams } from '../proceduralTexturing/fabrics/plainWeaveAdvanced/plainWeaveAdvancedGenerator'
+import type { PlainWeaveAdvancedParams } from '../proceduralTexturing/fabrics/plainWeaveAdvanced/plainWeaveAdvanced.types'
+
+export {
+    ref,
+    onMounted,
+    reactive,
+    watch,
+    isMobileDevice,
+    supportsNativeCamera,
+    handlePhotoCaptured,
+    toggleCamera,
+    createControlEventHandler,
+    defaultWoodParams,
+    defaultPlainWeaveAdvancedParams
+}
+
+export type {
+    Ref,
+    Component,
+    ControlEvent,
+    DehazeParams,
+    ClarityParams,
+    LuminanceAdjustmentParams,
+    HSLAdjustmentLayer,
+    WoodParams,
+    PlainWeaveAdvancedParams
+}
