@@ -1,5 +1,5 @@
 import type { Ref, DehazeParams, ClarityParams, LuminanceAdjustmentParams } from './imports'
-
+//@AITODO 各个Params不应该逐个声明,而是应该成为调整管线参数的一部分
 /**
  * HSL调整层接口
  */

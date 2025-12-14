@@ -1,7 +1,7 @@
 import { ref } from './imports'
 import type { DehazeParams, ClarityParams, LuminanceAdjustmentParams } from './imports'
 import type { HSLAdjustmentLayer, AdjustmentParams } from './useAdjustmentParams.types'
-
+//@AITODO 参数默认参数应该由各个模块的presets导出
 /** 去雾参数默认值 */
 export const 默认去雾参数: DehazeParams = {
     omega: 0.95,

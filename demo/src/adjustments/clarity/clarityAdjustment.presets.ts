@@ -2,7 +2,7 @@
  * 清晰度调整预设配置
  */
 import type { ClarityParams, ClarityPresetsCollection } from './clarityAdjustment.types'
-
+//@AIDONE 需要整理为模块,参考其它调整模块 - 已完成: 创建了clarity模块目录,包含index.ts/imports.ts/types.ts/presets.ts/clarityAdjustment.ts
 /** 默认清晰度参数 */
 export const 默认清晰度参数: ClarityParams = {
     sigma: 8.0,

@@ -12,7 +12,7 @@ import type { ControlEvent } from '../utils/imports'
 
 // Adjustments
 import type { DehazeParams } from '../adjustments/dehaze/types'
-import type { ClarityParams } from '../adjustments/clarityAdjustment'
+import type { ClarityParams } from '../adjustments/clarity'
 import type { LuminanceAdjustmentParams } from '../adjustments/imports'
 import type { HSLAdjustmentLayer } from '../utils/imports'
 

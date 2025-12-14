@@ -1,7 +1,7 @@
 import { ref, type Ref, type Component } from 'vue'
 import type { HSLAdjustmentLayer } from '../adjustments/hsl/hslAdjustStep'
 import type { DehazeParams } from '@/adjustments/dehaze/types'
-import type { ClarityParams } from '../adjustments/clarityAdjustment'
+import type { ClarityParams } from '../adjustments/clarity'
 import type { LuminanceAdjustmentParams } from '../adjustments/luminance'
 
 /** 预览覆盖层数据 */

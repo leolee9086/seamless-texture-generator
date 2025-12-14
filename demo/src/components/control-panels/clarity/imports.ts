@@ -2,7 +2,7 @@
 import type { ControlEvent } from '../../../types/controlEvents'
 
 // Re-export types from adjustments
-import type { ClarityParams } from '../../../adjustments/clarityAdjustment'
+import type { ClarityParams } from '../../../adjustments/clarity'
 
 // Re-export Vue types
 import type { Ref } from 'vue'
@@ -14,7 +14,7 @@ import { ref, computed } from 'vue'
 import type { SliderItem } from '@leolee9086/slider-component'
 
 // Re-export constants and functions from adjustments
-import { DEFAULT_CLARITY_PARAMS, CLARITY_PRESETS, getClarityPreset, createClarityAdjustmentEvent } from '../../../adjustments/clarityAdjustment'
+import { DEFAULT_CLARITY_PARAMS, CLARITY_PRESETS, getClarityPreset, createClarityAdjustmentEvent } from '../../../adjustments/clarity'
 
 export type { ControlEvent, ClarityParams, Ref, SliderItem }
 export { ref, computed, DEFAULT_CLARITY_PARAMS, CLARITY_PRESETS, getClarityPreset, createClarityAdjustmentEvent }

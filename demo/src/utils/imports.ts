@@ -8,7 +8,7 @@ import type { ImageDownloadParams } from '../types/download.types'
 import type { ControlEvent } from '../types/controlEvents'
 import type { PipelineData, baseOptions, GeneralSynthesisPipelineStep } from '../types/PipelineData.type'
 import type { DehazeParams } from '../adjustments/dehaze/types'
-import type { ClarityParams } from '../adjustments/clarityAdjustment'
+import type { ClarityParams } from '../adjustments/clarity'
 import type { LuminanceAdjustmentParams } from '../utils/webgpu/luminance.types'
 import type { HSLAdjustmentLayer } from '../adjustments/hsl/hslAdjust.utils'
 
