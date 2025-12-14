@@ -31,24 +31,33 @@ const BLEND_MODE_MAP: Record<BlendMode, number> = {
     'overlay': 4,
     'max': 5,
     'min': 6,
-    'replace': 0 // fallback or special case? In multi-pass, replace is just normal blend with high opacity?
-    // Or we can treat 'replace' as a mode where we ignore base? 
-    // Whatever our shader implements. Our shader treats 0 as normal/replace based on simplified blend.
+    'replace': 0 // fallback
 };
-
-// Shader uses: 0=normal, 1=add, 2=multiply, 3=screen, 4=overlay, 5=max, 6=min
-// We need to map correctly. 
-// Note: 'replace' in standard composition usually means "Source Over" without blending? Or "Copy"?
-// If we want "Replace" (dst = src), we can use Normal with 100% opacity usually.
-// Let's assume our shader 'Normal' is mix(base, layer, alpha).
-// If alpha is 1, it replaces base.
 
 /**
  * 将 HSLRule 数据打包到 Float32Array
  */
 function packRulesData(rules: HSLRule[]): Float32Array {
     const count = Math.min(rules.length, MAX_RULES_PER_LAYER);
-    // HSL_RULE_STRUCT_SIZE = 32 bytes = 8 floats
+    // HSL_RULE_STRUCT_SIZE = 48 bytes = 12 floats (updated size)
+    // Wait, let's check types.ts for HSL_RULE_STRUCT_SIZE. 
+    // Assuming I updated types.ts previously. 
+    // If I didn't update types.ts size constant, I should check it.
+    // In Step 511 edits, I updated struct in WGSL and types.ts interface.
+    // The struct became: 8 fields + maskSource + padding = 10 floats? 
+    // Wait, WGSL:
+    // hue, hueTol, sat, satTol (4)
+    // light, lightTol, feather, invert (4)
+    // maskSource, padding (2)
+    // Total 10 floats = 40 bytes.
+    // But alignment might require 16 bytes? 
+    // 40 bytes is 10 floats. 
+    // Let's assume 12 floats (48 bytes) for safety/alignment or 12 floats if I added more padding.
+    // In Step 515, I wrote: const ruleSize = 12; // floats (48 bytes / 4 = 12 floats)
+
+    // I need to use HSL_RULE_STRUCT_SIZE from types.ts.
+    // If types.ts says 48, then floatsPerRule = 12.
+
     const floatsPerRule = HSL_RULE_STRUCT_SIZE / 4;
     const bufferData = new Float32Array(MAX_RULES_PER_LAYER * floatsPerRule);
 
@@ -64,8 +73,10 @@ function packRulesData(rules: HSLRule[]): Float32Array {
         bufferData[offset + 4] = rule.lightness;
         bufferData[offset + 5] = rule.lightnessTolerance;
         bufferData[offset + 6] = rule.feather;
-        // bufferData[offset + 7] is invert (float)
         bufferData[offset + 7] = rule.invert ? 1.0 : 0.0;
+
+        bufferData[offset + 8] = rule.maskSource ?? 0; // 0=Self, 1=Base
+        // padding
     }
 
     return bufferData;
@@ -94,6 +105,7 @@ export async function createAdvancedCompositorPipeline(device: GPUDevice): Promi
  * 创建 Rules Storage Buffer
  */
 export function createRulesBuffer(device: GPUDevice): GPUBuffer {
+    // Ensure size is aligned
     const bufferSize = MAX_RULES_PER_LAYER * HSL_RULE_STRUCT_SIZE;
     return device.createBuffer({
         size: bufferSize,
@@ -112,11 +124,11 @@ export function executeLayerBlend(
         device, baseTexture, layerTexture, outputTexture,
         rulesBuffer, ruleCount,
         layerOpacity, layerBlendMode,
+        originalBaseTexture, // Added
         width, height
     } = params;
 
     // 1. 更新 Layer Params Uniform Buffer
-    // struct LayerParams { ruleCount, opacity, blendMode, padding }
     const uniformData = new Float32Array([
         ruleCount,
         layerOpacity,
@@ -131,11 +143,6 @@ export function executeLayerBlend(
     device.queue.writeBuffer(uniformBuffer, 0, uniformData.buffer);
 
     // 2. 创建 BindGroup
-    // @group(0) @binding(0) var baseTexture
-    // @group(0) @binding(1) var layerTexture
-    // @group(0) @binding(2) var dstTexture
-    // @group(0) @binding(3) var rules
-    // @group(0) @binding(4) var params
     const bindGroup = device.createBindGroup({
         layout: pipeline.getBindGroupLayout(0),
         entries: [
@@ -143,7 +150,8 @@ export function executeLayerBlend(
             { binding: 1, resource: layerTexture.createView() },
             { binding: 2, resource: outputTexture.createView() },
             { binding: 3, resource: { buffer: rulesBuffer } },
-            { binding: 4, resource: { buffer: uniformBuffer } }
+            { binding: 4, resource: { buffer: uniformBuffer } },
+            { binding: 5, resource: originalBaseTexture.createView() } // Added binding 5
         ]
     });
 

@@ -79,7 +79,7 @@
                     :base-palette="basePalette"
                     @toggle-expand="activeLayerId = activeLayerId === layer.id ? null : layer.id"
                     @toggle-visibility="layer.visible = !layer.visible; requestUpdate()"
-                    @delete="handleRemoveLayer"
+                    @delete="deleteLayer"
                     @update="requestUpdate"
                     @add-rule="addRuleToLayer"
                     @remove-rule="removeRule"
@@ -197,7 +197,7 @@ const toggleLayerVisibility = (layer: CompositorLayer) => {
     requestUpdate()
 }
 
-const addRuleFromColor = (layerId: string, color: {h: number, s: number, l: number}) => {
+const addRuleFromColor = (layerId: string, color: {h: number, s: number, l: number}, source: number = 0) => {
     const newRule: HSLRule = {
         id: Math.random().toString(36).substr(2, 9),
         hue: color.h,
@@ -207,7 +207,8 @@ const addRuleFromColor = (layerId: string, color: {h: number, s: number, l: numb
         lightness: color.l,
         lightnessTolerance: 15,
         feather: 0.2,
-        invert: false
+        invert: false,
+        maskSource: source // 0=Self, 1=Base
     }
     updateLayerRule(layerId, newRule)
     requestUpdate()
@@ -223,7 +224,8 @@ const addRuleToLayer = (layerId: string) => {
         lightness: 50,
         lightnessTolerance: 20,
         feather: 0.2,
-        invert: false
+        invert: false,
+        maskSource: 0 // Default to Self
     }
     updateLayerRule(layerId, newRule)
     requestUpdate()

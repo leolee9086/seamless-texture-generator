@@ -4,6 +4,7 @@
 export const advancedCompositorWGSL = /* wgsl */`
 
 // ==========================================
+// ==========================================
 // 结构定义
 // ==========================================
 
@@ -17,6 +18,8 @@ struct HSLRule {
     lightnessTolerance: f32, // offset 20
     feather: f32,         // offset 24
     invert: f32,          // offset 28
+    maskSource: f32,      // offset 32 (0=Self, 1=Base)
+    padding: f32,         // offset 36
 };
 
 struct LayerParams {
@@ -31,6 +34,7 @@ struct LayerParams {
 @group(0) @binding(2) var dstTexture: texture_storage_2d<rgba8unorm, write>; // Output
 @group(0) @binding(3) var<storage, read> rules: array<HSLRule>; // Mask Rules
 @group(0) @binding(4) var<uniform> params: LayerParams;
+@group(0) @binding(5) var originalBaseTexture: texture_2d<f32>; // Original Base Image (for Masking)
 
 // ==========================================
 // 辅助函数: 色彩空间转换
@@ -149,26 +153,31 @@ fn cs_main(@builtin(global_invocation_id) id: vec3<u32>) {
     let baseColor = textureLoad(baseTexture, coords, 0).rgb;
     let layerColor = textureLoad(layerTexture, coords, 0).rgb;
     
+    // 读取原始底图颜色 (Original Base)
+    let originalBaseColor = textureLoad(originalBaseTexture, coords, 0).rgb;
+    
     // 2. 计算 Layer Mask
     // 将 Layer 颜色转为 HSL 进行判断
     let layerHsl = rgbToHsl(layerColor);
+    let originalBaseHsl = rgbToHsl(originalBaseColor);
     
     var computedAlpha: f32 = 0.0;
     let count = i32(params.ruleCount);
     
-    // 如果没有规则，默认全透(0)还是全显(1)? 
-    // 根据需求 "选择HSL蒙版计算器"，隐含意图是选取部分区域。
-    // 这里设定：若无规则，则透明度为1 (整张图叠加)，或者0?
-    // 通常逻辑是：规则定义了“可见区域”。所以初始为0。
-    // 但是如果规则列表为空呢？
-    // 假设空规则列表意味着该图层不受HSL限制，直接使用全局透明度。
     if (count == 0) {
         computedAlpha = 1.0;
     } else {
         // 规则之间取最大值 (Union)
         for (var i = 0; i < count; i = i + 1) {
             let rule = rules[i];
-            let val = calculateRuleMask(layerHsl, rule);
+            
+            // 根据 maskSource 选择源颜色
+            var targetHsl = layerHsl;
+            if (rule.maskSource > 0.5) {
+                targetHsl = originalBaseHsl;
+            }
+
+            let val = calculateRuleMask(targetHsl, rule);
             computedAlpha = max(computedAlpha, val);
         }
     }

@@ -15,6 +15,7 @@ export interface HSLRule {
     lightnessTolerance: number; // 0-100
     feather: number;        // 0-1, 边缘羽化
     invert: boolean;        // 是否反选规则
+    maskSource: number;     // 0=Self (Layer), 1=Base (Original)
 }
 
 /**
@@ -75,6 +76,8 @@ export interface ExecuteLayerBlendParams {
     layerOpacity: number;
     layerBlendMode: number;
 
+    originalBaseTexture: GPUTexture; // 原始底图 (用于 Mask 计算)
+
     width: number;
     height: number;
 }
@@ -94,7 +97,9 @@ struct HSLRule {
     lightnessTolerance: f32, // offset 20
     feather: f32,         // offset 24
     invert: f32,          // offset 28 (0=false, 1=true)
+    maskSource: f32,      // offset 32 (0=Self, 1=Base)
+    padding: f32,         // offset 36 (Alignment)
 }
 */
-export const HSL_RULE_STRUCT_SIZE = 32;
+export const HSL_RULE_STRUCT_SIZE = 48; // Updated size (aligned to 16 bytes? 32+4+4=40 -> 48 for alignment)
 export const MAX_RULES_PER_LAYER = 16;

@@ -75,7 +75,7 @@
                         class="w-6 h-6 rounded-full border border-white/20 hover:border-white transition-all transform hover:scale-110 focus:outline-none focus:ring-1 focus:ring-blue-500"
                         :style="{ backgroundColor: `hsl(${color.h}, ${color.s}%, ${color.l}%)` }"
                         :title="`Self - H:${Math.round(color.h)} S:${Math.round(color.s)} L:${Math.round(color.l)}`"
-                        @click.stop="$emit('add-rule-from-color', layer.id, color)"
+                        @click.stop="$emit('add-rule-from-color', layer.id, color, 0)"
                     >
                     </button>
                 </div>
@@ -89,7 +89,7 @@
                         class="w-6 h-6 rounded-full border border-white/20 hover:border-white transition-all transform hover:scale-110 focus:outline-none focus:ring-1 focus:ring-blue-500"
                         :style="{ backgroundColor: `hsl(${color.h}, ${color.s}%, ${color.l}%)` }"
                         :title="`Base - H:${Math.round(color.h)} S:${Math.round(color.s)} L:${Math.round(color.l)}`"
-                        @click.stop="$emit('add-rule-from-color', layer.id, color)"
+                        @click.stop="$emit('add-rule-from-color', layer.id, color, 1)"
                     >
                     </button>
                 </div>
@@ -156,10 +156,27 @@
                                     <div class="flex justify-between text-[10px] text-white/40"><span>Feather</span><span>{{ rule.feather.toFixed(2) }}</span></div>
                                     <input type="range" v-model.number="rule.feather" :min="0" :max="1" :step="0.01" class="w-full h-1 bg-white/5 rounded accent-green-500/80" @input="$emit('update')" />
                                 </div>
-                                <label class="flex items-center text-[10px] text-white/60 cursor-pointer">
-                                    <input type="checkbox" v-model="rule.invert" class="mr-1 rounded bg-white/10" @change="$emit('update')" /> Inv
-                                </label>
-                            </div>
+                                    <label class="flex items-center text-[10px] text-white/60 cursor-pointer">
+                                        <input type="checkbox" v-model="rule.invert" class="mr-1 rounded bg-white/10" @change="$emit('update')" /> Inv
+                                    </label>
+                                </div>
+                                
+                                <!-- Mask Source Selection -->
+                                <div class="col-span-2 flex items-center gap-2 pt-1 border-t border-white/5 mt-1">
+                                    <span class="text-[10px] text-white/40">Source:</span>
+                                    <div class="flex bg-black/20 rounded p-0.5">
+                                        <button 
+                                            class="px-2 py-0.5 rounded text-[9px] transition-colors"
+                                            :class="(!rule.maskSource || rule.maskSource === 0) ? 'bg-blue-500 text-white' : 'text-white/40 hover:text-white'"
+                                            @click="rule.maskSource = 0; $emit('update')"
+                                        >Self</button>
+                                        <button 
+                                            class="px-2 py-0.5 rounded text-[9px] transition-colors"
+                                            :class="(rule.maskSource === 1) ? 'bg-blue-500 text-white' : 'text-white/40 hover:text-white'"
+                                            @click="rule.maskSource = 1; $emit('update')"
+                                        >Base</button>
+                                    </div>
+                                </div>
                         </div>
                     </div>
                 </div>

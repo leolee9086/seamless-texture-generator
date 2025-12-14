@@ -101,11 +101,17 @@ export async function runMultiLayerCompositor(
 
     let accum = device.createTexture(textureDesc);
     let temp = device.createTexture(textureDesc);
+    let originalBaseTexture = device.createTexture(textureDesc); // Store the initial base texture
 
     const commandEncoder = device.createCommandEncoder();
     commandEncoder.copyTextureToTexture(
         { texture: baseTexture },
         { texture: accum },
+        [width, height]
+    );
+    commandEncoder.copyTextureToTexture(
+        { texture: baseTexture },
+        { texture: originalBaseTexture },
         [width, height]
     );
     device.queue.submit([commandEncoder.finish()]);
@@ -119,12 +125,14 @@ export async function runMultiLayerCompositor(
             device,
             baseTexture: accum,
             layerTexture: layer.imageTexture,
+            originalBaseTexture: params.baseTexture, // Pass original base
             outputTexture: temp,
             rulesBuffer: rulesBuffer,
             ruleCount: layer.maskRules.length,
             layerOpacity: layer.opacity,
             layerBlendMode: getBlendModeIndex(layer.blendMode),
-            width, height
+            width, height,
+            originalBaseTexture: originalBaseTexture // Pass the original base texture
         }, pipeline);
 
         const t = accum;
@@ -142,6 +150,7 @@ export async function runMultiLayerCompositor(
 
     accum.destroy();
     temp.destroy();
+    originalBaseTexture.destroy();
 }
 
 /**
