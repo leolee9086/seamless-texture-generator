@@ -142,14 +142,24 @@ export async function handleImageClick(
 
 /**
  * 创建代理URL计算函数
+ * 返回用于缓存查询的 URL（与缓存时使用的 key 保持一致）
+ * - 思源代理：使用原始 URL（缓存 key 是原始 URL）
+ * - 普通代理：使用代理 URL（缓存 key 是代理 URL）
  */
 export function createProxiedUrlsComputed(
   generatedImages: Ref<string[]>,
-  proxyUrl: Ref<string>
+  proxyUrl: Ref<string>,
+  proxyType: Ref<string>
 ): ComputedRef<string[]> {
   return computed(() => (
     generatedImages.value.map(
       (item: string) => {
+        // 思源代理模式下，缓存 key 是原始 URL，所以直接返回原始 URL
+        const isSiyuanProxy = proxyType.value === 'siyuan'
+        if (isSiyuanProxy) {
+          return item
+        }
+        // 普通代理模式下，缓存 key 是代理 URL
         const proxiedUrl = proxyUrl.value ? buildProxyUrl(item, proxyUrl.value) : item
         return proxiedUrl
       }

@@ -74,7 +74,8 @@ const {
 })
 
 // 使用工具函数创建代理URL计算属性
-const proxiedUrls = createProxiedUrlsComputed(generatedImages, proxyUrl)
+// 传入 proxyType 以便区分思源代理和普通代理的缓存 key 策略
+const proxiedUrls = createProxiedUrlsComputed(generatedImages, proxyUrl, proxyType)
 
 /**
  * 处理图像点击事件
