@@ -36,6 +36,9 @@ export const DEFAULTS = {
   MODEL: 'Tongyi-MAI/Z-Image-Turbo',
   SHOW_ADVANCED: false,
   PROXY_URL: '/api/common-proxy',
+  PROXY_TYPE: 'default',
+  SIYUAN_URL: 'http://127.0.0.1:6806',
+  SIYUAN_TOKEN: '',
 } as const
 
 // 可用模型列表

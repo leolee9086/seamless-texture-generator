@@ -12,6 +12,8 @@ import {
   type TaskStatusResponse
 } from '../imports'
 
+import { fetchImageWithProxy } from '../../../../api/modelscope.api'
+
 // Re-export SecureApiKeyInput components and utilities
 import { secureKeyManager } from '../SecureApiKeyInput/SecureApiKeyInput.ctx'
 import { API_KEY_PREFIX, EMPTY_API_KEY } from '../SecureApiKeyInput/SecureApiKeyInput.constants'
@@ -41,5 +43,6 @@ export {
   ApiKeyInput,
   PromptInput,
   ParameterGrid,
-  StatusDisplay
+  StatusDisplay,
+  fetchImageWithProxy
 }

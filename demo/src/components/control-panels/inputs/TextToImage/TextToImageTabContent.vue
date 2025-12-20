@@ -10,8 +10,10 @@
     <ParameterGrid v-model:size="size" v-model:n="n" v-model:batch-interval="batchInterval" />
 
     <!-- Advanced Parameters (Collapsible) -->
+    <!-- Advanced Parameters (Collapsible) -->
     <AdvancedParameters v-model:num-inference-steps="numInferenceSteps" v-model:model="model"
-      v-model:proxy-url="proxyUrl" :show-advanced="showAdvanced" @toggle="showAdvanced = !showAdvanced" />
+      v-model:proxy-url="proxyUrl" v-model:proxy-type="proxyType" v-model:siyuan-url="siyuanUrl"
+      v-model:siyuan-token="siyuanToken" :show-advanced="showAdvanced" @toggle="showAdvanced = !showAdvanced" />
 
     <!-- Generate Button -->
     <GenerateButton :is-generating="isGenerating" :disabled="isGenerating || !apiKeyValid || !prompt.trim()"
@@ -55,6 +57,9 @@ const {
   numInferenceSteps,
   model,
   proxyUrl,
+  proxyType,
+  siyuanUrl,
+  siyuanToken,
   showAdvanced,
   isGenerating,
   error,

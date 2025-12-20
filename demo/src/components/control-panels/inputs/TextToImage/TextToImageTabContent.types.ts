@@ -13,7 +13,12 @@ export interface TextToImageParams {
   model: string
   proxyUrl?: string
   batchInterval?: number
+  proxyType?: ProxyType
+  siyuanUrl?: string
+  siyuanToken?: string
 }
+
+export type ProxyType = 'default' | 'custom' | 'siyuan'
 
 export interface TextToImageResult {
   success: boolean
@@ -48,6 +53,9 @@ export interface TextToImageState {
   model: string
   proxyUrl?: string
   batchInterval?: number
+  proxyType: ProxyType
+  siyuanUrl: string
+  siyuanToken: string
   showAdvanced: boolean
   isGenerating: boolean
   error: string
@@ -68,6 +76,9 @@ export type UseTextToImageStateReturn = {
   model: Ref<string>
   proxyUrl: Ref<string>
   batchInterval: Ref<number>
+  proxyType: Ref<ProxyType>
+  siyuanUrl: Ref<string>
+  siyuanToken: Ref<string>
   showAdvanced: Ref<boolean>
   isGenerating: Ref<boolean>
   error: Ref<string>
@@ -88,6 +99,9 @@ export type UseTextToImageReturn = {
   model: Ref<string>
   proxyUrl: Ref<string>
   batchInterval: Ref<number>
+  proxyType: Ref<ProxyType>
+  siyuanUrl: Ref<string>
+  siyuanToken: Ref<string>
   showAdvanced: Ref<boolean>
   isGenerating: Ref<boolean>
   error: Ref<string>

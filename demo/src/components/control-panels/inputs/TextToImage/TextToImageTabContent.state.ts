@@ -4,7 +4,7 @@
 
 import { ref, computed, hasValidApiKey } from './imports'
 import { DEFAULTS } from './TextToImageTabContent.constants'
-import type { UseTextToImageStateReturn } from './TextToImageTabContent.types'
+import type { UseTextToImageStateReturn, ProxyType } from './TextToImageTabContent.types'
 
 /**
  * 创建文本生成图像的状态和上下文
@@ -18,6 +18,9 @@ export function useTextToImageState(): UseTextToImageStateReturn {
   const model = ref(DEFAULTS.MODEL)
   const proxyUrl = ref(DEFAULTS.PROXY_URL)
   const batchInterval = ref(0)
+  const proxyType = ref<ProxyType>(DEFAULTS.PROXY_TYPE)
+  const siyuanUrl = ref(DEFAULTS.SIYUAN_URL)
+  const siyuanToken = ref(DEFAULTS.SIYUAN_TOKEN)
   const showAdvanced = ref(DEFAULTS.SHOW_ADVANCED)
   const isGenerating = ref(false)
   const error = ref('')
@@ -62,6 +65,9 @@ export function useTextToImageState(): UseTextToImageStateReturn {
     model,
     proxyUrl,
     batchInterval,
+    proxyType,
+    siyuanUrl,
+    siyuanToken,
     showAdvanced,
     isGenerating,
     error,

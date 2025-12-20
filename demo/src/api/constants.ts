@@ -44,3 +44,10 @@ export const ENDPOINT_TASK_STATUS = '/v1/tasks'
 
 // 错误消息模板
 export const ERROR_POLL_TIMEOUT = (taskId: string): string => `轮询超时，任务 ${taskId} 未在预期时间内完成`
+
+// SiYuan Proxy Constants
+export const SIYUAN_PROXY_ENDPOINT = '/api/network/forwardProxy'
+export const SIYUAN_TOKEN_PREFIX = 'Token '
+export const REQUEST_TIMEOUT_MS = 60000
+export const METHOD_POST = 'POST'
+export const METHOD_GET = 'GET'

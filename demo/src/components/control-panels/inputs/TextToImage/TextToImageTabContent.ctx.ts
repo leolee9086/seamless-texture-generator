@@ -4,7 +4,7 @@
 
 import { useTextToImageState } from './TextToImageTabContent.state'
 import { generateTextToImage } from './TextToImageTabContent.utils'
-import { fetchImageAsBase64, buildProxyUrl } from './imports'
+import { fetchImageWithProxy, buildProxyUrl } from './imports'
 import {
   VALIDATION_ERRORS,
   STATUS_MESSAGES,
@@ -61,7 +61,10 @@ async function generateWithFileMode(
     numInferenceSteps: state.numInferenceSteps.value,
     model: state.model.value,
     proxyUrl: state.proxyUrl.value || undefined,
-    batchInterval: state.batchInterval.value
+    batchInterval: state.batchInterval.value,
+    proxyType: state.proxyType.value,
+    siyuanUrl: state.siyuanUrl.value,
+    siyuanToken: state.siyuanToken.value
   }
 
   state.status.value = STATUS_MESSAGES.GENERATING
@@ -82,14 +85,24 @@ async function generateWithFileMode(
 
   const imageUrls = result.imageUrls || []
   const proxyUrl = params.proxyUrl
+  const isSiyuanProxy = params.proxyType === 'siyuan'
+  const siyuanConfig = isSiyuanProxy ? {
+    url: params.siyuanUrl || '',
+    token: params.siyuanToken || ''
+  } : undefined
 
   // 1. 并行下载并缓存所有图片
   // 这样可以避免多次请求同一张图片，并确保在更新 UI 前数据已准备好
   const downloadPromises = imageUrls.map(async (imageUrl) => {
-    const imageProxiedUrl = proxyUrl ? buildProxyUrl(imageUrl, proxyUrl) : imageUrl
+    // 缓存 key：普通代理用代理URL，思源代理用原始URL
+    const cacheKey = isSiyuanProxy ? imageUrl : (proxyUrl ? buildProxyUrl(imageUrl, proxyUrl) : imageUrl)
     try {
-      const imageBase64 = await fetchImageAsBase64(imageProxiedUrl)
-      await cacheImage(imageBase64, imageProxiedUrl)
+      const imageBase64 = await fetchImageWithProxy({
+        imageUrl,
+        proxyUrl: isSiyuanProxy ? undefined : proxyUrl,
+        siyuanConfig
+      })
+      await cacheImage(imageBase64, cacheKey)
       return { url: imageUrl, base64: imageBase64 }
     } catch (error) {
       console.warn(`Failed to download and cache image: ${imageUrl}`, error)
@@ -133,7 +146,10 @@ async function generateWithTempMode(
     numInferenceSteps: state.numInferenceSteps.value,
     model: state.model.value,
     proxyUrl: state.proxyUrl.value || undefined,
-    batchInterval: state.batchInterval.value
+    batchInterval: state.batchInterval.value,
+    proxyType: state.proxyType.value,
+    siyuanUrl: state.siyuanUrl.value,
+    siyuanToken: state.siyuanToken.value
   }
 
   state.status.value = STATUS_MESSAGES.GENERATING
@@ -146,18 +162,26 @@ async function generateWithTempMode(
 
   state.status.value = STATUS_MESSAGES.DOWNLOADING
 
-  state.status.value = STATUS_MESSAGES.DOWNLOADING
-
   const imageUrls = result.imageUrls || []
   const proxyUrl = params.proxyUrl
+  const isSiyuanProxy = params.proxyType === 'siyuan'
+  const siyuanConfig = isSiyuanProxy ? {
+    url: params.siyuanUrl || '',
+    token: params.siyuanToken || ''
+  } : undefined
 
   // 1. 并行下载并缓存所有图片
   // 这样可以避免多次请求同一张图片，并确保在更新 UI 前数据已准备好
   const downloadPromises = imageUrls.map(async (imageUrl) => {
-    const imageProxiedUrl = proxyUrl ? buildProxyUrl(imageUrl, proxyUrl) : imageUrl
+    // 缓存 key：普通代理用代理URL，思源代理用原始URL
+    const cacheKey = isSiyuanProxy ? imageUrl : (proxyUrl ? buildProxyUrl(imageUrl, proxyUrl) : imageUrl)
     try {
-      const imageBase64 = await fetchImageAsBase64(imageProxiedUrl)
-      await cacheImage(imageBase64, imageProxiedUrl)
+      const imageBase64 = await fetchImageWithProxy({
+        imageUrl,
+        proxyUrl: isSiyuanProxy ? undefined : proxyUrl,
+        siyuanConfig
+      })
+      await cacheImage(imageBase64, cacheKey)
       return { url: imageUrl, base64: imageBase64 }
     } catch (error) {
       console.warn(`Failed to download and cache image: ${imageUrl}`, error)
@@ -205,11 +229,13 @@ function createGenerate(
       return
     }
 
-    // 检测代理可用性（使用默认代理时）
+    // 检测代理可用性（仅在使用默认代理时，思源代理不需要检查）
+    const isSiyuanProxy = state.proxyType.value === 'siyuan'
     const currentProxyUrl = state.proxyUrl.value || DEFAULTS.PROXY_URL
     const isDefaultProxy = currentProxyUrl === DEFAULTS.PROXY_URL
+    const shouldCheckProxy = !isSiyuanProxy && isDefaultProxy
 
-    if (isDefaultProxy) {
+    if (shouldCheckProxy) {
       state.status.value = PROXY_CHECK.STATUS.CHECKING
       const isProxyAvailable = await checkProxyAvailable(currentProxyUrl)
 
@@ -254,6 +280,9 @@ function createReset(state: ReturnType<typeof useTextToImageState>): () => void 
     state.model.value = DEFAULTS.MODEL
     state.proxyUrl.value = DEFAULTS.PROXY_URL
     state.batchInterval.value = 0
+    state.proxyType.value = 'default'
+    state.siyuanUrl.value = 'http://127.0.0.1:6806'
+    state.siyuanToken.value = ''
     state.showAdvanced.value = DEFAULTS.SHOW_ADVANCED
     state.error.value = DEFAULTS.EMPTY_STRING
     state.status.value = DEFAULTS.EMPTY_STRING
@@ -275,6 +304,9 @@ export function useTextToImage(onImageGenerated?: (base64: string) => void): Use
     model: state.model,
     proxyUrl: state.proxyUrl,
     batchInterval: state.batchInterval,
+    proxyType: state.proxyType,
+    siyuanUrl: state.siyuanUrl,
+    siyuanToken: state.siyuanToken,
     showAdvanced: state.showAdvanced,
     isGenerating: state.isGenerating,
     error: state.error,

@@ -25,6 +25,11 @@ function processTaskResult(params: ProcessTaskResultParams): void {
  * 提交任务并获取任务 ID
  */
 async function submitTasks(params: TextToImageParams): Promise<string[]> {
+  const siyuanConfig = params.proxyType === 'siyuan' ? {
+    url: params.siyuanUrl || '',
+    token: params.siyuanToken || ''
+  } : undefined
+
   return await submitGenerationTask({
     apiKey: params.apiKey,
     prompt: params.prompt,
@@ -35,7 +40,9 @@ async function submitTasks(params: TextToImageParams): Promise<string[]> {
       model: params.model
     },
     proxyUrl: params.proxyUrl,
-    batchInterval: params.batchInterval
+    batchInterval: params.batchInterval,
+    proxyType: params.proxyType,
+    siyuanConfig
   })
 }
 
@@ -52,7 +59,12 @@ async function pollAllTasks(
       taskId,
       interval: 2000,
       maxAttempts: 60,
-      proxyUrl: params.proxyUrl
+      proxyUrl: params.proxyUrl,
+      proxyType: params.proxyType,
+      siyuanConfig: params.proxyType === 'siyuan' ? {
+        url: params.siyuanUrl || '',
+        token: params.siyuanToken || ''
+      } : undefined
     })
   )
   return await Promise.all(pollPromises)

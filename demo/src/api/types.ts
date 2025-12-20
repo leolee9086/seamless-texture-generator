@@ -81,10 +81,26 @@ export interface FetchWithRetryParams {
   retryDelay?: number
 }
 
+export interface SiyuanConfig {
+  url: string
+  token: string
+}
+
+export type ApiProxyType = 'default' | 'custom' | 'siyuan'
+
+export interface PerformFetchContext {
+  payload: Record<string, any>
+  apiKey: string
+  url: string
+  siyuanConfig?: SiyuanConfig
+}
+
 export interface GetTaskStatusParams {
   apiKey: string
   taskId: string
   proxyUrl?: string
+  proxyType?: ApiProxyType
+  siyuanConfig?: SiyuanConfig
 }
 
 export interface PollTaskUntilCompleteParams {
@@ -93,6 +109,8 @@ export interface PollTaskUntilCompleteParams {
   interval?: number
   maxAttempts?: number
   proxyUrl?: string
+  proxyType?: ApiProxyType
+  siyuanConfig?: SiyuanConfig
 }
 
 export interface SubmitGenerationTaskParams {
@@ -101,4 +119,13 @@ export interface SubmitGenerationTaskParams {
   params?: Partial<Omit<GenerationParams, 'prompt'>>
   proxyUrl?: string
   batchInterval?: number
+  proxyType?: ApiProxyType
+  siyuanConfig?: SiyuanConfig
+}
+
+export interface SiyuanProxyData {
+  statusCode: number
+  body?: string
+  bodyEncoding?: string
+  headers?: Record<string, string[]>
 }
