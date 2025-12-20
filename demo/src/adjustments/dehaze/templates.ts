@@ -1,3 +1,6 @@
+/** 
+ * @简洁函数 错误消息格式化工具函数，统一处理去雾失败时的错误信息格式 
+ */
 export const dehazeFailed = (error: unknown): string => {
   return `去雾处理失败: ${error instanceof Error ? error.message : String(error)}`
 }

@@ -84,6 +84,9 @@
                     @add-rule="addRuleToLayer"
                     @remove-rule="removeRule"
                     @add-rule-from-color="addRuleFromColor"
+                    @replace-image="handleReplaceLayerTrigger"
+                    @duplicate="(id) => { duplicateLayer(id); requestUpdate(); }"
+                    @move="(id, dir) => { moveLayer(id, dir); requestUpdate(); }"
                 />
 
                 <div v-if="layers.length === 0" class="text-center py-6 text-white/20 text-xs">
@@ -110,6 +113,9 @@ const {
     removeLayer, 
     updateLayerRule,
     removeLayerRule,
+    replaceLayerImage,
+    duplicateLayer, // Destructure duplicateLayer
+    moveLayer, // Destructure moveLayer
     layers, 
     isProcessing, 
     error,
@@ -120,6 +126,7 @@ const {
 const canvasRef = ref<HTMLCanvasElement | null>(null)
 const layerInputRef = ref<HTMLInputElement | null>(null)
 const activeLayerId = ref<string | null>(null)
+const replacingLayerId = ref<string | null>(null) // Track layer being replaced
 let debounceTimer: any = null
 
 onMounted(async () => {
@@ -162,6 +169,12 @@ const handleBaseImageUpload = (event: Event) => {
 }
 
 const triggerAddLayer = () => {
+    replacingLayerId.value = null // Ensure we are in add mode
+    layerInputRef.value?.click()
+}
+
+const handleReplaceLayerTrigger = (layerId: string) => {
+    replacingLayerId.value = layerId // Set mode to replace
     layerInputRef.value?.click()
 }
 
@@ -171,13 +184,23 @@ const handleAddLayerFile = (event: Event) => {
         const reader = new FileReader()
         reader.onload = async (e) => {
             if (e.target?.result) {
-                await addLayer(e.target.result as string)
+                const url = e.target.result as string
+                
+                if (replacingLayerId.value) {
+                    // Replace Mode
+                    await replaceLayerImage(replacingLayerId.value, url)
+                    replacingLayerId.value = null
+                } else {
+                    // Add Mode
+                    await addLayer(url)
+                    // Auto expand new layer
+                    setTimeout(() => {
+                        const last = layers.value[layers.value.length - 1]
+                        if (last) activeLayerId.value = last.id
+                    }, 100)
+                }
+                
                 requestUpdate()
-                // Auto expand new layer
-                setTimeout(() => {
-                    const last = layers.value[layers.value.length - 1]
-                    if (last) activeLayerId.value = last.id
-                }, 100)
             }
         }
         reader.readAsDataURL(file)

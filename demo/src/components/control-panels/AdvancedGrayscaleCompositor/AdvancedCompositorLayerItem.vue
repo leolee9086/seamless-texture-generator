@@ -5,8 +5,14 @@
     >
         <!-- Layer Summary (Click to Toggle Expand) -->
         <div class="layer-header p-2 flex items-center gap-2 cursor-pointer bg-white/5" @click="$emit('toggle-expand')">
-            <div class="w-8 h-8 rounded bg-black/40 overflow-hidden border border-white/10 flex-shrink-0">
+            <div class="w-8 h-8 rounded bg-black/40 overflow-hidden border border-white/10 flex-shrink-0 relative group/thumb">
                     <img v-if="layer.imageSource" :src="layer.imageSource" class="w-full h-full object-cover" />
+                    <!-- Replace Overlay -->
+                    <div class="absolute inset-0 bg-black/60 flex items-center justify-center opacity-0 group-hover/thumb:opacity-100 transition-opacity" title="Replace Image">
+                         <button @click.stop="$emit('replace-image', layer.id)" class="text-white hover:text-blue-300">
+                            <i class="i-carbon-renew" />
+                         </button>
+                    </div>
             </div>
             
             <div class="flex-1 min-w-0">
@@ -19,7 +25,25 @@
             </div>
 
             <div class="flex items-center gap-1">
-                    <button 
+                 <!-- Move controls -->
+                <div class="flex flex-col mr-1">
+                    <button @click.stop="$emit('move', layer.id, 'up')" class="text-white/30 hover:text-white leading-none p-0.5" title="Move Up">
+                        <i class="i-carbon-caret-up text-[10px]" />
+                    </button>
+                    <button @click.stop="$emit('move', layer.id, 'down')" class="text-white/30 hover:text-white leading-none p-0.5" title="Move Down">
+                        <i class="i-carbon-caret-down text-[10px]" />
+                    </button>
+                </div>
+
+                <button 
+                    @click.stop="$emit('duplicate', layer.id)"
+                    class="text-white/30 hover:text-white transition-colors p-1"
+                    title="Duplicate Layer"
+                >
+                    <i class="i-carbon-copy" />
+                </button>
+
+                <button 
                     @click.stop="$emit('toggle-visibility', layer)"
                     :class="layer.visible ? 'text-white/80' : 'text-white/30'"
                     class="hover:text-white transition-colors p-1"
@@ -202,7 +226,10 @@ defineEmits<{
     (e: 'delete', id: string): void;
     (e: 'add-rule', layerId: string): void;
     (e: 'remove-rule', layerId: string, ruleId: string): void;
-    (e: 'add-rule-from-color', layerId: string, color: any): void;
+    (e: 'add-rule-from-color', layerId: string, color: {h: number, s: number, l: number}, source: number): void;
+    (e: 'replace-image', layerId: string): void;
+    (e: 'duplicate', layerId: string): void;
+    (e: 'move', layerId: string, direction: 'up' | 'down'): void;
 }>();
 </script>
 

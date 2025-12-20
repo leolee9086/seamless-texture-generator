@@ -3,6 +3,7 @@ import { isNumber } from './imports';
 
 /**
  * 检查参数对象中是否存在指定参数
+ * @简洁函数 谓词工具函数，职责单一，简洁性是有意设计
  * @param params 参数对象
  * @param paramName 参数名
  * @returns 是否存在该参数

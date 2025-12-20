@@ -17,6 +17,9 @@ export function useAdvancedCompositor(): {
     setBaseImage: (url: string) => Promise<void>;
     addLayer: (url: string) => Promise<void>;
     removeLayer: (id: string) => void;
+    replaceLayerImage: (layerId: string, url: string) => Promise<void>;
+    duplicateLayer: (layerId: string) => Promise<void>; // New Action
+    moveLayer: (layerId: string, direction: 'up' | 'down') => void; // New Action
     updateLayerRule: (layerId: string, rule: HSLRule) => void; // Add/Update rule
     removeLayerRule: (layerId: string, ruleId: string) => void;
 
@@ -148,6 +151,80 @@ export function useAdvancedCompositor(): {
         }
     }
 
+    const replaceLayerImage = async (layerId: string, url: string) => {
+        await init();
+        if (!device.value) return;
+
+        await executeWithLoading(isProcessing, error, 'Replace Layer Image Failed', async () => {
+            const layer = layers.value.find(l => l.id === layerId);
+            if (!layer) return;
+
+            // Update Source
+            layer.imageSource = url;
+
+            // Reload Texture
+            const res = await loadAndResizeImage(url, outputSize.value.width, outputSize.value.height);
+            if (layer.imageTexture) layer.imageTexture.destroy();
+            layer.imageTexture = createTextureFromBitmap(device.value!, res.bitmap);
+
+            // Re-analyze Colors
+            try {
+                layer.layerPalette = await import('./useAdvancedCompositor.utils').then(m => m.analyzeImageColors(url));
+            } catch (e) {
+                console.warn("Color analysis failed during replacement", e);
+            }
+        });
+    }
+
+    const moveLayer = (layerId: string, direction: 'up' | 'down') => {
+        const index = layers.value.findIndex(l => l.id === layerId);
+        if (index === -1) return;
+
+        if (direction === 'up') {
+            if (index > 0) {
+                // Swap with previous
+                const temp = layers.value[index];
+                layers.value[index] = layers.value[index - 1];
+                layers.value[index - 1] = temp;
+            }
+        } else {
+            if (index < layers.value.length - 1) {
+                // Swap with next
+                const temp = layers.value[index];
+                layers.value[index] = layers.value[index + 1];
+                layers.value[index + 1] = temp;
+            }
+        }
+    }
+
+    const duplicateLayer = async (layerId: string) => {
+        if (!device.value) return;
+
+        await executeWithLoading(isProcessing, error, 'Duplicate Layer Failed', async () => {
+            const originalLayer = layers.value.find(l => l.id === layerId);
+            if (!originalLayer) return;
+
+            // Deep copy layer properties (except texture)
+            const newLayer: CompositorLayer = {
+                ...originalLayer,
+                id: generateId(),
+                imageTexture: null, // Will be created
+                // Deep copy mask rules to ensure new IDs
+                maskRules: originalLayer.maskRules.map(rule => ({ ...rule, id: generateId() }))
+            };
+
+            // Clone texture (re-create from source to ensure independent lifecycle)
+            if (originalLayer.imageSource) {
+                const res = await loadAndResizeImage(originalLayer.imageSource, outputSize.value.width, outputSize.value.height);
+                newLayer.imageTexture = createTextureFromBitmap(device.value!, res.bitmap);
+            }
+
+            // Insert after original
+            const index = layers.value.findIndex(l => l.id === layerId);
+            layers.value.splice(index + 1, 0, newLayer);
+        });
+    }
+
     // Render Loop
     const forceUpdate = async (canvas?: HTMLCanvasElement) => {
         if (!device.value || !pipeline.value || !rulesBuffer.value || !baseTexture.value) return;
@@ -177,7 +254,11 @@ export function useAdvancedCompositor(): {
         init,
         baseImage, basePalette, layers, isProcessing, error,
         setBaseImage, addLayer, removeLayer,
-        updateLayerRule, removeLayerRule,
+        replaceLayerImage,
+        duplicateLayer,
+        moveLayer,
+        updateLayerRule,
+        removeLayerRule,
         forceUpdate
     }
 }
