@@ -1,4 +1,4 @@
-import type { DehazeParams, ClarityParams, LuminanceAdjustmentParams, Component, HSLAdjustmentLayer } from './imports'
+import type { DehazeParams, ClarityParams, LuminanceAdjustmentParams, Component, HSLAdjustmentLayer, 水印配置 } from './imports'
 
 /**
  * 创建统一事件处理器的配置选项
@@ -44,4 +44,8 @@ export interface ControlEventHandlerOptions {
     onLuminanceAdjustment?: (params: LuminanceAdjustmentParams) => void
     // 设置图片
     onSetImage?: (imageData: string) => void
+    // 水印调整处理器
+    onWatermarkConfigChange?: (config: 水印配置) => void
+    onWatermarkEnableChange?: (enabled: boolean) => void
 }
+

@@ -62,7 +62,8 @@
 
         <!-- Save Panel -->
         <SavePanel v-else-if="activeGroup === 'save'" is-mobile :original-image="originalImage"
-          :processed-image="processedImage" @save-original="saveOriginal" @save-result="saveResult" />
+          :processed-image="processedImage" @save-original="saveOriginal" @save-result="saveResult"
+          @control-event="emit('controlEvent', $event)" />
       </div>
     </div>
 

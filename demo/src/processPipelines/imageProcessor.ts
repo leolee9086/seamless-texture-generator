@@ -40,7 +40,7 @@ async function processImagePipeline(params: ProcessImageToTileableParams): Promi
     pipelineData = await executeHSLAdjust(pipelineData, options.hslLayers, device)
   }
 
-  // 步骤 2.6-2.9: 应用中间件处理
+  // 步骤 2.6-2.9: 应用中间件处理（不含水印）
   const cache = new WeakMap()
   const context: MiddlewareContext = {
     options,
@@ -49,17 +49,29 @@ async function processImagePipeline(params: ProcessImageToTileableParams): Promi
     getWebGPUDevice: () => getWebGPUDevice()
   }
 
-  // 按顺序应用所有中间件
+  // 按顺序应用所有中间件（水印节点会自动跳过，因为它在这里不应该执行）
   for (const middleware of allMiddlewares) {
+    // 跳过水印节点，它将在 tileable 之后单独执行
+    if ('isWatermark' in middleware) continue
     if (middleware.guard(options)) {
       await middleware.process(context)
-      // 更新 pipelineData 为处理后的结果
       pipelineData = context.pipelineData
     }
   }
 
   // 步骤 3: 可平铺化处理
   pipelineData = await executeTileableProcess(pipelineData, options)
+
+  // 步骤 4: 水印处理（在 tileable 之后）
+  if (options.enableWatermark && options.watermarkConfig) {
+    context.pipelineData = pipelineData
+    const watermarkNode = allMiddlewares.find(m => 'isWatermark' in m)
+    if (watermarkNode && watermarkNode.guard(options)) {
+      await watermarkNode.process(context)
+      pipelineData = context.pipelineData
+    }
+  }
+
   return pipelineData
 }
 

@@ -5,7 +5,8 @@ import type {
   LuminanceAdjustmentParams,
   baseOptions,
   GeneralSynthesisPipelineStep,
-  PipelineData
+  PipelineData,
+  水印配置
 } from './imports'
 
 /**
@@ -18,11 +19,15 @@ export interface PipelineOptions extends baseOptions {
   lutIntensity?: number
   maskData?: Uint8Array
   hslLayers?: HSLAdjustmentLayer[]
-  exposureStrength?: number  // 新增
-  exposureManual?: { exposure: number; contrast: number; gamma: number }  // 新增
-  dehazeParams?: DehazeParams  // 新增
-  clarityParams?: ClarityParams  // 新增
-  luminanceParams?: LuminanceAdjustmentParams  // 新增
+  exposureStrength?: number
+  exposureManual?: { exposure: number; contrast: number; gamma: number }
+  dehazeParams?: DehazeParams
+  clarityParams?: ClarityParams
+  luminanceParams?: LuminanceAdjustmentParams
+  /** 水印配置 */
+  watermarkConfig?: 水印配置
+  /** 是否启用水印 */
+  enableWatermark?: boolean
 }
 
 /**

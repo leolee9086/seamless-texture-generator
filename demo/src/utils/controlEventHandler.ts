@@ -52,6 +52,8 @@ function handleUpdateData(options: ControlEventHandlerOptions, detail: ControlEv
   if (action === DATA_ACTION.CLARITY_ADJUSTMENT) { options.onClarityAdjustment?.(data); return }
   if (action === DATA_ACTION.LUMINANCE_ADJUSTMENT) { options.onLuminanceAdjustment?.(data); return }
   if (action === DATA_ACTION.SET_IMAGE) { options.onSetImage?.(data); return }
+  if (action === DATA_ACTION.WATERMARK_CONFIG_CHANGE) { options.onWatermarkConfigChange?.(data); return }
+  if (action === DATA_ACTION.WATERMARK_ENABLE_CHANGE) { options.onWatermarkEnableChange?.(data); return }
 }
 
 /**

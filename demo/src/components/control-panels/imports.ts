@@ -33,7 +33,10 @@ import { isHTMLInputElement } from '../../utils/app-utils'
 import { createComponentWrapper, withProps, withEmit, composeWrappers } from '../../utils/vue/wrapper'
 import type { ComponentWrapperConfig, VueComponent } from '../../utils/vue/wrapper'
 
-export type { SliderItem, LeatherParams, WoodParams, FilmGradeTuringParams, AdjustmentLayer, RGBColor, HSLRange, ComponentWrapperConfig, VueComponent }
+// Control Events
+import type { ControlEvent } from '../../types/controlEvents'
+
+export type { SliderItem, LeatherParams, WoodParams, FilmGradeTuringParams, AdjustmentLayer, RGBColor, HSLRange, ComponentWrapperConfig, VueComponent, ControlEvent }
 export {
   CollapsiblePanel,
   SliderParameterGroup,

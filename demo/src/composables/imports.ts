@@ -15,6 +15,7 @@ import type { DehazeParams } from '../adjustments/dehaze/types'
 import type { ClarityParams } from '../adjustments/clarity'
 import type { LuminanceAdjustmentParams } from '../adjustments/imports'
 import type { HSLAdjustmentLayer } from '../utils/imports'
+import type { 水印配置 } from '../components/control-panels/watermark/watermark.types'
 
 
 // Procedural Textures
@@ -45,5 +46,6 @@ export type {
     LuminanceAdjustmentParams,
     HSLAdjustmentLayer,
     WoodParams,
-    PlainWeaveAdvancedParams
+    PlainWeaveAdvancedParams,
+    水印配置
 }

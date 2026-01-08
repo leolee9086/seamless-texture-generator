@@ -77,7 +77,7 @@
 
         <!-- Save Panel -->
         <SavePanel v-else-if="activeGroup === 'save'" :original-image="originalImage" :processed-image="processedImage"
-          @save-original="saveOriginal" @save-result="saveResult" />
+          @save-original="saveOriginal" @save-result="saveResult" @control-event="handleControlEvent" />
       </div>
     </div>
   </div>

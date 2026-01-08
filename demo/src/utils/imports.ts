@@ -21,6 +21,7 @@ import type { DehazeParams } from '../adjustments/dehaze/types'
 import type { ClarityParams } from '../adjustments/clarity'
 import type { LuminanceAdjustmentParams } from '../utils/webgpu/luminance.types'
 import type { HSLAdjustmentLayer } from '../adjustments/hsl/hslAdjust.utils'
+import type { 水印配置 } from '../components/control-panels/watermark/watermark.types'
 
 // 类导入转发 - 来自父级目录
 import { IndexDBFS } from '../infra/IndexDBFS.class'
@@ -29,5 +30,5 @@ import { IndexDBFS } from '../infra/IndexDBFS.class'
 import { z } from 'zod'
 import type { Component } from 'vue'
 
-export type { ImageDownloadParams, ControlEvent, PipelineData, baseOptions, GeneralSynthesisPipelineStep, DehazeParams, ClarityParams, LuminanceAdjustmentParams, HSLAdjustmentLayer, Component }
+export type { ImageDownloadParams, ControlEvent, PipelineData, baseOptions, GeneralSynthesisPipelineStep, DehazeParams, ClarityParams, LuminanceAdjustmentParams, HSLAdjustmentLayer, Component, 水印配置 }
 export { z, IndexDBFS }

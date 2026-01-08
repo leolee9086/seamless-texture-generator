@@ -40,6 +40,8 @@ export const DATA_ACTION = {
     CLARITY_ADJUSTMENT: 'clarity-adjustment',
     LUMINANCE_ADJUSTMENT: 'luminance-adjustment',
     SET_IMAGE: 'set-image',
+    WATERMARK_CONFIG_CHANGE: 'watermark-config-change',
+    WATERMARK_ENABLE_CHANGE: 'watermark-enable-change',
 } as const
 
 /** 事件类型常量 */

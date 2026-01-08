@@ -17,6 +17,9 @@ import type {
 import type { HSLAdjustmentLayer } from '../adjustments/hsl/hslAdjust.utils'
 import { executeHSLAdjust } from '../adjustments/hsl/hslAdjust.utils'
 
+// 水印类型转发
+import type { 水印配置 } from '../components/control-panels/watermark/watermark.types'
+
 // 值导入转发 - 仅来自父级目录的工具函数
 import { scaleImageToMaxResolution } from '../utils/imageLoader'
 import { getWebGPUDevice } from '../utils/webgpu/deviceCache/webgpuDevice'
@@ -31,7 +34,8 @@ export type {
   baseOptions,
   GeneralSynthesisPipelineStep,
   PipelineData,
-  HSLAdjustmentLayer
+  HSLAdjustmentLayer,
+  水印配置
 }
 
 export {
