@@ -125,14 +125,13 @@ export async function runMultiLayerCompositor(
             device,
             baseTexture: accum,
             layerTexture: layer.imageTexture,
-            originalBaseTexture: params.baseTexture, // Pass original base
+            originalBaseTexture: originalBaseTexture, // Pass original base
             outputTexture: temp,
             rulesBuffer: rulesBuffer,
             ruleCount: layer.maskRules.length,
             layerOpacity: layer.opacity,
             layerBlendMode: getBlendModeIndex(layer.blendMode),
             width, height,
-            originalBaseTexture: originalBaseTexture // Pass the original base texture
         }, pipeline);
 
         const t = accum;

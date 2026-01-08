@@ -22,7 +22,7 @@
             <!-- 处理结果保存区域 -->
             <template v-if="processedImage">
                 <!-- 无水印保存 -->
-                <button @click="$emit('save-result')" :class="saveButtonClass">
+                <button @click="保存无水印图片" :class="saveButtonClass">
                     <div :class="iconContainerClass('green')">
                         <div class="i-carbon-save" :class="iconClass"></div>
                     </div>
@@ -63,11 +63,10 @@
 </template>
 
 <script setup lang="ts">
-import { ref, computed } from 'vue'
+import { computed } from 'vue'
 import WatermarkSettings from './watermark/WatermarkSettings.vue'
-import { 添加水印到图片 } from './watermark/watermark.renderer'
-import type { 水印配置 } from './watermark/watermark.types'
 import type { ControlEvent } from './imports'
+import { createUpdateDataEvent, createButtonClickEvent } from './imports'
 
 const props = defineProps<{
     isMobile?: boolean
@@ -78,22 +77,29 @@ const props = defineProps<{
 const emit = defineEmits<{
     'save-original': []
     'save-result': []
-    'save-watermarked': [base64: string]
     'controlEvent': [event: ControlEvent]
 }>()
 
 /** @简洁函数 转发子组件控制事件到父组件 */
 const 转发控制事件 = (event: ControlEvent): void => emit('controlEvent', event)
 
-const watermarkSettingsRef = ref<InstanceType<typeof WatermarkSettings> | null>(null)
+/**
+ * 保存无水印图片：临时关闭水印后保存
+ */
+function 保存无水印图片() {
+    // 先关闭水印
+    emit('controlEvent', createUpdateDataEvent('watermark-enable-change', false))
+    // 等待下一帧确保状态更新，然后保存
+    requestAnimationFrame(() => {
+        emit('controlEvent', createButtonClickEvent('save-result'))
+    })
+}
 
-async function 保存带水印图片() {
-    if (!props.processedImage) return
-    const config = watermarkSettingsRef.value?.当前配置 as 水印配置 | undefined
-    if (!config) return
-
-    const watermarked = await 添加水印到图片(props.processedImage, config)
-    emit('save-watermarked', watermarked)
+/**
+ * @简洁函数 保存带水印图片：直接保存当前处理结果（已经带水印）
+ */
+function 保存带水印图片() {
+    emit('controlEvent', createButtonClickEvent('save-result'))
 }
 
 const emptyStateClass = computed(() =>

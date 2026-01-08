@@ -1,6 +1,6 @@
 import { ref, onUnmounted, shallowRef } from './imports'
 import { ADVANCED_COMPOSITOR_CONSTANTS } from './useAdvancedCompositor.constants'
-import { initCompositorResources, loadAndResizeImage, createTextureFromBitmap, runMultiLayerCompositor, generateId, executeWithLoading } from './useAdvancedCompositor.utils'
+import { initCompositorResources, loadAndResizeImage, createTextureFromBitmap, runMultiLayerCompositor, generateId, executeWithLoading, analyzeImageColors, createNewLayer } from './useAdvancedCompositor.utils'
 import type { CompositorLayer, HSLRule, AdvancedCompositorParams } from './types'
 
 export function useAdvancedCompositor(): {
@@ -69,8 +69,8 @@ export function useAdvancedCompositor(): {
 
             // Analyze Colors (Client-side)
             try {
-                // Dynamically import and call analyzeImageColors
-                basePalette.value = await import('./useAdvancedCompositor.utils').then(m => m.analyzeImageColors(url));
+                // Call statically imported analyzeImageColors
+                basePalette.value = await analyzeImageColors(url);
             } catch (e) {
                 console.warn("Base color analysis failed", e);
                 basePalette.value = [];
@@ -109,13 +109,13 @@ export function useAdvancedCompositor(): {
                 throw new Error("Please set Base Image first");
             }
 
-            const newLayer = await import('./useAdvancedCompositor.utils').then(m => m.createNewLayer(
+            const newLayer = await createNewLayer(
                 device.value!,
                 url,
                 layers.value.length,
                 outputSize.value.width,
                 outputSize.value.height
-            ));
+            );
 
             layers.value.push(newLayer);
         });
@@ -169,7 +169,7 @@ export function useAdvancedCompositor(): {
 
             // Re-analyze Colors
             try {
-                layer.layerPalette = await import('./useAdvancedCompositor.utils').then(m => m.analyzeImageColors(url));
+                layer.layerPalette = await analyzeImageColors(url);
             } catch (e) {
                 console.warn("Color analysis failed during replacement", e);
             }

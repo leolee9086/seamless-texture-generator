@@ -35,8 +35,10 @@ import type { ComponentWrapperConfig, VueComponent } from '../../utils/vue/wrapp
 
 // Control Events
 import type { ControlEvent } from '../../types/controlEvents'
+import { createUpdateDataEvent, createButtonClickEvent } from '../../types/controlEvents'
 
 export type { SliderItem, LeatherParams, WoodParams, FilmGradeTuringParams, AdjustmentLayer, RGBColor, HSLRange, ComponentWrapperConfig, VueComponent, ControlEvent }
+export { createUpdateDataEvent, createButtonClickEvent }
 export {
   CollapsiblePanel,
   SliderParameterGroup,

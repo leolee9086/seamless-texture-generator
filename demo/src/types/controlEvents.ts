@@ -45,6 +45,7 @@ export type UpdateAction =
   | 'luminance-adjustment'    // 新增
   | 'set-image'               // 新增
   | 'watermark-config-change' // 水印配置变更
+  | 'watermark-enable-change' // 水印启用变更
 
 // 事件创建辅助函数
 export const createButtonClickEvent = (action: ButtonAction): ControlEvent => ({
