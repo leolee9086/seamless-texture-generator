@@ -6,7 +6,7 @@
 
 import { projectFS } from './imports'
 import type { ImageProject, ProjectParams } from './imports'
-import { 生成缩略图, 获取图片尺寸, blobToDataURL } from './useProjectState.utils'
+import { 生成缩略图, 获取图片尺寸, blobToDataURL, cloneDeep } from './useProjectState.utils'
 import { 获取默认项目参数 } from './useProjectState.presets'
 import { 默认缩略图尺寸, 保存防抖延迟 } from './useProjectState.constants'
 import {
@@ -47,7 +47,7 @@ export function 防抖保存项目(project: ImageProject): void {
     saveDebounceTimer = setTimeout(async () => {
         isSaving.value = true
         try {
-            await projectFS.saveProject(project)
+            await projectFS.saveProject(cloneDeep(project))
         } finally {
             isSaving.value = false
         }
@@ -124,7 +124,7 @@ export async function 创建项目(file: File): Promise<ImageProject> {
     }
 
     // 5. 保存项目元数据
-    await projectFS.saveProject(project)
+    await projectFS.saveProject(cloneDeep(project))
 
     // 6. 更新内存状态 (插入到列表开头)
     projects.value.unshift(project)
@@ -225,7 +225,7 @@ export async function 立即保存当前项目(): Promise<void> {
 
     isSaving.value = true
     try {
-        await projectFS.saveProject(project)
+        await projectFS.saveProject(cloneDeep(project))
     } finally {
         isSaving.value = false
     }

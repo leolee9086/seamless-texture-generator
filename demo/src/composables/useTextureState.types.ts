@@ -1,4 +1,4 @@
-import type { Component, Ref, ComputedRef } from './imports'
+import type { Component, Ref, WritableComputedRef } from './imports'
 
 /** 预览覆盖层数据 */
 export interface PreviewOverlayData {
@@ -19,10 +19,10 @@ export interface UseTextureStateOptions {
  */
 export interface TextureState {
     originalImage: Ref<string | null>
-    rawOriginalImage: ComputedRef<string | null>
+    rawOriginalImage: WritableComputedRef<string | null>
     processedImage: Ref<string | null>
-    borderSize: ComputedRef<number> | Ref<number>
-    maxResolution: ComputedRef<number> | Ref<number>
+    borderSize: WritableComputedRef<number>
+    maxResolution: WritableComputedRef<number>
     splitPosition: Ref<number>
     isProcessing: Ref<boolean>
     isSampling: Ref<boolean>

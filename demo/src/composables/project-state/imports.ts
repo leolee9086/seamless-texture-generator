@@ -3,7 +3,7 @@
  */
 
 // Vue
-import { ref, shallowRef, computed } from 'vue'
+import { ref, shallowRef, computed, toRaw } from 'vue'
 import type { Ref, ShallowRef, ComputedRef } from 'vue'
 
 // 项目类型
@@ -19,6 +19,7 @@ export {
     ref,
     shallowRef,
     computed,
+    toRaw,
     projectFS,
     默认去雾参数,
     默认清晰度参数,

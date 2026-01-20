@@ -1,5 +1,5 @@
 import { ref, onMounted, reactive, watch, computed, shallowRef } from 'vue'
-import type { Ref, Component, ComputedRef } from 'vue'
+import type { Ref, Component, ComputedRef, WritableComputedRef } from 'vue'
 import JSZip from 'jszip'
 
 // Utils
@@ -18,6 +18,7 @@ import type { ClarityParams } from '../adjustments/clarity'
 import type { LuminanceAdjustmentParams } from '../adjustments/imports'
 import type { HSLAdjustmentLayer } from '../utils/imports'
 import type { 水印配置 } from '../components/control-panels/watermark/watermark.types'
+import { 默认水印配置 } from '../components/control-panels/watermark/watermark.constants'
 
 // Project Types
 import type { ImageProject, ProjectParams } from '../types/project.types'
@@ -55,12 +56,14 @@ export {
     blobToDataURL,
     默认导出预设,
     convertImage,
-    downloadBlob
+    downloadBlob,
+    默认水印配置
 }
 
 export type {
     Ref,
     ComputedRef,
+    WritableComputedRef,
     Component,
     ControlEvent,
     DehazeParams,

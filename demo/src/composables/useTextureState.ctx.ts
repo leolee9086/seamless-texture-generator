@@ -1,5 +1,5 @@
 import { computed } from './imports'
-import type { ComputedRef } from './imports'
+import type { WritableComputedRef } from './imports'
 import { dataURLToBlob } from './project-state/useProjectState.utils'
 import { 生成上传文件名 } from './useTextureState.templates'
 import type { ProjectStateReturn } from './project-state/useProjectState.types'
@@ -11,7 +11,7 @@ import type { ProjectParams } from './project-state/imports'
  * 连接本地 rawOriginalImage 与项目状态 activeOriginalDataUrl
  * 处理图片上传逻辑
  */
-export function 创建原图代理(projectState: ProjectStateReturn): ComputedRef<string | null> {
+export function 创建原图代理(projectState: ProjectStateReturn): WritableComputedRef<string | null> {
     return computed({
         get: () => projectState.state.activeOriginalDataUrl.value,
         set: (dataUrl: string | null) => {
@@ -38,7 +38,7 @@ export function 创建参数代理<K extends keyof ProjectParams>(
     projectState: ProjectStateReturn,
     paramName: K,
     defaultValue: ProjectParams[K]
-): ComputedRef<ProjectParams[K]> {
+): WritableComputedRef<ProjectParams[K]> {
     return computed({
         get: () => projectState.state.activeProject.value?.params[paramName] ?? defaultValue,
         /** @简洁函数 setter 简单地更新参数 */
