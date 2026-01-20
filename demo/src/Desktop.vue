@@ -48,7 +48,7 @@
 </template>
 
 <script setup lang="ts">
-import { ref, watch } from 'vue'
+import { ref } from 'vue'
 import DesktopControls from './components/desktop/DesktopControls.vue'
 import Viewer from './components/Viewer.vue'
 import ProjectSidebar from './components/project-manager/ProjectSidebar.vue'
@@ -124,12 +124,9 @@ const {
 })
 
 // === State Bridge ===
-// 当项目切换时，更新 Viewer 显示的图片
-watch(() => projectState.activeOriginalDataUrl.value, (newUrl) => {
-  if (newUrl) {
-    rawOriginalImage.value = newUrl
-  }
-})
+// 不需要手动 watch activeOriginalDataUrl，因为 rawOriginalImage 已经是 computed 属性，
+// 会自动响应 projectState.activeOriginalDataUrl 的变化。
+// 原有的 watch 会触发 rawOriginalImage 的 setter，导致错误的创建新项目逻辑。
 
 // === Event Handlers ===
 const handleExport = () => {

@@ -1,6 +1,7 @@
 import { ref } from './imports'
 import { useProjectState } from './project-state/index'
 import type { UseTextureStateOptions, PreviewOverlayData, TextureState } from './useTextureState.types'
+export type { UseTextureStateOptions, PreviewOverlayData, TextureState }
 import { 创建原图代理, 创建参数代理 } from './useTextureState.ctx'
 import { 默认最大分辨率, 默认边框大小, 分割位置初始值, 缩放层级初始值 } from './useTextureState.constants'
 
