@@ -7,6 +7,7 @@
 import { projectFS } from './imports'
 import type { ProjectParams } from './imports'
 import { projects } from './useProjectState.state'
+import { cloneDeep } from './useProjectState.utils'
 
 // ============================================================================
 // 批量操作
@@ -31,7 +32,7 @@ export async function 复制参数到项目(sourceId: string, targetIds: string[
 
         target.params = { ...paramsCopy }
         target.updatedAt = Date.now()
-        await projectFS.saveProject(target)
+        await projectFS.saveProject(cloneDeep(target))
     }
 }
 

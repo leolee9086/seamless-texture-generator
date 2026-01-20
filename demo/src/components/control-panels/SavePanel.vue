@@ -56,7 +56,7 @@
             <!-- 水印设置区域 -->
             <div class="水印设置区域">
                 <div class="区域标题">Watermark Settings</div>
-                <WatermarkSettings ref="watermarkSettingsRef" @control-event="转发控制事件" />
+                <WatermarkSettings v-if="watermarkConfig" :config="watermarkConfig" @update:config="更新水印配置" />
             </div>
         </div>
     </div>
@@ -67,11 +67,13 @@ import { computed } from 'vue'
 import WatermarkSettings from './watermark/WatermarkSettings.vue'
 import type { ControlEvent } from './imports'
 import { createUpdateDataEvent, createButtonClickEvent } from './imports'
+import type { 水印配置 } from './imports'
 
 const props = defineProps<{
     isMobile?: boolean
     originalImage: string | null
     processedImage: string | null
+    watermarkConfig?: 水印配置
 }>()
 
 const emit = defineEmits<{
@@ -80,8 +82,10 @@ const emit = defineEmits<{
     'controlEvent': [event: ControlEvent]
 }>()
 
-/** @简洁函数 转发子组件控制事件到父组件 */
-const 转发控制事件 = (event: ControlEvent): void => emit('controlEvent', event)
+/** @简洁函数 更新水印配置 */
+const 更新水印配置 = (config: 水印配置): void => {
+    emit('controlEvent', createUpdateDataEvent('watermark-config-change', config))
+}
 
 /**
  * 保存无水印图片：临时关闭水印后保存
