@@ -1,5 +1,5 @@
 // Vue
-import { ref, onMounted, reactive, watch } from 'vue'
+import { ref, onMounted, reactive, watch, computed, shallowRef } from 'vue'
 import type { Ref, Component } from 'vue'
 
 // Utils
@@ -17,6 +17,11 @@ import type { LuminanceAdjustmentParams } from '../adjustments/imports'
 import type { HSLAdjustmentLayer } from '../utils/imports'
 import type { 水印配置 } from '../components/control-panels/watermark/watermark.types'
 
+// Project Types
+import type { ImageProject, ProjectParams } from '../types/project.types'
+
+// Infra
+import { projectFS } from '../infra/ProjectFileSystem'
 
 // Procedural Textures
 import { defaultWoodParams, type WoodParams } from '../proceduralTexturing/wood/woodGeneratorPipeline'
@@ -28,13 +33,16 @@ export {
     onMounted,
     reactive,
     watch,
+    computed,
+    shallowRef,
     isMobileDevice,
     supportsNativeCamera,
     handlePhotoCaptured,
     toggleCamera,
     createControlEventHandler,
     defaultWoodParams,
-    defaultPlainWeaveAdvancedParams
+    defaultPlainWeaveAdvancedParams,
+    projectFS
 }
 
 export type {
@@ -47,5 +55,7 @@ export type {
     HSLAdjustmentLayer,
     WoodParams,
     PlainWeaveAdvancedParams,
-    水印配置
+    水印配置,
+    ImageProject,
+    ProjectParams
 }
