@@ -1,9 +1,9 @@
 import {
     ref, computed, JSZip, projectFS,
     processImageToTileable, blobToDataURL,
-    默认导出预设, convertImage, downloadBlob
+    默认导出预设, convertImage, downloadBlob, lutDb
 } from './imports'
-import type { ExportPreset, ExportTask } from './imports'
+import type { ExportPreset, ExportTask, 水印配置, HSLAdjustmentLayer } from './imports'
 import { useProjectState } from './project-state/index'
 
 /**
@@ -49,7 +49,7 @@ const generateFileName = (projectName: string): string => {
 
 const processProject = async (projectId: string): Promise<Blob> => {
     const { state } = useProjectState()
-    const project = state.projects.value.find(p => p.id === projectId)
+    const project = state.projects.value.find(proj => proj.id === projectId)
     if (!project) throw new Error('项目不存在')
 
     // 加载原图
@@ -60,21 +60,40 @@ const processProject = async (projectId: string): Promise<Blob> => {
     // 转换为 DataURL
     const originalDataUrl = await blobToDataURL(originalBlob)
 
+    // === 构建 HSL 图层（合并 globalHSL）===
+    const hslLayers = buildHSLLayersForExport(project.params)
+
+    // === 加载 LUT 文件 ===
+    let lutFile: File | undefined
+    if (project.params.lutId) {
+        const luts = await lutDb.getAllLUTs()
+        const lutItem = luts.find(item => item.id === project.params.lutId)
+        if (lutItem) {
+            lutFile = new File([lutItem.file], lutItem.name, { type: 'text/plain' })
+        }
+    }
+
+    // === 解析水印配置（项目优先/全局优先）===
+    const watermarkConfig = resolveWatermarkForExport(project.params, preset.value)
+    const enableWatermark = watermarkConfig !== undefined
+
     // 调用现有的处理管线
     const resultDataUrl = await processImageToTileable({
         originalImage: originalDataUrl,
         maxResolution: project.params.maxResolution,
         borderSize: project.params.borderSize,
-        hslLayers: project.params.hslLayers,
+        hslLayers,
         dehazeParams: project.params.dehazeParams,
         clarityParams: project.params.clarityParams,
         luminanceParams: project.params.luminanceParams,
         exposureStrength: project.params.exposureStrength,
         exposureManual: project.params.exposureManual,
-        watermarkConfig: preset.value.watermarkEnabled
-            ? preset.value.watermarkConfig
-            : undefined,
-        enableWatermark: preset.value.watermarkEnabled
+        // LUT 参数
+        lutFile,
+        lutIntensity: project.params.lutIntensity ?? 1.0,
+        // 水印参数
+        watermarkConfig,
+        enableWatermark
     })
 
     if (!resultDataUrl) {
@@ -89,6 +108,50 @@ const processProject = async (projectId: string): Promise<Blob> => {
         resizeMode: preset.value.resizeMode,
         resizeValue: preset.value.resizeValue
     })
+}
+
+/**
+ * 构建导出用的 HSL 图层（合并 globalHSL 到图层数组）
+ */
+function buildHSLLayersForExport(params: { globalHSL: { hue: number; saturation: number; lightness: number }; hslLayers: HSLAdjustmentLayer[] }): HSLAdjustmentLayer[] {
+    const { globalHSL, hslLayers } = params
+    // 如果 globalHSL 有非零值，将其作为特殊图层添加到数组开头
+    const hasGlobalAdjustment = globalHSL.hue !== 0 || globalHSL.saturation !== 0 || globalHSL.lightness !== 0
+    if (!hasGlobalAdjustment) {
+        return [...hslLayers]
+    }
+
+    const globalLayer: HSLAdjustmentLayer = {
+        id: 'global',
+        name: '全局调整',
+        enabled: true,
+        hue: globalHSL.hue,
+        saturation: globalHSL.saturation,
+        lightness: globalHSL.lightness,
+        // 全局调整应用于所有颜色
+        targetColor: null,
+        colorRange: 180
+    }
+    return [globalLayer, ...hslLayers]
+}
+
+/**
+ * 解析导出时的水印配置
+ * 优先级：导出预设 > 项目配置
+ */
+function resolveWatermarkForExport(
+    projectParams: { watermarkConfig: 水印配置 | null; enableWatermark: boolean },
+    exportPreset: ExportPreset
+): 水印配置 | undefined {
+    // 如果导出预设启用了水印，使用导出预设的配置
+    if (exportPreset.watermarkEnabled && exportPreset.watermarkConfig) {
+        return exportPreset.watermarkConfig
+    }
+    // 否则，如果项目启用了水印，使用项目的配置
+    if (projectParams.enableWatermark && projectParams.watermarkConfig) {
+        return projectParams.watermarkConfig
+    }
+    return undefined
 }
 
 const processIndividual = async () => {

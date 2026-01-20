@@ -25,6 +25,7 @@ import type { ImageProject, ProjectParams } from '../types/project.types'
 
 // Infra
 import { projectFS } from '../infra/ProjectFileSystem'
+import { lutDb } from '../utils/lutDb'
 
 // Logic
 import { processImageToTileable } from '../processPipelines/imageProcessor'
@@ -57,7 +58,8 @@ export {
     默认导出预设,
     convertImage,
     downloadBlob,
-    默认水印配置
+    默认水印配置,
+    lutDb
 }
 
 export type {

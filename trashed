@@ -1,0 +1,34 @@
+# 审阅意见：批量导出丢失 LUT 效果
+
+## 问题描述
+用户在预览界面应用了 LUT 滤镜（Lookup Table）后，通过“批量导出”功能生成的图片没有滤镜效果，颜色与预览界面完全不同。
+
+## 根本原因分析
+1. **持久化数据结构缺失**：在 `src/types/project.types.ts` 中定义的 `ProjectParams` 接口缺少 `lutFile` 和 `lutIntensity` 字段。这意味着当项目被保存到 IndexedDB 时，LUT 信息就已经丢失了。
+2. **导出参数传递缺失**：在 `src/composables/useBatchExport.ts` 的 `processProject` 函数中，调用 `processImageToTileable` 时没有从项目参数中提取并传入 `lutFile` 和 `lutIntensity`。
+
+## 代码证据
+
+### 1. `ProjectParams` 定义 (src/types/project.types.ts)
+```typescript
+export interface ProjectParams {
+    // ... 缺少 lutFile 和 lutIntensity
+    borderSize: number
+    maxResolution: number
+}
+```
+
+### 2. `useBatchExport.ts` 调用点
+```typescript
+const resultDataUrl = await processImageToTileable({
+    originalImage: originalDataUrl,
+    // ... 缺少 lutFile 和 lutIntensity
+    hslLayers: project.params.hslLayers,
+    // ...
+})
+```
+
+## 建议修复方案
+1. 在 `ProjectParams` 接口中添加 `lutFile` 和 `lutIntensity` 字段。
+2. 在 `useBatchExport.ts` 中，将项目存储的 LUT 参数传递给渲染管线。
+3. 确保在保存项目（Save Project）时，当前的 LUT 状态也被写入到持久化存储中。

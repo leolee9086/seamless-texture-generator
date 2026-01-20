@@ -1,15 +1,14 @@
 import { ref } from './imports'
-import type { Component, Ref } from './imports'
+import type { Component } from './imports'
 import { processImageToTileable } from './imports'
 import { useTextureState } from './useTextureState'
 import { useAdjustmentParams } from './useAdjustmentParams'
 import { useLUTControl } from './useLUTControl'
+import { useWatermarkState } from './useWatermarkState'
 import { useCameraSupport } from './useCameraSupport'
 import { useHSLAdjustment } from './useHSLAdjustment'
 import { useImageHandling } from './useImageHandling'
 import { createTextureControlEventHandler } from './useControlEventConfig'
-import type { 水印配置 } from './imports'
-import { 默认水印配置 } from './imports'
 import { setupTextureWatchers } from './useTextureGenerator.watch'
 import type { UseTextureGeneratorOptions } from './useTextureGenerator.types'
 
@@ -19,6 +18,7 @@ export function useTextureGenerator(options: UseTextureGeneratorOptions = {}) {
   const state = useTextureState(options)
   const adjustmentParams = useAdjustmentParams()
   const lutControl = useLUTControl()
+  const watermarkState = useWatermarkState()
   const cameraSupport = useCameraSupport(enableCamera)
   const hslAdjustment = useHSLAdjustment(adjustmentParams.globalHSL, adjustmentParams.hslLayers)
   const imageHandling = useImageHandling({
@@ -33,10 +33,6 @@ export function useTextureGenerator(options: UseTextureGeneratorOptions = {}) {
   })
 
   const maskGenerator = ref<(() => Promise<Uint8Array | null>) | null>(null)
-
-  // 水印配置状态
-  const watermarkConfig: Ref<水印配置> = ref({ ...默认水印配置 })
-  const enableWatermark = ref(false)
 
   const processImage = async () => {
     if (!state.originalImage.value) return
@@ -59,8 +55,8 @@ export function useTextureGenerator(options: UseTextureGeneratorOptions = {}) {
         dehazeParams: adjustmentParams.dehazeParams.value,
         clarityParams: adjustmentParams.clarityParams.value,
         luminanceParams: adjustmentParams.luminanceParams.value,
-        watermarkConfig: watermarkConfig.value,
-        enableWatermark: enableWatermark.value
+        watermarkConfig: watermarkState.watermarkConfig.value,
+        enableWatermark: watermarkState.enableWatermark.value
       })
     } catch (error) {
       console.error('处理图像时出错:', error)
@@ -87,8 +83,8 @@ export function useTextureGenerator(options: UseTextureGeneratorOptions = {}) {
     state,
     adjustmentParams,
     lutControl,
-    enableWatermark,
-    watermarkConfig,
+    enableWatermark: watermarkState.enableWatermark,
+    watermarkConfig: watermarkState.watermarkConfig,
     debouncedProcessImage
   })
 
@@ -105,13 +101,14 @@ export function useTextureGenerator(options: UseTextureGeneratorOptions = {}) {
     debouncedProcessImage,
     toggleMagnifierWrapper,
     setPreviewOverlay,
-    watermarkConfig,
-    enableWatermark
+    watermarkConfig: watermarkState.watermarkConfig,
+    enableWatermark: watermarkState.enableWatermark
   })
 
   return {
     ...state, ...adjustmentParams, ...lutControl, maskGenerator,
-    watermarkConfig, enableWatermark,
+    watermarkConfig: watermarkState.watermarkConfig,
+    enableWatermark: watermarkState.enableWatermark,
     isMobile: cameraSupport.isMobile,
     cameraActive: cameraSupport.cameraActive,
     supportsNativeCamera: cameraSupport.supportsNativeCamera,

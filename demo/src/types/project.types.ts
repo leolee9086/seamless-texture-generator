@@ -9,10 +9,13 @@
  * - 定义导出相关的类型
  */
 
-import type { HSLAdjustmentLayer } from '../composables/useAdjustmentParams.types'
-import type { DehazeParams } from '../adjustments/dehaze/types'
-import type { ClarityParams } from '../adjustments/clarity'
-import type { LuminanceAdjustmentParams } from '../adjustments/luminance'
+import type {
+    HSLAdjustmentLayer,
+    DehazeParams,
+    ClarityParams,
+    LuminanceAdjustmentParams,
+    水印配置
+} from './imports'
 
 // ============================================================================
 // 项目参数快照
@@ -43,6 +46,16 @@ export interface ProjectParams {
     borderSize: number
     /** 最大分辨率 */
     maxResolution: number
+    // === LUT 参数 ===
+    /** LUT 在 lutDb 中的 ID (null 表示未选择) */
+    lutId: string | null
+    /** LUT 强度 (0-1) */
+    lutIntensity: number
+    // === 水印参数 ===
+    /** 水印配置 (项目级，null 表示使用全局配置) */
+    watermarkConfig: 水印配置 | null
+    /** 水印开关 (项目级) */
+    enableWatermark: boolean
 }
 
 // ============================================================================

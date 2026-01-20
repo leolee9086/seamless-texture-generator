@@ -19,7 +19,13 @@ export function 获取默认项目参数(): ProjectParams {
         clarityParams: { ...默认清晰度参数 },
         luminanceParams: { ...默认亮度参数 },
         borderSize: 0,
-        maxResolution: 4096
+        maxResolution: 4096,
+        // LUT 参数
+        lutId: null,
+        lutIntensity: 1.0,
+        // 水印参数
+        watermarkConfig: null,
+        enableWatermark: false
     }
 }
 
