@@ -103,3 +103,20 @@ export async function blobToDataURL(blob: Blob): Promise<string> {
         reader.readAsDataURL(blob)
     })
 }
+
+/**
+ * DataURL 转 Blob
+ * @param dataURL DataURL 字符串
+ * @returns Blob 对象
+ */
+export function dataURLToBlob(dataURL: string): Blob {
+    const arr = dataURL.split(',')
+    const mime = arr[0].match(/:(.*?);/)?.[1] ?? ''
+    const bstr = atob(arr[1])
+    let charIndex = bstr.length
+    const u8arr = new Uint8Array(charIndex)
+    while (charIndex--) {
+        u8arr[charIndex] = bstr.charCodeAt(charIndex)
+    }
+    return new Blob([u8arr], { type: mime })
+}

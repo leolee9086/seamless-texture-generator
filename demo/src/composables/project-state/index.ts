@@ -65,6 +65,11 @@ export type {
  * await actions.创建项目(file)
  */
 export function useProjectState(): ProjectStateReturn {
+    // 自动初始化
+    if (!isInitialized.value && !isLoading.value) {
+        加载所有项目()
+    }
+
     const state: ProjectStateData = {
         projects,
         activeProjectId,

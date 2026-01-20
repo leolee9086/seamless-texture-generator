@@ -70,6 +70,12 @@ export async function 加载所有项目(): Promise<void> {
         // 按更新时间倒序排列
         loaded.sort((项目A, 项目B) => 项目B.updatedAt - 项目A.updatedAt)
         projects.value = loaded
+
+        // 如果有项目且未选中，自动选中最新的
+        if (loaded.length > 0 && !activeProjectId.value) {
+            await 切换项目(loaded[0].id)
+        }
+
         isInitialized.value = true
     } finally {
         isLoading.value = false

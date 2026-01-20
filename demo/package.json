@@ -29,6 +29,7 @@
     "chroma-js": "^3.2.0",
     "eslint": "^9.39.1",
     "eslint-plugin-import": "^2.32.0",
+    "jszip": "^3.10.1",
     "konva": "^10.0.12",
     "vconsole": "^3.15.1",
     "vue": "^3.4.21",
@@ -37,6 +38,7 @@
   },
   "devDependencies": {
     "@iconify-json/carbon": "^1.2.14",
+    "@types/jszip": "^3.4.1",
     "@types/node": "^20.11.24",
     "@unocss/preset-attributify": "^66.5.9",
     "@unocss/preset-icons": "^66.5.9",

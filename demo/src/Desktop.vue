@@ -1,10 +1,11 @@
 <template>
   <div
     class="w-screen h-screen bg-gradient-to-br from-gray-900 to-black text-white font-sans relative overflow-hidden flex flex-row"
-    @dragenter.prevent="handleDragEnter" @dragleave.prevent="handleDragLeave" @dragover.prevent @drop.prevent="handleDrop">
+    @dragenter.prevent="handleDragEnter" @dragleave.prevent="handleDragLeave" @dragover.prevent
+    @drop.prevent="handleDrop">
 
     <!-- Controls Area (Left) -->
-    <div class="z-20   m-4 mr-0 w-96 min-w-96 overflow-y-auto scrollbar-hide">
+    <div class="z-20 m-4 mr-0 w-96 min-w-96 overflow-y-auto scrollbar-hide">
       <DesktopControls :is-processing="isProcessing" :original-image="originalImage" :processed-image="processedImage"
         :max-resolution="maxResolution" :border-size="borderSize" :split-position="splitPosition"
         :magnifier-enabled="magnifierEnabled" :zoom-level="zoomLevel" :lut-enabled="lutEnabled"
@@ -22,9 +23,19 @@
         @clear-overlay="clearPreviewOverlay" class="w-full h-full object-contain" />
     </div>
 
+    <!-- Project Sidebar (Far Right) -->
+    <ProjectSidebar class="w-64 m-4 ml-0 rounded-3xl overflow-hidden shadow-xl z-20" @export="handleExport" />
+
     <!-- Sampling Editor -->
     <SamplingEditor :visible="isSampling" :original-image="rawOriginalImage" @close="isSampling = false"
       @confirm="handleSamplingConfirmWrapper" />
+
+    <!-- Export Dialogs -->
+    <ExportDialog v-if="showExportDialog" :selected-count="projectState.projects.value.length"
+      @cancel="showExportDialog = false" @confirm="handleExportConfirm"
+      @configure-watermark="handleOpenWatermarkConfig" />
+
+    <ExportProgress v-if="showExportProgress" @close="showExportProgress = false" />
 
     <!-- Drag Overlay -->
     <div v-if="isDragging"
@@ -37,28 +48,42 @@
 </template>
 
 <script setup lang="ts">
+import { ref, watch } from 'vue'
 import DesktopControls from './components/desktop/DesktopControls.vue'
 import Viewer from './components/Viewer.vue'
+import ProjectSidebar from './components/project-manager/ProjectSidebar.vue'
+import ExportDialog from './components/export-dialog/ExportDialog.vue'
+import ExportProgress from './components/export-dialog/ExportProgress.vue'
 import { SamplingEditor } from './components/sampling-editor'
 import { useTextureGenerator } from './composables/useTextureGenerator'
-import { EVENT_TYPE, DATA_ACTION } from './utils/controlEventHandler.constants'
 import { useGlobalDragDrop } from './composables/useGlobalDragDrop'
+import { useBatchExport } from './composables/useBatchExport'
+import { useProjectState } from './composables/project-state/index'
+import type { ExportPreset } from './types/export.types'
 
-const { state: dragState, actions: dragActions } = useGlobalDragDrop((file) => {
-  const reader = new FileReader()
-  reader.onload = () => {
-    if (typeof reader.result === 'string') {
-      handleControlEvent({
-        type: EVENT_TYPE.UPDATE_DATA,
-        detail: {
-          action: DATA_ACTION.SET_IMAGE,
-          data: reader.result
-        }
-      })
+const { state: projectState, actions: projectActions } = useProjectState()
+const exporter = useBatchExport()
+
+// Dialog states
+const showExportDialog = ref(false)
+const showExportProgress = ref(false)
+
+const { state: dragState, actions: dragActions } = useGlobalDragDrop(
+  // 单文件回调 (保留作为兜底，但主要逻辑由多文件回调处理)
+  async (file) => {
+    const project = await projectActions.createProject(file)
+    await projectActions.switchProject(project.id)
+  },
+  ['image/'],
+  // 多文件回调
+  async (files) => {
+    const projects = await projectActions.createProjects(files)
+    if (projects.length > 0) {
+      // 切换到第一个导入的项目 (或最新的)
+      await projectActions.switchProject(projects[0].id)
     }
   }
-  reader.readAsDataURL(file)
-})
+)
 
 const { isDragging } = dragState
 const { handleDragEnter, handleDragLeave, handleDrop } = dragActions
@@ -84,11 +109,11 @@ const {
   previewOverlay,
   globalHSL,
   hslLayers,
-  exposureStrength,   // 新增
-  exposureManual,     // 新增
-  dehazeParams,      // 新增
-  clarityParams,      // 新增
-  luminanceParams,    // 新增
+  exposureStrength,
+  exposureManual,
+  dehazeParams,
+  clarityParams,
+  luminanceParams,
   clearPreviewOverlay,
   handleSamplingConfirmWrapper,
   handleControlEvent,
@@ -97,4 +122,31 @@ const {
   initialMaxResolution: 4096,
   initialBorderSize: 0,
 })
+
+// === State Bridge ===
+// 当项目切换时，更新 Viewer 显示的图片
+watch(() => projectState.activeOriginalDataUrl.value, (newUrl) => {
+  if (newUrl) {
+    rawOriginalImage.value = newUrl
+  }
+})
+
+// === Event Handlers ===
+const handleExport = () => {
+  if (projectState.projects.value.length === 0) return
+  showExportDialog.value = true
+}
+
+const handleExportConfirm = async (payload: { preset: ExportPreset, mode: 'individual' | 'zip' }) => {
+  showExportDialog.value = false
+  showExportProgress.value = true
+
+  const projectIds = projectState.projects.value.map(p => p.id)
+  await exporter.startExport(projectIds, payload.preset, payload.mode)
+}
+
+const handleOpenWatermarkConfig = () => {
+  showExportDialog.value = false
+  alert('请在左侧控制面板中配置水印，然后再次点击导出。')
+}
 </script>

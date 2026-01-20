@@ -38,10 +38,15 @@
 </template>
 
 <script setup lang="ts">
+import { watch } from 'vue'
 import MobileControls from './components/mobile/MobileControls.vue'
 import Viewer from './components/Viewer.vue'
+import ProjectDrawer from './components/project-manager/ProjectDrawer.vue'
 import { SamplingEditor } from './components/sampling-editor'
 import { useTextureGenerator } from './composables/useTextureGenerator'
+import { useProjectState } from './composables/project-state/index'
+
+const { state: projectState, actions: projectActions } = useProjectState()
 
 // 使用共享逻辑，禁用摄像头功能（移动端）
 const {
@@ -66,15 +71,24 @@ const {
   previewOverlay,
   globalHSL,
   hslLayers,
-  exposureStrength,   // 新增
-  exposureManual,     // 新增
-  dehazeParams,      // 新增
-  clarityParams,      // 新增
-  luminanceParams,    // 新增
+  exposureStrength,
+  exposureManual,
+  dehazeParams,
+  clarityParams,
+  luminanceParams,
   clearPreviewOverlay,
 } = useTextureGenerator({
   enableCamera: false,
   initialMaxResolution: 4096,
   initialBorderSize: 0,
+})
+
+// === State Bridge ===
+// 当项目切换时，更新 Viewer 显示的图片
+watch(() => projectState.activeOriginalDataUrl.value, (newUrl) => {
+  if (newUrl) {
+    // 移动端也同步更新
+    rawOriginalImage.value = newUrl
+  }
 })
 </script>
