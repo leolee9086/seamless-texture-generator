@@ -1,5 +1,5 @@
 <template>
-    <div class="project-sidebar flex flex-col h-full bg-[#1e1e1e] border-l border-white/10">
+    <div class="project-sidebar flex flex-col bg-black/60 backdrop-blur-xl border-l border-white/10">
         <!-- Header -->
         <div class="header h-12 flex items-center px-4 border-b border-white/10 shrink-0">
             <h2 class="text-sm font-medium text-white/90 flex items-center gap-2">
@@ -86,7 +86,7 @@
 
         <!-- Context Menu -->
         <div v-if="contextMenu.visible"
-            class="fixed z-50 bg-[#2a2a2a] border border-white/10 rounded-lg shadow-2xl py-1 min-w-[180px] backdrop-blur-sm"
+            class="fixed z-50 bg-black/90 border border-white/10 rounded-lg shadow-2xl py-1 min-w-[180px] backdrop-blur-md"
             :style="{ top: `${contextMenu.y}px`, left: `${contextMenu.x}px` }" @click.stop>
             <div class="px-3 py-2 text-xs text-white/40 border-b border-white/5 mb-1">
                 批量操作
