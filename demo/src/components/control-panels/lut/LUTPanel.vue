@@ -142,9 +142,9 @@ const handleSliderUpdate = (data: { id: string; value: number }) => { emit('slid
 const updateMaskOptions = (options: any) => { Object.assign(maskOptions.value, options) }
 const toggleMobileMaskPreview = () => { maskPreviewPanelRef.value?.toggleMaskPreview() }
 
-const handleFilesSelected = async (files: FileList) => {
+const handleFilesSelected = async (files: File[]) => {
     if (!files || files.length === 0) return
-    for (let i = 0; i < files.length; i++) { await 添加LUT文件(files[i]) }
+    for (const file of files) { await 添加LUT文件(file) }
     await loadLUTs()
 }
 

@@ -15,7 +15,7 @@
 
 // 类型导入转发 - 仅来自父级目录
 import type { ImageDownloadParams } from '../types/download.types'
-import type { ControlEvent } from '../types/controlEvents'
+import type { ControlEvent, ControlEventDetail } from '../types/controlEvents'
 import type { PipelineData, baseOptions, GeneralSynthesisPipelineStep } from '../types/PipelineData.type'
 import type { DehazeParams } from '../adjustments/dehaze/types'
 import type { ClarityParams } from '../adjustments/clarity'
@@ -30,5 +30,5 @@ import { IndexDBFS } from '../infra/IndexDBFS.class'
 import { z } from 'zod'
 import type { Component } from 'vue'
 
-export type { ImageDownloadParams, ControlEvent, PipelineData, baseOptions, GeneralSynthesisPipelineStep, DehazeParams, ClarityParams, LuminanceAdjustmentParams, HSLAdjustmentLayer, Component, 水印配置 }
+export type { ImageDownloadParams, ControlEvent, ControlEventDetail, PipelineData, baseOptions, GeneralSynthesisPipelineStep, DehazeParams, ClarityParams, LuminanceAdjustmentParams, HSLAdjustmentLayer, Component, 水印配置 }
 export { z, IndexDBFS }

@@ -3,12 +3,14 @@ export type ControlEventType =
   | 'button-click'
   | 'update-data'
 
+export interface ControlEventDetail {
+  action: string
+  data?: unknown
+}
+
 export interface ControlEvent {
   type: ControlEventType
-  detail: {
-    action: string
-    data?: unknown
-  }
+  detail: ControlEventDetail
 }
 
 // 按钮点击动作类型

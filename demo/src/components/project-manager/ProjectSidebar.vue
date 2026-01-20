@@ -84,9 +84,12 @@
         </div>
 
 
-        <!-- Context Menu -->
+    </div>
+
+    <!-- Context Menu - Teleport to body to avoid overflow/backdrop issues -->
+    <Teleport to="body">
         <div v-if="contextMenu.visible"
-            class="fixed z-50 bg-black/90 border border-white/10 rounded-lg shadow-2xl py-1 min-w-[180px] backdrop-blur-md"
+            class="fixed z-[9999] bg-black/90 border border-white/10 rounded-lg shadow-2xl py-1 min-w-[180px] backdrop-blur-md"
             :style="{ top: `${contextMenu.y}px`, left: `${contextMenu.x}px` }" @click.stop>
             <div class="px-3 py-2 text-xs text-white/40 border-b border-white/5 mb-1">
                 批量操作
@@ -122,7 +125,7 @@
                 <span>删除项目</span>
             </button>
         </div>
-    </div>
+    </Teleport>
 </template>
 
 <script setup lang="ts">

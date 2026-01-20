@@ -80,7 +80,7 @@ const props = defineProps<{
 
 const emit = defineEmits<{
     'update-all-thumbnails': []
-    'files-selected': [files: FileList]
+    'files-selected': [files: File[]]
     'select-lut': [lut: LUTItem]
     'delete-lut': [id: string]
     'update-thumbnail': [id: string]
@@ -104,7 +104,7 @@ const triggerUpload = () => {
 const handleFileChange = (event: Event) => {
     const input = event.target as HTMLInputElement
     if (input.files && input.files.length > 0) {
-        emit('files-selected', input.files)
+        emit('files-selected', Array.from(input.files))
     }
     input.value = ''
 }
