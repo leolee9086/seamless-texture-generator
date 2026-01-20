@@ -41,7 +41,7 @@ export function createTextureControlEventHandler(deps: ControlEventDeps): (event
         onClarityAdjustment: (params: ClarityParams): void => { adjustmentParams.clarityParams.value = params; if (state.originalImage.value) debouncedProcessImage() },
         onLuminanceAdjustment: (params: LuminanceAdjustmentParams): void => { adjustmentParams.luminanceParams.value = params; if (state.originalImage.value) debouncedProcessImage() },
         onSetImage: imageHandling.setImage,
-        onWatermarkConfigChange: (config: 水印配置): void => { deps.watermarkConfig.value = config; deps.enableWatermark.value = true; if (state.originalImage.value) debouncedProcessImage() },
+        onWatermarkConfigChange: (config: Partial<水印配置>): void => { deps.watermarkConfig.value = { ...deps.watermarkConfig.value, ...config }; deps.enableWatermark.value = true; if (state.originalImage.value) debouncedProcessImage() },
         onWatermarkEnableChange: (enabled: boolean): void => { deps.enableWatermark.value = enabled; if (state.originalImage.value) debouncedProcessImage() },
     })
 }

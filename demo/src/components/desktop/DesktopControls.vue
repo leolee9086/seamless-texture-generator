@@ -65,6 +65,10 @@
         <LuminancePanel v-else-if="activeGroup === 'luminance'" :original-image="originalImage"
           :luminance-params="luminanceParams" @control-event="handleControlEvent" />
 
+        <!-- Watermark Panel -->
+        <WatermarkPanel v-else-if="activeGroup === 'watermark'" :original-image="originalImage"
+          :watermark-config="watermarkConfig" :enable-watermark="enableWatermark" @control-event="handleControlEvent" />
+
         <!-- Settings Panel -->
         <SettingsPanel v-else-if="activeGroup === 'tileablesettings'" :is-processing="isProcessing"
           :original-image="originalImage" :settings-slider-items="settingsSliderItems" @process-image="processImage"
@@ -99,9 +103,12 @@ import ExposurePanel from '../control-panels/ExposurePanel.vue'  // 新增导入
 import DehazePanel from '../control-panels/dehaze/DehazePanel.vue'  // 新增导入
 import ClarityPanel from '../control-panels/clarity/ClarityPanel.vue'  // 新增导入
 import LuminancePanel from '../control-panels/LuminancePanel.vue'  // 新增导入
+import WatermarkPanel from '../control-panels/watermark/WatermarkPanel.vue' // 新增导入
 import SettingsPanel from '../control-panels/SettingsPanel.vue'
 import ViewPanel from '../control-panels/ViewPanel.vue'
 import SavePanel from '../control-panels/SavePanel.vue'
+
+import type { 水印配置 } from '../control-panels/watermark/imports'
 
 const props = defineProps<{
   isProcessing: boolean,
@@ -118,11 +125,13 @@ const props = defineProps<{
   lutFile: File | null,
   globalHSL?: { hue: number; saturation: number; lightness: number },
   hslLayers?: any[]
-  exposureStrength?: number  // 新增
-  exposureManual?: { exposure: number; contrast: number; gamma: number }  // 新增
-  dehazeParams?: DehazeParams  // 新增
-  clarityParams?: ClarityParams  // 新增
-  luminanceParams?: LuminanceAdjustmentParams  // 新增
+  exposureStrength?: number
+  exposureManual?: { exposure: number; contrast: number; gamma: number }
+  dehazeParams?: DehazeParams
+  clarityParams?: ClarityParams
+  luminanceParams?: LuminanceAdjustmentParams
+  watermarkConfig?: 水印配置
+  enableWatermark?: boolean
 }>()
 
 const emit = defineEmits<{
@@ -151,6 +160,14 @@ const {
   setImage,
   handleControlEvent
 } = useControlsLogic(props, emit)
+
+const switchToGroup = (groupId: string) => {
+  activeGroup.value = groupId
+}
+
+defineExpose({
+  switchToGroup
+})
 
 // 创建零绑定包装后的 InputsPanel 组件
 const wrappedInputsPanel = createZeroBindingInputsPanel({

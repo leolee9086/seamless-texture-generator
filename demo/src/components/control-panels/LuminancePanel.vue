@@ -515,10 +515,10 @@ watch(() => props.luminanceParams, (newParams) => {
     }
 }, { deep: true })
 
-// 当图像变化时重置所有设置
-watch(() => props.originalImage, () => {
-    resetLuminance()
-})
+// 当图像变化时重置所有设置 - 已移除
+// watch(() => props.originalImage, () => {
+//    resetLuminance()
+// })
 </script>
 
 <style scoped>

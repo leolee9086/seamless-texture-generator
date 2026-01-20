@@ -6,12 +6,13 @@
 
     <!-- Controls Area (Left) -->
     <div class="z-20 m-4 mr-0 w-96 min-w-96 overflow-y-auto scrollbar-hide">
-      <DesktopControls :is-processing="isProcessing" :original-image="originalImage" :processed-image="processedImage"
-        :max-resolution="maxResolution" :border-size="borderSize" :split-position="splitPosition"
-        :magnifier-enabled="magnifierEnabled" :zoom-level="zoomLevel" :lut-enabled="lutEnabled"
-        :lut-intensity="lutIntensity" :lut-file-name="lutFileName" :lut-file="lutFile" :global-hsl="globalHSL"
-        :hsl-layers="hslLayers" :exposure-strength="exposureStrength" :exposure-manual="exposureManual"
-        :dehaze-params="dehazeParams" :clarity-params="clarityParams" :luminance-params="luminanceParams"
+      <DesktopControls ref="desktopControlsRef" :is-processing="isProcessing" :original-image="originalImage"
+        :processed-image="processedImage" :max-resolution="maxResolution" :border-size="borderSize"
+        :split-position="splitPosition" :magnifier-enabled="magnifierEnabled" :zoom-level="zoomLevel"
+        :lut-enabled="lutEnabled" :lut-intensity="lutIntensity" :lut-file-name="lutFileName" :lut-file="lutFile"
+        :global-hsl="globalHSL" :hsl-layers="hslLayers" :exposure-strength="exposureStrength"
+        :exposure-manual="exposureManual" :dehaze-params="dehazeParams" :clarity-params="clarityParams"
+        :luminance-params="luminanceParams" :watermark-config="watermarkConfig" :enable-watermark="enableWatermark"
         @control-event="handleControlEvent" />
     </div>
 
@@ -60,6 +61,8 @@ import { useGlobalDragDrop } from './composables/useGlobalDragDrop'
 import { useBatchExport } from './composables/useBatchExport'
 import { useProjectState } from './composables/project-state/index'
 import type { ExportPreset } from './types/export.types'
+
+const desktopControlsRef = ref<InstanceType<typeof DesktopControls> | null>(null)
 
 const { state: projectState, actions: projectActions } = useProjectState()
 const exporter = useBatchExport()
@@ -114,6 +117,8 @@ const {
   dehazeParams,
   clarityParams,
   luminanceParams,
+  watermarkConfig,
+  enableWatermark,
   clearPreviewOverlay,
   handleSamplingConfirmWrapper,
   handleControlEvent,
@@ -144,6 +149,8 @@ const handleExportConfirm = async (payload: { preset: ExportPreset, mode: 'indiv
 
 const handleOpenWatermarkConfig = () => {
   showExportDialog.value = false
-  alert('请在左侧控制面板中配置水印，然后再次点击导出。')
+  if (desktopControlsRef.value) {
+    desktopControlsRef.value.switchToGroup('watermark')
+  }
 }
 </script>

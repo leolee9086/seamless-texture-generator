@@ -21,7 +21,7 @@
                 </div>
 
                 <Slider :items="autoExposureSliderItems" @updateValue="handleAutoExposureUpdate" />
-                
+
                 <div class="mt-3 text-xs text-white/50">
                     <p>自动曝光会分析图像直方图并智能调整曝光水平，适用于大多数场景。</p>
                 </div>
@@ -42,7 +42,7 @@
                 </div>
 
                 <Slider :items="manualExposureSliderItems" @updateValue="handleManualExposureUpdate" />
-                
+
                 <div class="mt-3 text-xs text-white/50">
                     <p>手动调整曝光、对比度和伽马值，精确控制图像外观。</p>
                 </div>
@@ -56,16 +56,14 @@
                     </label>
                     <div class="flex gap-2">
                         <button @click="exposureMode = 'auto'"
-                            class="glass-btn text-[10px] px-3 py-1.5 rounded transition-colors"
-                            :class="exposureMode === 'auto' 
-                                ? 'bg-white/20 text-white border-white/40' 
+                            class="glass-btn text-[10px] px-3 py-1.5 rounded transition-colors" :class="exposureMode === 'auto'
+                                ? 'bg-white/20 text-white border-white/40'
                                 : 'bg-white/5 text-white/60 hover:bg-white/10 hover:text-white/90 border-white/10'">
                             自动
                         </button>
                         <button @click="exposureMode = 'manual'"
-                            class="glass-btn text-[10px] px-3 py-1.5 rounded transition-colors"
-                            :class="exposureMode === 'manual' 
-                                ? 'bg-white/20 text-white border-white/40' 
+                            class="glass-btn text-[10px] px-3 py-1.5 rounded transition-colors" :class="exposureMode === 'manual'
+                                ? 'bg-white/20 text-white border-white/40'
                                 : 'bg-white/5 text-white/60 hover:bg-white/10 hover:text-white/90 border-white/10'">
                             手动
                         </button>
@@ -79,10 +77,9 @@
                     <label class="block text-sm font-medium text-white/80">
                         显示调整预览
                     </label>
-                    <button @click="togglePreview"
-                        class="glass-btn text-[10px] px-3 py-1.5 rounded transition-colors"
-                        :class="showPreview 
-                            ? 'bg-white/20 text-white border-white/40' 
+                    <button @click="togglePreview" class="glass-btn text-[10px] px-3 py-1.5 rounded transition-colors"
+                        :class="showPreview
+                            ? 'bg-white/20 text-white border-white/40'
                             : 'bg-white/5 text-white/60 hover:bg-white/10 hover:text-white/90 border-white/10'">
                         {{ showPreview ? '开启' : '关闭' }}
                     </button>
@@ -230,6 +227,22 @@ const togglePreview = () => {
 }
 
 // Watchers
+watch(() => props.exposureStrength, (newVal) => {
+    if (newVal !== undefined) {
+        autoExposureStrength.value = newVal
+        // 防止循环触发: 如果是 auto 模式，更新可能会再次触发事件?
+        // 不，updateValue 事件由 slider 触发，这里只是响应 prop 变化
+    }
+})
+
+watch(() => props.exposureManual, (newVal) => {
+    if (newVal) {
+        manualExposure.value = newVal.exposure
+        manualContrast.value = newVal.contrast
+        manualGamma.value = newVal.gamma
+    }
+}, { deep: true })
+
 watch(exposureMode, (newMode) => {
     // 当模式切换时，发送相应的事件
     if (newMode === 'auto') {
@@ -241,13 +254,6 @@ watch(exposureMode, (newMode) => {
             gamma: manualGamma.value
         }))
     }
-})
-
-// 当图像变化时重置所有设置
-watch(() => props.originalImage, () => {
-    resetAutoExposure()
-    resetManualExposure()
-    exposureMode.value = 'auto'
 })
 </script>
 

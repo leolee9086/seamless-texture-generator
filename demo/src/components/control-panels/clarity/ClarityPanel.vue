@@ -7,28 +7,15 @@
 
         <div v-else :class="contentContainerClass(isMobile || false)">
             <!-- 滤波参数组 -->
-            <FilterParamsGroup
-                :isMobile="isMobile"
-                :clarityParams="clarityParams"
-                @update-value="handleParamUpdate"
-            />
+            <FilterParamsGroup :isMobile="isMobile" :clarityParams="clarityParams" @update-value="handleParamUpdate" />
 
             <!-- 增强参数组 -->
-            <EnhancementParamsGroup
-                :isMobile="isMobile"
-                :clarityParams="clarityParams"
-                @update-value="handleParamUpdate"
-            />
+            <EnhancementParamsGroup :isMobile="isMobile" :clarityParams="clarityParams"
+                @update-value="handleParamUpdate" />
 
             <!-- 预设和操作 -->
-            <PresetsAndActionsGroup
-                :isMobile="isMobile"
-                :currentPreset="currentPreset"
-                @reset-params="resetParams"
-                @apply-preset="applyPreset"
-                @export-params="handleExportParams"
-                @import-params="handleImportParams"
-            />
+            <PresetsAndActionsGroup :isMobile="isMobile" :currentPreset="currentPreset" @reset-params="resetParams"
+                @apply-preset="applyPreset" @export-params="handleExportParams" @import-params="handleImportParams" />
         </div>
     </div>
 </template>
@@ -38,11 +25,13 @@ import { useClarityPanel } from './useClarityPanel'
 import FilterParamsGroup from './FilterParamsGroup.vue'
 import EnhancementParamsGroup from './EnhancementParamsGroup.vue'
 import PresetsAndActionsGroup from './PresetsAndActionsGroup.vue'
-import type { ControlEvent } from './imports'
+import { watch } from 'vue'
+import type { ControlEvent, ClarityParams } from './imports'
 
 const props = defineProps<{
     isMobile?: boolean
     originalImage: string | null
+    clarityParams?: ClarityParams
 }>()
 
 const emit = defineEmits<{
@@ -63,5 +52,12 @@ const {
 } = useClarityPanel((event: 'controlEvent', data: ControlEvent) => {
     emit(event, data)
 })
+
+// Sync props to local state
+watch(() => props.clarityParams, (newParams) => {
+    if (newParams) {
+        clarityParams.value = { ...newParams }
+    }
+}, { deep: true, immediate: true })
 
 </script>

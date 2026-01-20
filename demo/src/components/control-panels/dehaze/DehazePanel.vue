@@ -35,11 +35,13 @@ import DehazePresetSelector from './DehazePresetSelector.vue'
 import DehazeBasicParams from './DehazeBasicParams.vue'
 import DehazeAdvancedParams from './DehazeAdvancedParams.vue'
 import DehazeEnhancementParams from './DehazeEnhancementParams.vue'
-import DehazeProcessingIndicator from './DehazeProcessingIndicator.vue'
+import { watch } from 'vue'
+import type { DehazeParams } from './imports' // Ensure imported
 
-defineProps<{
+const props = defineProps<{
     isMobile?: boolean
     originalImage: string | null
+    dehazeParams?: DehazeParams
 }>()
 
 const emit = defineEmits<{
@@ -60,6 +62,13 @@ const {
 } = useDehazePanel((event: 'controlEvent', data: ControlEvent) => {
     emit(event, data)
 })
+
+// Sync props to local state
+watch(() => props.dehazeParams, (newParams) => {
+    if (newParams) {
+        dehazeParams.value = { ...newParams }
+    }
+}, { deep: true, immediate: true })
 
 const basicSliderItems = createSliderItemsComputed(BasicParamsUIDefine, dehazeParams)
 const advancedSliderItems = createSliderItemsComputed(AdvancedParamsUIDefine, dehazeParams)

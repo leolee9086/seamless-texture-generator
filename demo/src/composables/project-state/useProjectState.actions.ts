@@ -176,10 +176,18 @@ export async function 切换项目(id: string): Promise<void> {
     const originalKey = project.originalPath.replace(资产路径前缀, '')
     const blob = await projectFS.loadAsset(originalKey)
 
+    // 竞态条件检查：如果加载期间切换了项目，则丢弃结果
+    if (activeProjectId.value !== id) return
+
     if (!blob) return
 
+    const dataUrl = await blobToDataURL(blob)
+
+    // 再次检查竞态条件 (blobToDataURL 也是异步的)
+    if (activeProjectId.value !== id) return
+
     activeOriginalBlob.value = blob
-    activeOriginalDataUrl.value = await blobToDataURL(blob)
+    activeOriginalDataUrl.value = dataUrl
 }
 
 // ============================================================================
