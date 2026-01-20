@@ -8,7 +8,10 @@
         <div v-else class="flex flex-col gap-4">
             <!-- Enable Toggle -->
             <div class="flex items-center justify-between p-4 bg-white/5 rounded-xl border border-white/10">
-                <span class="text-sm font-medium text-white/90">Enable Watermark</span>
+                <div class="flex items-center gap-2">
+                    <div class="i-carbon-stamp text-lg text-white/70"></div>
+                    <span class="text-sm font-medium text-white/90">Enable Watermark</span>
+                </div>
                 <button @click="toggleEnable"
                     class="w-12 h-6 rounded-full transition-colors duration-200 relative cursor-pointer"
                     :class="enableWatermark ? 'bg-blue-600' : 'bg-white/20'">
@@ -17,7 +20,7 @@
                 </button>
             </div>
 
-            <div v-if="enableWatermark" class="flex flex-col gap-4 animate-fade-in-down">
+            <div v-if="enableWatermark" class="flex flex-col gap-4">
                 <!-- Configuration Controls -->
                 <!-- Text Input -->
                 <div class="flex flex-col gap-2">
@@ -119,9 +122,9 @@ const sliderItems = computed(() => {
             id: 'wm-fontsize',
             label: 'Size',
             value: props.watermarkConfig.字体大小,
-            min: 配置范围.字体大小.min as number,
-            max: 配置范围.字体大小.max as number,
-            step: 配置范围.字体大小.step as number,
+            min: 配置范围.字体大小.min,
+            max: 配置范围.字体大小.max,
+            step: 配置范围.字体大小.step,
             valuePosition: 'after' as const,
             showRuler: false
         },
@@ -129,9 +132,9 @@ const sliderItems = computed(() => {
             id: 'wm-opacity',
             label: 'Opacity',
             value: props.watermarkConfig.不透明度,
-            min: 配置范围.不透明度.min as number,
-            max: 配置范围.不透明度.max as number,
-            step: 配置范围.不透明度.step as number,
+            min: 配置范围.不透明度.min,
+            max: 配置范围.不透明度.max,
+            step: 配置范围.不透明度.step,
             valuePosition: 'after' as const,
             showRuler: false
         }
@@ -142,9 +145,9 @@ const sliderItems = computed(() => {
             id: 'wm-spacing',
             label: 'Spacing',
             value: props.watermarkConfig.网格间距,
-            min: 配置范围.网格间距.min as number,
-            max: 配置范围.网格间距.max as number,
-            step: 配置范围.网格间距.step as number,
+            min: 配置范围.网格间距.min,
+            max: 配置范围.网格间距.max,
+            step: 配置范围.网格间距.step,
             valuePosition: 'after' as const,
             showRuler: false
         })
