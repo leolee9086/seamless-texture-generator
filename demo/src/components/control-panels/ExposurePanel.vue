@@ -20,10 +20,29 @@
                     </button>
                 </div>
 
-                <Slider :items="autoExposureSliderItems" @updateValue="handleAutoExposureUpdate" />
+                <!-- 模式选择 -->
+                <div class="flex items-center gap-2 mb-3">
+                    <span class="text-xs text-white/60">分析模式:</span>
+                    <select v-model="autoExposureMode"
+                        class="bg-white/10 text-white text-xs rounded px-2 py-1 border border-white/10 focus:border-white/30 outline-none">
+                        <option value="cdf">CDF 色调映射</option>
+                        <option value="clahe">CLAHE 自适应</option>
+                    </select>
+                </div>
+
+                <!-- CDF模式参数 -->
+                <div v-if="autoExposureMode === 'cdf'">
+                    <Slider :items="autoExposureSliderItems" @updateValue="handleAutoExposureUpdate" />
+                </div>
+
+                <!-- CLAHE模式参数 -->
+                <div v-else-if="autoExposureMode === 'clahe'">
+                    <Slider :items="claheSliderItems" @updateValue="handleCLAHEUpdate" />
+                </div>
 
                 <div class="mt-3 text-xs text-white/50">
-                    <p>自动曝光会分析图像直方图并智能调整曝光水平，适用于大多数场景。</p>
+                    <p v-if="autoExposureMode === 'cdf'">CDF模式分析直方图并全局调整曝光水平。</p>
+                    <p v-else-if="autoExposureMode === 'clahe'">CLAHE分块自适应均衡化，增强局部对比度。</p>
                 </div>
             </div>
 
@@ -112,6 +131,9 @@ const manualExposure = ref(props.exposureManual?.exposure || 1.0)
 const manualContrast = ref(props.exposureManual?.contrast || 1.0)
 const manualGamma = ref(props.exposureManual?.gamma || 1.0)
 const exposureMode = ref<'auto' | 'manual'>('auto')
+const autoExposureMode = ref<'cdf' | 'clahe'>('cdf')
+const claheClipLimit = ref(2.0)
+const claheBlockSize = ref(64)
 const showPreview = ref(true)
 
 // Computed
@@ -144,6 +166,29 @@ const autoExposureSliderItems = computed(() => [
         max: 20,
         step: 0.01,
         gradient: 'linear-gradient(90deg, #1a1a1a 0%, #888 50%, #ffffff 100%)',
+        showRuler: true
+    }
+])
+
+const claheSliderItems = computed(() => [
+    {
+        id: 'clahe-clip-limit',
+        label: '对比度限制',
+        value: claheClipLimit.value,
+        min: 1.0,
+        max: 4.0,
+        step: 0.1,
+        gradient: 'linear-gradient(90deg, #333 0%, #888 50%, #fff 100%)',
+        showRuler: true
+    },
+    {
+        id: 'clahe-block-size',
+        label: '分块大小',
+        value: claheBlockSize.value,
+        min: 32,
+        max: 128,
+        step: 32,
+        gradient: 'linear-gradient(90deg, #666 0%, #aaa 100%)',
         showRuler: true
     }
 ])
@@ -187,6 +232,19 @@ const handleAutoExposureUpdate = (data: { id: string; value: number }) => {
         autoExposureStrength.value = data.value
         emit('controlEvent', createUpdateDataEvent('exposure-strength', data.value))
     }
+}
+
+const handleCLAHEUpdate = (data: { id: string; value: number }) => {
+    if (data.id === 'clahe-clip-limit') {
+        claheClipLimit.value = data.value
+    } else if (data.id === 'clahe-block-size') {
+        claheBlockSize.value = data.value
+    }
+    emit('controlEvent', createUpdateDataEvent('exposure-clahe', {
+        clipLimit: claheClipLimit.value,
+        blockSize: claheBlockSize.value,
+        numBins: 256
+    }))
 }
 
 const handleManualExposureUpdate = (data: { id: string; value: number }) => {

@@ -15,9 +15,15 @@ function isWatermarkEnabled(options: WatermarkOptions): boolean {
 
 /**
  * 水印处理中间件
+ * 水印总是在管线最后应用，使用Canvas API渲染
  */
 export const watermarkMiddleware: Node<WatermarkOptions> & { isWatermark: true } = {
     isWatermark: true,
+    名称: '水印处理',
+    可接受输入: ['GPUBuffer'],
+    输出格式: 'GPUBuffer',
+    cpuProcess: undefined,  // 不支持CPU批处理
+
     guard: isWatermarkEnabled,
 
     process: async (context: NodeContext<WatermarkOptions>) => {

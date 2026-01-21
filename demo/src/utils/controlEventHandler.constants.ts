@@ -36,6 +36,8 @@ export const DATA_ACTION = {
     REMOVE_HSL_LAYER: 'remove-hsl-layer',
     EXPOSURE_STRENGTH: 'exposure-strength',
     EXPOSURE_MANUAL: 'exposure-manual',
+    EXPOSURE_MODE: 'exposure-mode',
+    EXPOSURE_CLAHE: 'exposure-clahe',
     DEHAZE_CHANGE: 'dehaze-change',
     CLARITY_ADJUSTMENT: 'clarity-adjustment',
     LUMINANCE_ADJUSTMENT: 'luminance-adjustment',

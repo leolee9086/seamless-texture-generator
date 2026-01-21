@@ -42,6 +42,8 @@ export type UpdateAction =
   | 'remove-hsl-layer'       // 新增
   | 'exposure-strength'      // 新增
   | 'exposure-manual'        // 新增
+  | 'exposure-mode'          // 自动曝光模式选择
+  | 'exposure-clahe'         // CLAHE参数配置
   | 'dehaze-change'          // 新增
   | 'clarity-adjustment'      // 新增
   | 'luminance-adjustment'    // 新增

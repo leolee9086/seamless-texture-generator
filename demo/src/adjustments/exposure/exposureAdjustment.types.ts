@@ -46,3 +46,27 @@ export interface HistogramFeatures {
     darkRatio: number
     brightRatio: number
 }
+
+/** 自动曝光分析模式 */
+export type AutoExposureMode =
+    | 'cdf'            // CDF色调映射（当前默认）
+    | 'histogram_eq'   // 直方图均衡化
+    | 'clahe'          // 限制对比度自适应直方图均衡化
+    | 'adaptive_gamma' // 自适应伽马校正
+
+/** CLAHE 配置参数 */
+export interface CLAHEConfig {
+    /** 对比度限制 [1.0, 4.0]，默认 2.0 */
+    clipLimit: number
+    /** 分块大小 [32, 64, 128]，默认 64 */
+    blockSize: number
+    /** 直方图bin数 [128, 256]，默认 256 */
+    numBins: number
+}
+
+/** 默认CLAHE配置 */
+export const DEFAULT_CLAHE_CONFIG: CLAHEConfig = {
+    clipLimit: 2.0,
+    blockSize: 64,
+    numBins: 256
+}

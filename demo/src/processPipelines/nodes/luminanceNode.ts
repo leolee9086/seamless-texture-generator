@@ -10,11 +10,12 @@ async function 亮度处理(imageData: ImageData, options: baseOptions, device: 
 
 /**
  * 亮度调整中间件
+ * 内部使用GPU处理，设置为GPU节点模式避免被错误放入CPU批处理组
  */
 export const luminanceMiddleware: Node = {
   名称: '亮度调整',
-  可接受输入: ['ImageData'],
-  输出格式: 'ImageData',
+  可接受输入: ['GPUBuffer'],
+  输出格式: 'GPUBuffer',
 
   guard: (options: baseOptions) => {
     return options.luminanceParams && (
@@ -26,10 +27,8 @@ export const luminanceMiddleware: Node = {
     )
   },
 
-  cpuProcess: async (imageData: ImageData, options: baseOptions): Promise<ImageData> => {
-    console.warn('亮度节点需要 GPU device，应使用 process 方法')
-    return imageData
-  },
+  // 不提供 cpuProcess，调度器会识别为 GPU 节点并调用 process
+  cpuProcess: undefined,
 
   process: async (context: NodeContext) => {
     const { options, pipelineData } = context
