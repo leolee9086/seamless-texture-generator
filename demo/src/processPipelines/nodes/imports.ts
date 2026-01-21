@@ -12,11 +12,12 @@ import type { 水印配置 } from '../../components/control-panels/watermark/wat
 import { applyDehazeAdjustment, DEFAULT_DEHAZE_PARAMS } from '../../adjustments/dehaze'
 import { processClarityAdjustment } from '../../adjustments/clarity'
 import { adjustExposure, adjustExposureManual } from '../../adjustments/exposure'
+import { GPU手动曝光调整 } from '../../adjustments/exposure/exposureAdjustment.manual.gpu'
 import { applyLuminanceAdjustmentToImageData } from '../../adjustments/luminance'
 import { gpuBufferToImageData } from '../../utils/webgpu/convert/gpuBufferToImageData'
 import { 应用水印 } from '../../components/control-panels/watermark/watermark.renderer'
 import { imageDataToGPUBuffer } from '../imageProcessor.utils'
 
 export type { PipelineData, baseOptions, DehazeParams, 水印配置 }
-export { applyDehazeAdjustment, DEFAULT_DEHAZE_PARAMS, processClarityAdjustment, adjustExposure, adjustExposureManual, applyLuminanceAdjustmentToImageData, gpuBufferToImageData, 应用水印, imageDataToGPUBuffer }
+export { applyDehazeAdjustment, DEFAULT_DEHAZE_PARAMS, processClarityAdjustment, adjustExposure, adjustExposureManual, GPU手动曝光调整, applyLuminanceAdjustmentToImageData, gpuBufferToImageData, 应用水印, imageDataToGPUBuffer }
 

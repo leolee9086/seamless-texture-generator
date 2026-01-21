@@ -10,11 +10,13 @@ async function 清晰度处理(imageData: ImageData, options: baseOptions, devic
 
 /**
  * 清晰度调整中间件
+ * 虽然内部使用GPU处理，但需要ImageData作为中间格式
+ * 设置为GPU节点模式以避免被错误放入CPU批处理组
  */
 export const clarityMiddleware: Node = {
   名称: '清晰度调整',
-  可接受输入: ['ImageData'],
-  输出格式: 'ImageData',
+  可接受输入: ['GPUBuffer'],
+  输出格式: 'GPUBuffer',
 
   guard: (options: baseOptions) => {
     return options.clarityParams &&
@@ -22,12 +24,8 @@ export const clarityMiddleware: Node = {
         options.clarityParams.macroEnhancement !== 0.0)
   },
 
-  cpuProcess: async (imageData: ImageData, options: baseOptions): Promise<ImageData> => {
-    // 注意：清晰度处理需要 device，批处理时会在上下文中获取
-    // 这里返回原图，实际处理在 process 中完成
-    console.warn('清晰度节点需要 GPU device，应使用 process 方法')
-    return imageData
-  },
+  // 不提供 cpuProcess，调度器会识别为 GPU 节点并调用 process
+  cpuProcess: undefined,
 
   process: async (context: NodeContext) => {
     const { options, pipelineData } = context

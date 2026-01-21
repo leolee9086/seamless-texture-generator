@@ -1,82 +1,69 @@
 import type { baseOptions } from './imports'
 import type { NodeContext, Node } from './types'
-import { adjustExposure, adjustExposureManual, gpuBufferToImageData } from './imports'
+import { GPU手动曝光调整 } from './imports'
 
 /**
- * 曝光调整 - 纯 CPU 处理函数
- */
-async function 曝光处理(imageData: ImageData, options: baseOptions): Promise<ImageData> {
-    // 自动曝光调整
-    if (options.exposureStrength && options.exposureStrength !== 1.0) {
-        return await adjustExposure(imageData, options.exposureStrength)
-    }
-
-    // 手动曝光调整
-    if (options.exposureManual) {
-        return adjustExposureManual(
-            imageData,
-            options.exposureManual.exposure,
-            options.exposureManual.contrast,
-            options.exposureManual.gamma
-        )
-    }
-
-    return imageData
-}
-
-/**
- * 曝光调整中间件
+ * 曝光调整中间件 - GPU 版本
+ * 直接在 GPUBuffer 上操作，避免 GPU↔CPU 往返传输
  */
 export const exposureMiddleware: Node = {
     名称: '曝光调整',
-    可接受输入: ['ImageData'],
-    输出格式: 'ImageData',
+    可接受输入: ['GPUBuffer'],
+    输出格式: 'GPUBuffer',
 
     guard: (options: baseOptions) => {
-        const hasExposureStrength = (options.exposureStrength && options.exposureStrength !== 1.0)
-        const hasExposureManual = (options.exposureManual &&
-            (options.exposureManual.exposure !== 1.0 ||
-                options.exposureManual.contrast !== 1.0 ||
-                options.exposureManual.gamma !== 1.0))
+        // 自动曝光暂不支持纯 GPU 路径，需要直方图计算
+        // const hasExposureStrength = (options.exposureStrength && options.exposureStrength !== 1.0)
 
-        return hasExposureStrength || hasExposureManual
+        // 手动曝光支持纯 GPU 路径
+        const hasExposureManual = options.exposureManual && (
+            options.exposureManual.exposure !== 1.0 ||
+            options.exposureManual.contrast !== 1.0 ||
+            options.exposureManual.gamma !== 1.0
+        )
+
+        return Boolean(hasExposureManual)
     },
 
-    // 纯 CPU 处理，供批处理使用
-    cpuProcess: 曝光处理,
+    // GPU 节点不提供 cpuProcess，调度器会识别为 GPU 节点
+    cpuProcess: undefined,
 
-    // 完整处理流程（包含格式转换）
     process: async (context: NodeContext) => {
         const { options, pipelineData } = context
         const device = await context.getWebGPUDevice()
+        const { exposureManual } = options
 
-        // GPU → CPU
-        const imageData = await gpuBufferToImageData(pipelineData.buffer, pipelineData.width, pipelineData.height, device)
+        if (!exposureManual) return
+
+        // 类型检查：确保是 GPUBuffer
+        if (!(pipelineData.buffer instanceof GPUBuffer)) {
+            console.warn('曝光节点需要 GPUBuffer 输入')
+            return
+        }
 
         try {
-            const processedImageData = await 曝光处理(imageData, options)
-
-            // CPU → GPU
-            const processedBuffer = device.createBuffer({
-                size: processedImageData.data.byteLength,
-                usage: GPUBufferUsage.STORAGE | GPUBufferUsage.COPY_SRC | GPUBufferUsage.COPY_DST,
-                mappedAtCreation: true
-            })
-            new Uint8Array(processedBuffer.getMappedRange()).set(processedImageData.data)
-            processedBuffer.unmap()
+            // 直接在 GPU 上处理，无需 GPU→CPU→GPU 往返
+            const resultBuffer = await GPU手动曝光调整(
+                device,
+                pipelineData.buffer,
+                pipelineData.width,
+                pipelineData.height,
+                exposureManual.exposure,
+                exposureManual.contrast,
+                exposureManual.gamma
+            )
 
             // 销毁旧 buffer
-            if (pipelineData.buffer instanceof GPUBuffer) {
-                pipelineData.buffer.destroy()
-            }
+            pipelineData.buffer.destroy()
 
+            // 更新管线数据
             context.pipelineData = {
-                buffer: processedBuffer,
-                width: processedImageData.width,
-                height: processedImageData.height
+                buffer: resultBuffer,
+                width: pipelineData.width,
+                height: pipelineData.height
             }
         } catch (error) {
-            console.warn('曝光处理失败，继续使用原始图像:', error)
+            console.warn('GPU曝光处理失败:', error)
         }
     }
 }
