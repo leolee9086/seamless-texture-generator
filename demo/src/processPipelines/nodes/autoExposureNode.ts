@@ -61,55 +61,7 @@ async function gpuBufferToTexture(
     return texture
 }
 
-/**
- * 将GPUTexture转回GPUBuffer
- */
-async function gpuTextureToBuffer(
-    device: GPUDevice,
-    texture: GPUTexture,
-    width: number,
-    height: number
-): Promise<GPUBuffer> {
-    const bytesPerRow = Math.ceil(width * 4 / 256) * 256
-    const bufferSize = bytesPerRow * height
 
-    const stagingBuffer = device.createBuffer({
-        size: bufferSize,
-        usage: GPUBufferUsage.COPY_DST | GPUBufferUsage.MAP_READ
-    })
-
-    const encoder = device.createCommandEncoder()
-    encoder.copyTextureToBuffer(
-        { texture },
-        { buffer: stagingBuffer, bytesPerRow, rowsPerImage: height },
-        { width, height }
-    )
-    device.queue.submit([encoder.finish()])
-    await device.queue.onSubmittedWorkDone()
-
-    await stagingBuffer.mapAsync(GPUMapMode.READ)
-    const alignedData = new Uint8Array(stagingBuffer.getMappedRange())
-
-    // 去除对齐padding
-    const finalData = new Uint8Array(width * height * 4)
-    for (let y = 0; y < height; y++) {
-        const srcOffset = y * bytesPerRow
-        const dstOffset = y * width * 4
-        finalData.set(alignedData.subarray(srcOffset, srcOffset + width * 4), dstOffset)
-    }
-    stagingBuffer.unmap()
-    stagingBuffer.destroy()
-
-    const outputBuffer = device.createBuffer({
-        size: width * height * 4,
-        usage: GPUBufferUsage.STORAGE | GPUBufferUsage.COPY_SRC | GPUBufferUsage.COPY_DST,
-        mappedAtCreation: true
-    })
-    new Uint8Array(outputBuffer.getMappedRange()).set(finalData)
-    outputBuffer.unmap()
-
-    return outputBuffer
-}
 
 /**
  * 自动曝光分析节点
@@ -158,20 +110,14 @@ export const autoExposureMiddleware: Node<AutoExposureOptions> = {
                     pipelineData.height
                 )
 
-                // 执行CLAHE
-                const outputTexture = await 执行CLAHE(device, inputTexture, options.claheConfig)
-
-                // 转回Buffer
-                const outputBuffer = await gpuTextureToBuffer(
-                    device,
-                    outputTexture,
-                    pipelineData.width,
-                    pipelineData.height
-                )
+                // 执行CLAHE - 返回 Buffer (紧凑格式)
+                const outputBuffer = await 执行CLAHE(device, inputTexture, {
+                    ...options.claheConfig,
+                    strength: options.claheConfig.strength ?? 1.0 // 传递强度参数
+                })
 
                 // 清理
                 inputTexture.destroy()
-                outputTexture.destroy()
                 pipelineData.buffer.destroy()
 
                 context.pipelineData = {

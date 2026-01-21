@@ -48,6 +48,8 @@ function handleUpdateData(options: ControlEventHandlerOptions, detail: ControlEv
   if (action === DATA_ACTION.REMOVE_HSL_LAYER) { options.onRemoveHSLLayer?.(data); return }
   if (action === DATA_ACTION.EXPOSURE_STRENGTH) { options.onExposureStrength?.(data); return }
   if (action === DATA_ACTION.EXPOSURE_MANUAL) { options.onExposureManual?.(data); return }
+  if (action === DATA_ACTION.EXPOSURE_MODE) { options.onExposureMode?.(data); return }
+  if (action === DATA_ACTION.EXPOSURE_CLAHE) { options.onExposureCLAHE?.(data); return }
   if (action === DATA_ACTION.DEHAZE_CHANGE) { options.onDehazeChange?.(data); return }
   if (action === DATA_ACTION.CLARITY_ADJUSTMENT) { options.onClarityAdjustment?.(data); return }
   if (action === DATA_ACTION.LUMINANCE_ADJUSTMENT) { options.onLuminanceAdjustment?.(data); return }

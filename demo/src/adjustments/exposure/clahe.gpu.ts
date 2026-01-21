@@ -48,16 +48,17 @@ function 创建Uniform缓冲区(
     width: number,
     height: number
 ): GPUBuffer {
-    const bufferData = new ArrayBuffer(20) // 5个u32/f32
+    const bufferData = new ArrayBuffer(24) // 6个u32/f32
     const view = new DataView(bufferData)
     view.setUint32(0, width, true)
     view.setUint32(4, height, true)
     view.setFloat32(8, params.clipLimit, true)
     view.setUint32(12, params.blockSize, true)
     view.setUint32(16, params.numBins, true)
+    view.setFloat32(20, params.strength || 1.0, true) // 强度参数
 
     const uniformBuffer = device.createBuffer({
-        size: 20,
+        size: 24,
         usage: GPUBufferUsage.UNIFORM | GPUBufferUsage.COPY_DST,
         label: 'CLAHE Uniform Buffer'
     })
@@ -69,7 +70,7 @@ function 创建Uniform缓冲区(
  * 获取或创建CLAHE管线
  */
 async function 获取管线(device: GPUDevice, params: CLAHEParams): Promise<CLAHEPipelines> {
-    const paramsKey = `${params.clipLimit}-${params.blockSize}-${params.numBins}`
+    const paramsKey = `v7-${params.clipLimit}-${params.blockSize}-${params.numBins}`
 
     if (缓存管线 && 缓存参数Key === paramsKey) {
         return 缓存管线
@@ -114,7 +115,7 @@ async function 获取管线(device: GPUDevice, params: CLAHEParams): Promise<CLA
     // CDF计算管线
     const cdfBindings: GPUBindGroupLayoutEntry[] = [
         { binding: 0, visibility: GPUShaderStage.COMPUTE, buffer: { type: 'read-only-storage' } },
-        { binding: 1, visibility: GPUShaderStage.COMPUTE, storageTexture: { access: 'write-only', format: 'rgba8unorm' } },
+        { binding: 1, visibility: GPUShaderStage.COMPUTE, buffer: { type: 'storage' } }, // 改为Buffer
         { binding: 2, visibility: GPUShaderStage.COMPUTE, buffer: { type: 'uniform' } }
     ]
     const { pipeline: cdfPipeline, bindGroupLayout: cdfLayout } =
@@ -123,9 +124,9 @@ async function 获取管线(device: GPUDevice, params: CLAHEParams): Promise<CLA
     // LUT应用管线
     const applyLUTBindings: GPUBindGroupLayoutEntry[] = [
         { binding: 0, visibility: GPUShaderStage.COMPUTE, texture: { sampleType: 'unfilterable-float' } },
-        { binding: 1, visibility: GPUShaderStage.COMPUTE, texture: { sampleType: 'unfilterable-float' } },
+        { binding: 1, visibility: GPUShaderStage.COMPUTE, buffer: { type: 'read-only-storage' } }, // 改为Buffer
         { binding: 2, visibility: GPUShaderStage.COMPUTE, buffer: { type: 'uniform' } },
-        { binding: 3, visibility: GPUShaderStage.COMPUTE, storageTexture: { access: 'write-only', format: 'rgba8unorm' } }
+        { binding: 3, visibility: GPUShaderStage.COMPUTE, buffer: { type: 'storage' } }
     ]
     const { pipeline: applyLUTPipeline, bindGroupLayout: applyLUTLayout } =
         createPipeline(shaders.应用LUT着色器, applyLUTBindings, 'CLAHE Apply LUT')
@@ -146,13 +147,13 @@ async function 获取管线(device: GPUDevice, params: CLAHEParams): Promise<CLA
  * @param device WebGPU设备
  * @param inputTexture 输入纹理
  * @param params CLAHE参数
- * @returns 输出纹理
+ * @returns 输出缓冲区 (RGBA8Unorm packed as u32)
  */
 export async function 执行CLAHE(
     device: GPUDevice,
     inputTexture: GPUTexture,
     params: Partial<CLAHEParams> = {}
-): Promise<GPUTexture> {
+): Promise<GPUBuffer> {
     const 最终参数: CLAHEParams = { ...默认CLAHE参数, ...params }
     const { clipLimit, blockSize, numBins } = 最终参数
 
@@ -193,18 +194,19 @@ export async function 执行CLAHE(
         label: 'CLAHE Excess Buffer'
     })
 
-    const lutTexture = device.createTexture({
-        size: { width: 最终参数.numBins, height: numBlocks * 4 },
-        format: 'rgba8unorm',
-        usage: GPUTextureUsage.STORAGE_BINDING | GPUTextureUsage.TEXTURE_BINDING,
-        label: 'CLAHE LUT Texture'
+    // LUT Buffer (以前是 Texture)
+    // 大小: numBlocks * 4 (channels) * numBins * 4 (float32 bytes)
+    const lutBufferSize = numBlocks * 4 * 最终参数.numBins * 4
+    const lutBuffer = device.createBuffer({
+        size: lutBufferSize,
+        usage: GPUBufferUsage.STORAGE | GPUBufferUsage.COPY_SRC | GPUBufferUsage.COPY_DST,
+        label: 'CLAHE LUT Buffer'
     })
 
-    const outputTexture = device.createTexture({
-        size: { width, height },
-        format: 'rgba8unorm',
-        usage: GPUTextureUsage.STORAGE_BINDING | GPUTextureUsage.TEXTURE_BINDING | GPUTextureUsage.COPY_SRC,
-        label: 'CLAHE Output Texture'
+    const outputBuffer = device.createBuffer({
+        size: width * height * 4,
+        usage: GPUBufferUsage.STORAGE | GPUBufferUsage.COPY_SRC | GPUBufferUsage.COPY_DST,
+        label: 'CLAHE Output Buffer'
     })
 
     const uniformBuffer = 创建Uniform缓冲区(device, 最终参数, width, height)
@@ -232,7 +234,7 @@ export async function 执行CLAHE(
         layout: pipelines.cdfLayout,
         entries: [
             { binding: 0, resource: { buffer: histogramBuffer } },
-            { binding: 1, resource: lutTexture.createView() },
+            { binding: 1, resource: { buffer: lutBuffer } }, // Bind Buffer
             { binding: 2, resource: { buffer: uniformBuffer } }
         ]
     })
@@ -241,9 +243,9 @@ export async function 执行CLAHE(
         layout: pipelines.applyLUTLayout,
         entries: [
             { binding: 0, resource: inputTexture.createView() },
-            { binding: 1, resource: lutTexture.createView() },
+            { binding: 1, resource: { buffer: lutBuffer } }, // Bind Buffer
             { binding: 2, resource: { buffer: uniformBuffer } },
-            { binding: 3, resource: outputTexture.createView() }
+            { binding: 3, resource: { buffer: outputBuffer } }
         ]
     })
 
@@ -252,6 +254,10 @@ export async function 执行CLAHE(
 
     // 阶段1：直方图计算
     {
+        const numBlocksX = Math.ceil(width / 最终参数.blockSize)
+        const numBlocksY = Math.ceil(height / 最终参数.blockSize)
+        console.log(`[CLAHE Debug] Hist: Image(${width}x${height}) BlockSize(${最终参数.blockSize}) Grid(${numBlocksX}x${numBlocksY}) TotalBlocks(${numBlocks})`)
+
         const pass = encoder.beginComputePass({ label: 'CLAHE Histogram Pass' })
         pass.setPipeline(pipelines.histogramPipeline)
         pass.setBindGroup(0, histogramBindGroup)
@@ -289,14 +295,62 @@ export async function 执行CLAHE(
     device.queue.submit([encoder.finish()])
     await device.queue.onSubmittedWorkDone()
 
+    // DEBUG: 读取直方图和LUT数据验证
+    if (true) { // 开启调试
+        // 直方图 Readback
+        const hSize = histogramBuffer.size
+        const hStaging = device.createBuffer({ size: hSize, usage: GPUBufferUsage.MAP_READ | GPUBufferUsage.COPY_DST })
+        const cmd = device.createCommandEncoder()
+        cmd.copyBufferToBuffer(histogramBuffer, 0, hStaging, 0, hSize)
+        device.queue.submit([cmd.finish()])
+        await device.queue.onSubmittedWorkDone()
+
+        await hStaging.mapAsync(GPUMapMode.READ)
+        const hData = new Uint32Array(hStaging.getMappedRange())
+
+        // Find Non-Zero
+        let firstNZ = -1;
+        let lastNZ = -1;
+        for (let i = 0; i < hData.length; i++) {
+            if (hData[i] > 0) {
+                if (firstNZ === -1) firstNZ = i;
+                lastNZ = i;
+            }
+        }
+        console.log('[CLAHE Debug] Hist First NZ:', firstNZ, 'Val:', firstNZ >= 0 ? hData[firstNZ] : 0)
+        console.log('[CLAHE Debug] Hist Last NZ:', lastNZ, 'Val:', lastNZ >= 0 ? hData[lastNZ] : 0)
+
+        // console.log('[CLAHE Debug] Histogram First 20:', Array.from(hData.slice(0, 20)))
+        let hSum = 0; for (let i = 0; i < hData.length; i++) hSum += hData[i];
+        console.log('[CLAHE Debug] Histogram Total Sum:', hSum, 'Expected:', width * height)
+        hStaging.unmap()
+
+        // LUT Readback
+        const lSize = lutBuffer.size
+        const lStaging = device.createBuffer({ size: lSize, usage: GPUBufferUsage.MAP_READ | GPUBufferUsage.COPY_DST })
+        const cmd2 = device.createCommandEncoder()
+        cmd2.copyBufferToBuffer(lutBuffer, 0, lStaging, 0, lSize)
+        device.queue.submit([cmd2.finish()])
+        await device.queue.onSubmittedWorkDone()
+
+        await lStaging.mapAsync(GPUMapMode.READ)
+        const lData = new Float32Array(lStaging.getMappedRange())
+        console.log('[CLAHE Debug] LUT First 20:', Array.from(lData.slice(0, 20)))
+        console.log('[CLAHE Debug] LUT Sample (Middle):', Array.from(lData.slice(lData.length / 2, lData.length / 2 + 20)))
+        lStaging.unmap()
+    }
+
     // 清理临时资源
     histogramBuffer.destroy()
     excessBuffer.destroy()
-    lutTexture.destroy()
+    lutBuffer.destroy() // Destroy Buffer
     uniformBuffer.destroy()
 
-    return outputTexture
+    console.log('[CLAHE Debug] Execution Finished')
+
+    return outputBuffer
 }
+
 
 /** 英文别名 */
 export const applyCLAHE = 执行CLAHE

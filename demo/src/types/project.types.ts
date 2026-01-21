@@ -34,6 +34,10 @@ export interface ProjectParams {
     hslLayers: HSLAdjustmentLayer[]
     /** 曝光强度 (自动模式使用) */
     exposureStrength: number
+    /** 自动曝光模式 */
+    exposureMode: 'cdf' | 'clahe'
+    /** CLAHE 配置 */
+    claheConfig: { clipLimit: number, blockSize: number, numBins: number, strength: number }
     /** 手动曝光参数 */
     exposureManual: { exposure: number; contrast: number; gamma: number }
     /** 去雾参数 */

@@ -14,6 +14,8 @@ export function 获取默认项目参数(): ProjectParams {
         globalHSL: { hue: 0, saturation: 0, lightness: 0 },
         hslLayers: [],
         exposureStrength: 1.0,
+        exposureMode: 'cdf',
+        claheConfig: { ...DEFAULT_CLAHE_CONFIG },
         exposureManual: { exposure: 1.0, contrast: 1.0, gamma: 1.0 },
         dehazeParams: { ...默认去雾参数 },
         clarityParams: { ...默认清晰度参数 },

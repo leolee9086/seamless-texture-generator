@@ -18,6 +18,8 @@ export interface AdjustmentParams {
     globalHSL: Ref<{ hue: number, saturation: number, lightness: number }>
     hslLayers: Ref<HSLAdjustmentLayer[]>
     exposureStrength: Ref<number>
+    exposureMode: Ref<'cdf' | 'clahe'>
+    claheConfig: Ref<{ clipLimit: number, blockSize: number, numBins: number }>
     exposureManual: Ref<{ exposure: number, contrast: number, gamma: number }>
     dehazeParams: Ref<DehazeParams>
     clarityParams: Ref<ClarityParams>

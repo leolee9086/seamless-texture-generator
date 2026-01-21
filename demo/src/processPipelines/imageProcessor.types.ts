@@ -20,6 +20,8 @@ export interface PipelineOptions extends baseOptions {
   maskData?: Uint8Array
   hslLayers?: HSLAdjustmentLayer[]
   exposureStrength?: number
+  exposureMode?: 'cdf' | 'clahe'
+  claheConfig?: { clipLimit: number, blockSize: number, numBins: number }
   exposureManual?: { exposure: number; contrast: number; gamma: number }
   dehazeParams?: DehazeParams
   clarityParams?: ClarityParams

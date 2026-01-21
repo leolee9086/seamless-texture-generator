@@ -126,14 +126,15 @@ const emit = defineEmits<{
 }>()
 
 // State
-const autoExposureStrength = ref(props.exposureStrength || 1.0)
+const autoExposureStrength = ref(props.exposureStrength ?? 1.0)
 const manualExposure = ref(props.exposureManual?.exposure || 1.0)
 const manualContrast = ref(props.exposureManual?.contrast || 1.0)
 const manualGamma = ref(props.exposureManual?.gamma || 1.0)
 const exposureMode = ref<'auto' | 'manual'>('auto')
 const autoExposureMode = ref<'cdf' | 'clahe'>('cdf')
-const claheClipLimit = ref(2.0)
-const claheBlockSize = ref(64)
+const claheClipLimit = ref(props.claheConfig?.clipLimit ?? 1.8)
+const claheBlockSize = ref(props.claheConfig?.blockSize ?? 128)
+const claheStrength = ref(props.claheConfig?.strength ?? 1.0)
 const showPreview = ref(true)
 
 // Computed
@@ -190,6 +191,16 @@ const claheSliderItems = computed(() => [
         step: 32,
         gradient: 'linear-gradient(90deg, #666 0%, #aaa 100%)',
         showRuler: true
+    },
+    {
+        id: 'clahe-strength',
+        label: '强度',
+        value: claheStrength.value,
+        min: 0,
+        max: 1,
+        step: 0.05,
+        gradient: 'linear-gradient(90deg, #000 0%, #fff 100%)',
+        showRuler: true
     }
 ])
 
@@ -239,11 +250,15 @@ const handleCLAHEUpdate = (data: { id: string; value: number }) => {
         claheClipLimit.value = data.value
     } else if (data.id === 'clahe-block-size') {
         claheBlockSize.value = data.value
+    } else if (data.id === 'clahe-strength') {
+        claheStrength.value = data.value
     }
+
     emit('controlEvent', createUpdateDataEvent('exposure-clahe', {
         clipLimit: claheClipLimit.value,
         blockSize: claheBlockSize.value,
-        numBins: 256
+        numBins: 256,
+        strength: claheStrength.value
     }))
 }
 
@@ -285,13 +300,30 @@ const togglePreview = () => {
 }
 
 // Watchers
+// Watchers
+watch(autoExposureMode, (newMode) => {
+    emit('controlEvent', createUpdateDataEvent('exposure-mode', newMode))
+})
+
 watch(() => props.exposureStrength, (newVal) => {
     if (newVal !== undefined) {
         autoExposureStrength.value = newVal
-        // 防止循环触发: 如果是 auto 模式，更新可能会再次触发事件?
-        // 不，updateValue 事件由 slider 触发，这里只是响应 prop 变化
     }
 })
+
+watch(() => props.exposureMode, (newVal) => {
+    if (newVal) {
+        autoExposureMode.value = newVal
+    }
+})
+
+watch(() => props.claheConfig, (newVal) => {
+    if (newVal) {
+        claheClipLimit.value = newVal.clipLimit
+        claheBlockSize.value = newVal.blockSize
+        claheStrength.value = newVal.strength
+    }
+}, { deep: true })
 
 watch(() => props.exposureManual, (newVal) => {
     if (newVal) {
@@ -304,6 +336,7 @@ watch(() => props.exposureManual, (newVal) => {
 watch(exposureMode, (newMode) => {
     // 当模式切换时，发送相应的事件
     if (newMode === 'auto') {
+        emit('controlEvent', createUpdateDataEvent('exposure-mode', autoExposureMode.value))
         emit('controlEvent', createUpdateDataEvent('exposure-strength', autoExposureStrength.value))
     } else {
         emit('controlEvent', createUpdateDataEvent('exposure-manual', {

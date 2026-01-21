@@ -36,6 +36,8 @@ export interface ControlEventHandlerOptions {
     onRemoveHSLLayer?: (id: string) => void  // 曝光调整处理器
     onExposureStrength?: (strength: number) => void
     onExposureManual?: (params: { exposure: number; contrast: number; gamma: number }) => void
+    onExposureMode?: (mode: 'cdf' | 'clahe') => void
+    onExposureCLAHE?: (config: any) => void
     // 去雾调整处理器
     onDehazeChange?: (params: DehazeParams) => void
     // 清晰度调整处理器

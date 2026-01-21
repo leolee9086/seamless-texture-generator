@@ -51,7 +51,8 @@
 
         <!-- Exposure Panel -->
         <ExposurePanel v-else-if="activeGroup === 'exposure'" :original-image="originalImage"
-          :exposure-strength="exposureStrength" :exposure-manual="exposureManual" @control-event="handleControlEvent" />
+          :exposure-strength="exposureStrength" :exposure-manual="exposureManual" :exposure-mode="exposureMode"
+          :clahe-config="claheConfig" @control-event="handleControlEvent" />
 
         <!-- Dehaze Panel -->
         <DehazePanel v-else-if="activeGroup === 'dehaze'" :original-image="originalImage" :dehaze-params="dehazeParams"
@@ -127,6 +128,8 @@ const props = defineProps<{
   globalHSL?: { hue: number; saturation: number; lightness: number },
   hslLayers?: any[]
   exposureStrength?: number
+  exposureMode?: 'cdf' | 'clahe'
+  claheConfig?: { clipLimit: number, blockSize: number, numBins: number }
   exposureManual?: { exposure: number; contrast: number; gamma: number }
   dehazeParams?: DehazeParams
   clarityParams?: ClarityParams

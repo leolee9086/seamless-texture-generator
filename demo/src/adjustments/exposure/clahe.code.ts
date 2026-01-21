@@ -30,36 +30,62 @@ export function 生成CLAHE着色器(参数: {
     
     var<workgroup> histogram: array<array<atomic<u32>, ${numBins}>, 4>;
     
-    @compute @workgroup_size(${blockSize}, ${blockSize > 16 ? 1 : blockSize})
-    fn main(@builtin(global_invocation_id) id: vec3<u32>, @builtin(local_invocation_id) lid: vec3<u32>) {
-      let block_id = id.xy / ${blockSize}u;
-      let local_pos = id.xy % ${blockSize}u;
+    // 使用 numBins 作为线程数 (256)，每个线程处理多个像素
+    @compute @workgroup_size(${numBins}, 1)
+    fn main(@builtin(global_invocation_id) global_id: vec3<u32>, 
+            @builtin(local_invocation_id) local_id: vec3<u32>, 
+            @builtin(workgroup_id) group_id: vec3<u32>) {
+            
+      let tid = local_id.x; // 0..255
+      let block_coord = group_id.xy;
       
-      // 初始化 workgroup 直方图
-      if (local_pos.x < ${numBins}u && local_pos.y < 4u) {
-        atomicStore(&histogram[local_pos.y][local_pos.x], 0u);
+      // 1. 初始化 workgroup 共享内存直方图
+      // 每个线程负责初始化4个通道的对应bin
+      if (tid < ${numBins}u) {
+        for (var c = 0u; c < 4u; c++) {
+            atomicStore(&histogram[c][tid], 0u);
+        }
       }
       workgroupBarrier();
       
-      let global_pos = block_id * ${blockSize}u + local_pos;
-      if (global_pos.x < params.width && global_pos.y < params.height) {
-        let color = textureLoad(inputTexture, vec2<i32>(global_pos), 0);
-        let r = u32(color.r * f32(${numBins - 1}));
-        let g = u32(color.g * f32(${numBins - 1}));
-        let b = u32(color.b * f32(${numBins - 1}));
-        let a = u32(color.a * f32(${numBins - 1}));
-        atomicAdd(&histogram[0][r], 1u);
-        atomicAdd(&histogram[1][g], 1u);
-        atomicAdd(&histogram[2][b], 1u);
-        atomicAdd(&histogram[3][a], 1u);
+      // 2. 遍历Block中的所有像素
+      // 总像素数 = blockSize * blockSize
+      // 线程数 = numBins
+      let total_pixels = ${blockSize}u * ${blockSize}u;
+      
+      // 简单的循环步进
+      for (var i = tid; i < total_pixels; i += ${numBins}u) {
+          let px = i % ${blockSize}u;
+          let py = i / ${blockSize}u;
+          
+          let global_x = block_coord.x * ${blockSize}u + px;
+          let global_y = block_coord.y * ${blockSize}u + py;
+          
+          if (global_x < params.width && global_y < params.height) {
+              let color = textureLoad(inputTexture, vec2<i32>(i32(global_x), i32(global_y)), 0);
+              
+              // 累积到共享内存
+              atomicAdd(&histogram[0][u32(color.r * f32(${numBins - 1}))], 1u);
+              atomicAdd(&histogram[1][u32(color.g * f32(${numBins - 1}))], 1u);
+              atomicAdd(&histogram[2][u32(color.b * f32(${numBins - 1}))], 1u);
+              atomicAdd(&histogram[3][u32(color.a * f32(${numBins - 1}))], 1u);
+          }
       }
       workgroupBarrier();
       
-      // 写入全局直方图缓冲区
-      if (local_pos.x < ${numBins}u && local_pos.y < 4u) {
-        let numBlocksX = (params.width + ${blockSize - 1}u) / ${blockSize}u;
-        let buffer_index = (block_id.y * numBlocksX + block_id.x) * ${numBins * 4}u + local_pos.y * ${numBins}u + local_pos.x;
-        atomicStore(&histogramBuffer[buffer_index], atomicLoad(&histogram[local_pos.y][local_pos.x]));
+      // 3. 将共享内存写入全局 Buffer
+      // 每个线程负责写入一个 bin 的 4 个通道
+      // Flattened Index: (BlockIndex) * (4 * 256) + (Channel * 256) + Bin
+      
+      if (tid < ${numBins}u) {
+          let numBlocksX = (params.width + ${blockSize - 1}u) / ${blockSize}u;
+          let flattened_block_idx = block_coord.y * numBlocksX + block_coord.x;
+          let block_addr_base = flattened_block_idx * ${numBins * 4}u;
+          
+          for (var c = 0u; c < 4u; c++) {
+              let channel_addr = block_addr_base + c * ${numBins}u + tid;
+              atomicStore(&histogramBuffer[channel_addr], atomicLoad(&histogram[c][tid]));
+          }
       }
     }
   `
@@ -84,7 +110,10 @@ export function 生成CLAHE着色器(参数: {
       let bin = id.x % ${numBins}u;
       let buffer_offset = block_id * ${numBins * 4}u + channel * ${numBins}u;
       
-      let clip_limit = u32(params.clipLimit * f32(params.blockSize * params.blockSize) / f32(params.numBins));
+      var clip_limit = u32(params.clipLimit * f32(params.blockSize * params.blockSize) / f32(params.numBins));
+      if (clip_limit < 1u) {
+          clip_limit = 32u; // Fallback safety
+      }
       let original_count = histogramBuffer[buffer_offset + bin];
       let clipped_count = min(original_count, clip_limit);
       let excess = original_count - clipped_count;
@@ -104,7 +133,7 @@ export function 生成CLAHE着色器(参数: {
       numBins: u32
     }
     @group(0) @binding(0) var<storage, read> histogramBuffer: array<u32>;
-    @group(0) @binding(1) var lutTexture: texture_storage_2d<rgba8unorm, write>;
+    @group(0) @binding(1) var<storage, read_write> lutBuffer: array<f32>;
     @group(0) @binding(2) var<uniform> params: CLAHEParams;
     
     @compute @workgroup_size(${numBins}, 1)
@@ -120,9 +149,10 @@ export function 生成CLAHE着色器(参数: {
         cdf += histogramBuffer[buffer_offset + i];
       }
       
-      let lut_pos = vec2<u32>(bin, block_id * 4u + channel);
       let normalizedCdf = f32(cdf) / f32(params.blockSize * params.blockSize);
-      textureStore(lutTexture, vec2<i32>(lut_pos), vec4<f32>(normalizedCdf, 0.0, 0.0, 1.0));
+      
+      // 写入LUT Buffer
+      lutBuffer[buffer_offset + bin] = normalizedCdf;
     }
   `
 
@@ -133,12 +163,13 @@ export function 生成CLAHE着色器(参数: {
       height: u32,
       clipLimit: f32,
       blockSize: u32,
-      numBins: u32
+      numBins: u32,
+      strength: f32
     }
     @group(0) @binding(0) var inputTexture: texture_2d<f32>;
-    @group(0) @binding(1) var lutTexture: texture_2d<f32>;
+    @group(0) @binding(1) var<storage, read> lutBuffer: array<f32>;
     @group(0) @binding(2) var<uniform> params: CLAHEParams;
-    @group(0) @binding(3) var outputTexture: texture_storage_2d<rgba8unorm, write>;
+    @group(0) @binding(3) var<storage, read_write> outputBuffer: array<u32>;
     
     @compute @workgroup_size(16, 16)
     fn main(@builtin(global_invocation_id) id: vec3<u32>) {
@@ -149,23 +180,59 @@ export function 生成CLAHE着色器(参数: {
       let block_id = vec2<u32>(pos) / params.blockSize;
       let local_pos = vec2<f32>(vec2<u32>(pos) % params.blockSize) / f32(params.blockSize);
       
+      // 计算网格尺寸
+      let numBlocksX = (params.width + params.blockSize - 1u) / params.blockSize;
+      let numBlocksY = (params.height + params.blockSize - 1u) / params.blockSize;
+      
+      // 双线性插值的4个邻居块坐标 (Clamped)
+      let bx0 = block_id.x;
+      let bx1 = min(bx0 + 1u, numBlocksX - 1u);
+      let by0 = block_id.y;
+      let by1 = min(by0 + 1u, numBlocksY - 1u);
+      
+      // 预计算4个块的Buffer起始索引 (Flattened Index: y * W + x)
+      // Buffer Layout: Block -> Channel -> Bin
+      // Block Offset = BlockIndex * 4 * numBins
+      let b00_base = (by0 * numBlocksX + bx0) * 4u * params.numBins;
+      let b10_base = (by0 * numBlocksX + bx1) * 4u * params.numBins;
+      let b01_base = (by1 * numBlocksX + bx0) * 4u * params.numBins;
+      let b11_base = (by1 * numBlocksX + bx1) * 4u * params.numBins;
+      
       var enhanced_color = vec4<f32>(0.0);
       
-      // 对每个通道应用CLAHE增强
-      for (var c = 0; c < 4; c++) {
+      // 对RGB通道应用CLAHE增强
+      for (var c = 0u; c < 3u; c++) {
         let channel_value = color[c];
         let bin = u32(channel_value * f32(params.numBins - 1));
         
-        // 获取相邻块的CDF值（双线性插值）
-        let cdf_00 = textureLoad(lutTexture, vec2<i32>(i32(bin), i32(block_id.y * 4u + u32(c))), 0).x;
-        let cdf_10 = textureLoad(lutTexture, vec2<i32>(i32(bin), i32((block_id.y + 1u) * 4u + u32(c))), 0).x;
+        let channel_offset = c * params.numBins;
         
-        // 简化：仅在Y方向插值（完整版本需要X方向插值）
-        let cdf_interp = mix(cdf_00, cdf_10, local_pos.y);
-        enhanced_color[c] = cdf_interp;
+        // 读取4个角落的CDF值
+        let cdf00 = lutBuffer[b00_base + channel_offset + bin];
+        let cdf10 = lutBuffer[b10_base + channel_offset + bin];
+        let cdf01 = lutBuffer[b01_base + channel_offset + bin];
+        let cdf11 = lutBuffer[b11_base + channel_offset + bin];
+        
+        // 双线性插值
+        // mix(x, y, a) = x*(1-a) + y*a
+        // 先在X方向插值
+        let cdf_top = mix(cdf00, cdf10, local_pos.x);
+        let cdf_bottom = mix(cdf01, cdf11, local_pos.x);
+        
+        // 再在Y方向插值
+        let cdf_final = mix(cdf_top, cdf_bottom, local_pos.y);
+        
+        enhanced_color[c] = cdf_final;
       }
       
-      textureStore(outputTexture, pos, enhanced_color);
+      // 保留原始Alpha通道
+      enhanced_color.a = color.a;
+      
+      // 混合原始颜色和增强颜色
+      let final_color = mix(color, enhanced_color, params.strength);
+      
+      let index = id.y * params.width + id.x;
+      outputBuffer[index] = pack4x8unorm(final_color);
     }
   `
 

@@ -37,6 +37,8 @@ export function createTextureControlEventHandler(deps: ControlEventDeps): (event
         onRemoveHSLLayer: (id: string): void => { hslAdjustment.removeHSLLayer(id); if (state.originalImage.value) debouncedProcessImage() },
         onExposureStrength: (strength: number): void => { adjustmentParams.exposureStrength.value = strength; if (state.originalImage.value) debouncedProcessImage() },
         onExposureManual: (params: { exposure: number; contrast: number; gamma: number }): void => { adjustmentParams.exposureManual.value = params; if (state.originalImage.value) debouncedProcessImage() },
+        onExposureMode: (mode: 'cdf' | 'clahe'): void => { adjustmentParams.exposureMode.value = mode; if (state.originalImage.value) debouncedProcessImage() },
+        onExposureCLAHE: (config: any): void => { adjustmentParams.claheConfig.value = config; if (state.originalImage.value) debouncedProcessImage() },
         onDehazeChange: (params: DehazeParams): void => { adjustmentParams.dehazeParams.value = params; if (state.originalImage.value) debouncedProcessImage() },
         onClarityAdjustment: (params: ClarityParams): void => { adjustmentParams.clarityParams.value = params; if (state.originalImage.value) debouncedProcessImage() },
         onLuminanceAdjustment: (params: LuminanceAdjustmentParams): void => { adjustmentParams.luminanceParams.value = params; if (state.originalImage.value) debouncedProcessImage() },

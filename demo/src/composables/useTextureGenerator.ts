@@ -51,6 +51,8 @@ export function useTextureGenerator(options: UseTextureGeneratorOptions = {}) {
         maskData,
         hslLayers: hslAdjustment.buildHSLLayers(),
         exposureStrength: adjustmentParams.exposureStrength.value,
+        exposureMode: adjustmentParams.exposureMode.value,
+        claheConfig: adjustmentParams.claheConfig.value,
         exposureManual: adjustmentParams.exposureManual.value,
         dehazeParams: adjustmentParams.dehazeParams.value,
         clarityParams: adjustmentParams.clarityParams.value,

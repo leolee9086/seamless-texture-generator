@@ -14,6 +14,7 @@ import { projectFS } from '../../infra/ProjectFileSystem'
 
 // 调整参数预设
 import { 默认去雾参数, 默认清晰度参数, 默认亮度参数 } from '../useAdjustmentParams.presets'
+import { DEFAULT_CLAHE_CONFIG } from '../../adjustments/exposure/exposureAdjustment.types'
 
 export {
     ref,

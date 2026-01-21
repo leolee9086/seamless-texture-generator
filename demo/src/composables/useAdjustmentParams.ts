@@ -54,6 +54,8 @@ export function useAdjustmentParams(): AdjustmentParams {
     // 曝光调整
     const exposureStrength = ref(1.0)
     const exposureManual = ref({ exposure: 1.0, contrast: 1.0, gamma: 1.0 })
+    const exposureMode = ref<'cdf' | 'clahe'>('cdf')
+    const claheConfig = ref({ clipLimit: 2.0, blockSize: 64, numBins: 256 })
 
     // 去雾调整
     const dehazeParams = ref<DehazeParams>({ ...默认去雾参数 })
@@ -82,6 +84,8 @@ export function useAdjustmentParams(): AdjustmentParams {
             if (newParams.hslLayers) hslLayers.value = [...newParams.hslLayers]
             if (newParams.exposureStrength !== undefined) exposureStrength.value = newParams.exposureStrength
             if (newParams.exposureManual) exposureManual.value = { ...newParams.exposureManual }
+            if (newParams.exposureMode) exposureMode.value = newParams.exposureMode
+            if (newParams.claheConfig) claheConfig.value = { ...newParams.claheConfig }
             if (newParams.dehazeParams) dehazeParams.value = { ...newParams.dehazeParams }
             if (newParams.clarityParams) clarityParams.value = { ...newParams.clarityParams }
             if (newParams.luminanceParams) luminanceParams.value = { ...newParams.luminanceParams }
@@ -92,7 +96,7 @@ export function useAdjustmentParams(): AdjustmentParams {
 
     // 2. 从本地同步到项目 (Local -> Project)
     watch(
-        [globalHSL, hslLayers, exposureStrength, exposureManual, dehazeParams, clarityParams, luminanceParams],
+        [globalHSL, hslLayers, exposureStrength, exposureManual, exposureMode, claheConfig, dehazeParams, clarityParams, luminanceParams],
         () => {
             // 如果没有活动项目，或者正在从项目同步，则跳过
             if (!projectState.activeProject.value || isSyncing) return
@@ -107,6 +111,8 @@ export function useAdjustmentParams(): AdjustmentParams {
                     hslLayers: [...hslLayers.value],
                     exposureStrength: exposureStrength.value,
                     exposureManual: { ...exposureManual.value },
+                    exposureMode: exposureMode.value,
+                    claheConfig: { ...claheConfig.value },
                     dehazeParams: { ...dehazeParams.value },
                     clarityParams: { ...clarityParams.value },
                     luminanceParams: { ...luminanceParams.value }
@@ -122,7 +128,10 @@ export function useAdjustmentParams(): AdjustmentParams {
         globalHSL,
         hslLayers,
         exposureStrength,
+        exposureStrength,
         exposureManual,
+        exposureMode,
+        claheConfig,
         dehazeParams,
         clarityParams,
         luminanceParams,
