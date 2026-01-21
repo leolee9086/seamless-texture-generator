@@ -3,27 +3,35 @@ import { applyDehazeAdjustment, DEFAULT_DEHAZE_PARAMS, gpuBufferToImageData } fr
 import type { NodeContext, Node } from './types'
 
 /**
+ * 去雾 - 纯 CPU 处理函数
+ */
+async function 去雾处理(imageData: ImageData, options: baseOptions): Promise<ImageData> {
+  if (!options.dehazeParams) return imageData
+  return await applyDehazeAdjustment(imageData, options.dehazeParams)
+}
+
+/**
  * 去雾调整中间件
  */
 export const dehazeMiddleware: Node = {
+  名称: '去雾',
+  可接受输入: ['ImageData'],
+  输出格式: 'ImageData',
+
   guard: (options: baseOptions) => {
     return options.dehazeParams && JSON.stringify(options.dehazeParams) !== JSON.stringify(DEFAULT_DEHAZE_PARAMS)
   },
 
+  cpuProcess: 去雾处理,
+
   process: async (context: NodeContext) => {
     const { options, pipelineData } = context
-    
-    // 获取 GPU 设备
     const device = await context.getWebGPUDevice()
-    
-    // 将 GPUBuffer/GPUTexture 转换为 ImageData
     const imageData = await gpuBufferToImageData(pipelineData.buffer, pipelineData.width, pipelineData.height, device)
-    
+
     try {
-      // 应用去雾调整
-      const processedImageData = await applyDehazeAdjustment(imageData, options.dehazeParams!)
-      
-      // 转换回 GPUBuffer
+      const processedImageData = await 去雾处理(imageData, options)
+
       const processedBuffer = device.createBuffer({
         size: processedImageData.data.byteLength,
         usage: GPUBufferUsage.STORAGE | GPUBufferUsage.COPY_SRC | GPUBufferUsage.COPY_DST,
@@ -31,17 +39,11 @@ export const dehazeMiddleware: Node = {
       })
       new Uint8Array(processedBuffer.getMappedRange()).set(processedImageData.data)
       processedBuffer.unmap()
-      
-      // 销毁旧的 buffer
+
       if (pipelineData.buffer instanceof GPUBuffer) {
         pipelineData.buffer.destroy()
       }
-      
-      if (pipelineData.buffer instanceof GPUTexture) {
-        pipelineData.buffer.destroy()
-      }
-      
-      // 更新上下文中的 pipelineData
+
       context.pipelineData = {
         buffer: processedBuffer,
         width: processedImageData.width,

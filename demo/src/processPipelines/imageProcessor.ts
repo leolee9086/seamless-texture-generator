@@ -3,6 +3,7 @@ import { executeLUTProcess } from '../adjustments/lut'
 import { executeTileableProcess } from './tileable.utils'
 import { convertToDataURL } from './output.utils'
 import { allMiddlewares, type MiddlewareContext } from './nodes/index'
+import { 智能执行节点 } from './nodes/scheduler'
 /**
  * 获取或初始化 WebGPU 设备
  * 统一使用 webgpuDevice.ts 中的设备获取逻辑
@@ -40,7 +41,7 @@ async function processImagePipeline(params: ProcessImageToTileableParams): Promi
     pipelineData = await executeHSLAdjust(pipelineData, options.hslLayers, device)
   }
 
-  // 步骤 2.6-2.9: 应用中间件处理（不含水印）
+  // 步骤 2.6-2.9: 应用中间件处理（使用智能调度器优化 CPU 批处理）
   const cache = new WeakMap()
   const context: MiddlewareContext = {
     options,
@@ -49,15 +50,12 @@ async function processImagePipeline(params: ProcessImageToTileableParams): Promi
     getWebGPUDevice: () => getWebGPUDevice()
   }
 
-  // 按顺序应用所有中间件（水印节点会自动跳过，因为它在这里不应该执行）
-  for (const middleware of allMiddlewares) {
-    // 跳过水印节点，它将在 tileable 之后单独执行
-    if ('isWatermark' in middleware) continue
-    if (middleware.guard(options)) {
-      await middleware.process(context)
-      pipelineData = context.pipelineData
-    }
-  }
+  // 过滤出非水印节点
+  const 效果节点 = allMiddlewares.filter(middleware => !('isWatermark' in middleware))
+
+  // 使用智能调度器执行（自动识别连续 CPU 节点并合并传输）
+  await 智能执行节点(效果节点, context)
+  pipelineData = context.pipelineData
 
   // 步骤 3: 可平铺化处理
   pipelineData = await executeTileableProcess(pipelineData, options)

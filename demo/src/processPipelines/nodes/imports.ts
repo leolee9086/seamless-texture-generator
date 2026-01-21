@@ -15,6 +15,8 @@ import { adjustExposure, adjustExposureManual } from '../../adjustments/exposure
 import { applyLuminanceAdjustmentToImageData } from '../../adjustments/luminance'
 import { gpuBufferToImageData } from '../../utils/webgpu/convert/gpuBufferToImageData'
 import { 应用水印 } from '../../components/control-panels/watermark/watermark.renderer'
+import { imageDataToGPUBuffer } from '../imageProcessor.utils'
 
 export type { PipelineData, baseOptions, DehazeParams, 水印配置 }
-export { applyDehazeAdjustment, DEFAULT_DEHAZE_PARAMS, processClarityAdjustment, adjustExposure, adjustExposureManual, applyLuminanceAdjustmentToImageData, gpuBufferToImageData, 应用水印 }
+export { applyDehazeAdjustment, DEFAULT_DEHAZE_PARAMS, processClarityAdjustment, adjustExposure, adjustExposureManual, applyLuminanceAdjustmentToImageData, gpuBufferToImageData, 应用水印, imageDataToGPUBuffer }
+
