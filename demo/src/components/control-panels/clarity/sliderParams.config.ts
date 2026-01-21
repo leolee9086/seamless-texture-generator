@@ -10,7 +10,7 @@ export const filterParams: SliderParamConfig[] = [
         label: 'Sigma',
         min: 1.0,
         max: 16.0,
-        step: 0.5,
+        step: 0.01,
         gradient: 'linear-gradient(90deg, #3b82f6 0%, #8b5cf6 100%)',
         showRuler: false
     },
@@ -52,7 +52,7 @@ export const enhancementParams: SliderParamConfig[] = [
         label: 'Detail Strength',
         min: 0.1,
         max: 20.0,
-        step: 0.1,
+        step: 0.01,
         gradient: 'linear-gradient(90deg, #06b6d4 0%, #10b981 100%)',
         showRuler: false
     },
@@ -61,7 +61,7 @@ export const enhancementParams: SliderParamConfig[] = [
         label: 'Enhancement Strength',
         min: 0.1,
         max: 10.0,
-        step: 0.1,
+        step: 0.01,
         gradient: 'linear-gradient(90deg, #3b82f6 0%, #8b5cf6 100%)',
         showRuler: false
     },
@@ -70,7 +70,7 @@ export const enhancementParams: SliderParamConfig[] = [
         label: 'Macro Enhancement',
         min: 0.0,
         max: 2.0,
-        step: 0.1,
+        step: 0.01,
         gradient: 'linear-gradient(90deg, #f59e0b 0%, #f97316 100%)',
         showRuler: false
     },
@@ -79,7 +79,7 @@ export const enhancementParams: SliderParamConfig[] = [
         label: 'Contrast Boost',
         min: 1.0,
         max: 3.0,
-        step: 0.1,
+        step: 0.01,
         gradient: 'linear-gradient(90deg, #6366f1 0%, #8b5cf6 100%)',
         showRuler: false
     }
