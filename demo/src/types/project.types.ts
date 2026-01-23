@@ -14,7 +14,8 @@ import type {
     DehazeParams,
     ClarityParams,
     LuminanceAdjustmentParams,
-    水印配置
+    水印配置,
+    CLAHEConfig
 } from './imports'
 
 // ============================================================================
@@ -37,7 +38,7 @@ export interface ProjectParams {
     /** 自动曝光模式 */
     exposureMode: 'cdf' | 'clahe'
     /** CLAHE 配置 */
-    claheConfig: { clipLimit: number, blockSize: number, numBins: number, strength: number }
+    claheConfig: CLAHEConfig
     /** 手动曝光参数 */
     exposureManual: { exposure: number; contrast: number; gamma: number }
     /** 去雾参数 */

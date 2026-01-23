@@ -3,7 +3,7 @@
  */
 
 import type { ProjectParams } from './imports'
-import { 默认去雾参数, 默认清晰度参数, 默认亮度参数 } from './imports'
+import { 默认去雾参数, 默认清晰度参数, 默认亮度参数, DEFAULT_CLAHE_CONFIG } from './imports'
 
 /**
  * 获取默认项目参数

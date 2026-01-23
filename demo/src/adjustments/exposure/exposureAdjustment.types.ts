@@ -62,11 +62,14 @@ export interface CLAHEConfig {
     blockSize: number
     /** 直方图bin数 [128, 256]，默认 256 */
     numBins: number
+    /** 混合强度 [0.0, 1.0]，默认 1.0 */
+    strength: number
 }
 
 /** 默认CLAHE配置 */
 export const DEFAULT_CLAHE_CONFIG: CLAHEConfig = {
     clipLimit: 2.0,
     blockSize: 64,
-    numBins: 256
+    numBins: 256,
+    strength: 1.0
 }

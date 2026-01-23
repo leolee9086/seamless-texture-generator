@@ -24,7 +24,8 @@ export {
     projectFS,
     默认去雾参数,
     默认清晰度参数,
-    默认亮度参数
+    默认亮度参数,
+    DEFAULT_CLAHE_CONFIG
 }
 
 export type {

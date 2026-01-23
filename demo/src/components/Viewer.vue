@@ -20,7 +20,7 @@
         title="下载原始图像">
         <div class="i-carbon-download text-lg"></div>
       </button>
-      
+
       <button v-if="processedImage" @click="downloadProcessedImage"
         class="absolute top-4 right-4 z-20 glass-btn p-2 rounded-full bg-black/50 hover:bg-black/70 text-white/80 hover:text-white transition-colors"
         title="下载处理后图像">
@@ -81,6 +81,9 @@ const containerRef = ref<HTMLElement | null>(null)
 const containerWidth = ref(0)
 const containerHeight = ref(0)
 
+// 追踪上一次的原始图像，用于判断是否需要重置缩放
+const lastOriginalImage = ref<string | null>(null)
+
 let resizeObserver: ResizeObserver | null = null
 let debounceTimer: number | null = null
 
@@ -124,12 +127,14 @@ const handleImageLoad = async (side: string) => {
       }
     }
 
-    if (splitViewerRef.value) {
-      // 强制重置内部状态
+    // 只在原始图像变化时重置缩放，管线更新处理结果时保留当前状态
+    const originalChanged = props.originalImage !== lastOriginalImage.value
+    if (originalChanged && splitViewerRef.value) {
+      lastOriginalImage.value = props.originalImage
+      // 重置缩放以适应新图像
       if (typeof splitViewerRef.value.resetZoom === 'function') {
         splitViewerRef.value.resetZoom()
       }
-
       // 恢复缩放
       setTimeout(() => {
         if (splitViewerRef.value) {

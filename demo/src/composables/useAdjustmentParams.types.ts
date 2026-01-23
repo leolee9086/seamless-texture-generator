@@ -1,5 +1,6 @@
 import type { Ref, DehazeParams, ClarityParams, LuminanceAdjustmentParams } from './imports'
-//@AITODO 各个Params不应该逐个声明,而是应该成为调整管线参数的一部分
+import type { ProjectStateData, ProjectStateActions } from './project-state/useProjectState.types'
+//@AIDONE 各个Params不应该逐个声明,而是应该成为调整管线参数的一部分
 /**
  * HSL调整层接口
  */
@@ -19,9 +20,17 @@ export interface AdjustmentParams {
     hslLayers: Ref<HSLAdjustmentLayer[]>
     exposureStrength: Ref<number>
     exposureMode: Ref<'cdf' | 'clahe'>
-    claheConfig: Ref<{ clipLimit: number, blockSize: number, numBins: number }>
+    claheConfig: Ref<{ clipLimit: number, blockSize: number, numBins: number, strength: number }>
     exposureManual: Ref<{ exposure: number, contrast: number, gamma: number }>
     dehazeParams: Ref<DehazeParams>
     clarityParams: Ref<ClarityParams>
     luminanceParams: Ref<LuminanceAdjustmentParams>
+}
+
+/** 同步逻辑上下文 */
+export interface 同步上下文 {
+    状态: AdjustmentParams
+    项目状态: ProjectStateData
+    项目动作: ProjectStateActions
+    同步锁: { 正在同步中: boolean }
 }
