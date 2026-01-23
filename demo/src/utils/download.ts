@@ -15,14 +15,26 @@ export const downloadCanvasJPG = (canvas: HTMLCanvasElement | null, fileName: st
 
 /**
  * 将 DataURL 转换为 Blob 对象
- * @param dataURL - 图像的 DataURL
- * @returns Blob 对象
+ * @param dataURL - 图像的 DataURL 或 Blob URL
+ * @returns Promise<Blob> 对象
  */
-export const dataURLToBlob = (dataURL: string): Blob => {
+export const dataURLToBlob = async (dataURL: string): Promise<Blob> => {
+    // 兼容处理：如果是已经生成的 blob URL，则通过 fetch 重新获取 blob 对象
+    if (dataURL.startsWith('blob:')) {
+        const response = await fetch(dataURL)
+        return await response.blob()
+    }
+
     const arr = dataURL.split(',')
+    if (arr.length < 2) {
+        throw new Error('无效的 DataURL 格式')
+    }
+
     const mimeMatch = arr[0].match(/:(.*?);/)
     const mime = mimeMatch?.[1] || 'image/png'
-    const bstr = atob(arr[1])
+
+    // 健壮处理 atob：移除可能的换行符或空格
+    const bstr = atob(arr[1].replace(/\s/g, ''))
     let n = bstr.length
     const u8arr = new Uint8Array(n)
     while (n--) {
@@ -33,15 +45,15 @@ export const dataURLToBlob = (dataURL: string): Blob => {
 
 /**
  * 保存图像到本地
- * @param imageData - 图像数据，可以是 DataURL 或 Canvas
+ * @param imageData - 图像数据，可以是 DataURL、Blob URL 或 Canvas
  * @param fileName - 文件名（不包含扩展名）
  * @param format - 图像格式，默认为 'png'
  */
-export const saveImage = (
-    imageData: string | HTMLCanvasElement,
+export const saveImage = async (
+    imageData: string | HTMLCanvasElement | null,
     fileName: string = 'image',
     format: 'png' | 'jpg' | 'jpeg' = 'png'
-): void => {
+): Promise<void> => {
     if (!imageData) return
 
     try {
@@ -51,17 +63,21 @@ export const saveImage = (
         // 卫语句：处理字符串类型的图像数据
         if (typeof imageData === 'string') {
             dataURL = imageData
-            // 从 DataURL 中提取 MIME 类型
-            const match = imageData.match(/data:([^;]+);/)
-            mimeType = match?.[1] || `image/${format}`
-            return processImageDownload({ dataURL, mimeType, fileName, format })
+            // 从 DataURL 中提取 MIME 类型，如果是 blob URL 则标记为未知由浏览器处理
+            if (dataURL.startsWith('blob:')) {
+                mimeType = `image/${format}`
+            } else {
+                const match = imageData.match(/data:([^;]+);/)
+                mimeType = match?.[1] || `image/${format}`
+            }
+            return await processImageDownload({ dataURL, mimeType, fileName, format })
         }
 
         // 卫语句：处理 Canvas 类型的图像数据
         mimeType = format === 'jpg' || format === 'jpeg' ? 'image/jpeg' : 'image/png'
         const quality = format === 'jpg' || format === 'jpeg' ? 1.0 : undefined
         dataURL = imageData.toDataURL(mimeType, quality)
-        processImageDownload({ dataURL, mimeType, fileName, format })
+        await processImageDownload({ dataURL, mimeType, fileName, format })
     } catch (error) {
         console.error('保存图像失败:', error)
     }
@@ -70,25 +86,39 @@ export const saveImage = (
 /**
  * 处理图像下载的通用逻辑
  */
-const processImageDownload = (params: ImageDownloadParams): void => {
+const processImageDownload = async (params: ImageDownloadParams): Promise<void> => {
     const { dataURL, fileName, format } = params
-    const blob = dataURLToBlob(dataURL)
-    const url = URL.createObjectURL(blob)
+
+    let url: string
+    let isCreated = false
+
+    // 如果本身就是 blob URL，没必要再转一次 blob 再转回 URL
+    if (dataURL.startsWith('blob:')) {
+        url = dataURL
+    } else {
+        const blob = await dataURLToBlob(dataURL)
+        url = URL.createObjectURL(blob)
+        isCreated = true
+    }
+
     const link = document.createElement('a')
     link.href = url
     link.download = `${fileName}-${Date.now()}.${format}`
     document.body.appendChild(link)
     link.click()
     document.body.removeChild(link)
-    URL.revokeObjectURL(url)
+
+    if (isCreated) {
+        URL.revokeObjectURL(url)
+    }
 }
 
 /**
  * 保存原始图像
  * @param imageData - 图像的 DataURL
  */
-export const saveOriginalImage = (imageData: string): void => {
-    saveImage(imageData, 'original-image', 'png')
+export const saveOriginalImage = async (imageData: string): Promise<void> => {
+    await saveImage(imageData, 'original-image', 'png')
 }
 
 /**
