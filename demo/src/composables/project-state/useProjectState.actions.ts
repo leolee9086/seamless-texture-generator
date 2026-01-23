@@ -27,6 +27,7 @@ import {
     isInitialized,
     activeProject
 } from './useProjectState.state'
+import { 确保项目模式 } from './useProjectState.canvas.utils'
 
 // ============================================================================
 // 防抖保存
@@ -188,6 +189,9 @@ export async function 切换项目(id: string): Promise<void> {
 
     activeOriginalBlob.value = blob
     activeOriginalDataUrl.value = dataUrl
+    
+    // 自动切换回项目模式（如果当前不是项目模式）
+    await 确保项目模式()
 }
 
 // ============================================================================

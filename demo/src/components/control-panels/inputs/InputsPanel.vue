@@ -2,14 +2,14 @@
   <div class="flex flex-col" :class="isMobile ? 'gap-6' : 'gap-6'">
     <!-- Tabs -->
     <TabSelector
-      :active-tab="state.activeTab"
+      :active-tab="state.proceduralState.activeTab"
       :tabs="tabs"
-      @tab-change="handleTabChange"
+      @tab-change="actions.handleTabChange"
     />
 
     <!-- Upload Tab Content -->
     <UploadTabContent
-      v-if="state.activeTab === INPUTS_PANEL_TABS.UPLOAD"
+      v-if="state.proceduralState.activeTab === INPUTS_PANEL_TABS.UPLOAD"
       :is-mobile="isMobile"
       :is-processing="isProcessing"
       :original-image="originalImage"
@@ -19,20 +19,19 @@
 
     <!-- Procedural Tab Content -->
     <ProceduralTabContent
-      v-else-if="state.activeTab === INPUTS_PANEL_TABS.PROCEDURAL"
+      v-else-if="state.proceduralState.activeTab === INPUTS_PANEL_TABS.PROCEDURAL"
       :is-mobile="isMobile"
-      :procedural-type="state.proceduralType"
+      :procedural-type="state.proceduralState.proceduralType"
       :texture-types="textureTypes"
-      :is-generating="isGenerating"
-      @type-change="handleTypeChange"
-      @set-image="$emit('set-image', $event)"
+      :is-generating="state.isGenerating.value"
+      @type-change="actions.handleTypeChange"
     />
 
     <!-- Text-to-Image Tab Content -->
     <TextToImageTabContent
-      v-else-if="state.activeTab === INPUTS_PANEL_TABS.TEXT_TO_IMAGE"
+      v-else-if="state.proceduralState.activeTab === INPUTS_PANEL_TABS.TEXT_TO_IMAGE"
       :is-mobile="isMobile"
-      @set-image="$emit('set-image', $event)"
+      @set-image="actions.handleTextToImageSetImage"
     />
 
     <!-- Max Resolution Slider -->
@@ -46,16 +45,15 @@
 </template>
 
 <script setup lang="ts">
-import { ref } from 'vue'
-import { useProceduralTextureState } from './imports'
+import { createInputsPanelContext } from './InputsPanel.ctx'
 import TabSelector from './TabSelector.vue'
 import UploadTabContent from './UploadTabContent.vue'
 import ProceduralTabContent from './ProceduralTabContent.vue'
 import MaxResolutionSlider from './MaxResolutionSlider.vue'
 import TextToImageTabContent from './TextToImage/TextToImageTabContent.vue'
-import { INPUTS_PANEL_TABS, type InputsPanelTab } from './InputsPanel.constants'
+import { INPUTS_PANEL_TABS } from './InputsPanel.constants'
 
-const props = defineProps<{
+defineProps<{
   isMobile?: boolean
   isProcessing: boolean
   originalImage: string | null
@@ -69,17 +67,9 @@ const emit = defineEmits<{
   'set-image': [imageData: string]
 }>()
 
-// 使用持久化状态管理
-const { state } = useProceduralTextureState()
 const textureTypes = ['Wood', 'Plain Weave', 'Plain Weave Advanced', 'Leather', 'Twill Weave', 'Velvet', 'Turing', 'Gray-Scott', 'Compositor', 'Advanced Compositor'] as const
 const tabs = [INPUTS_PANEL_TABS.UPLOAD, INPUTS_PANEL_TABS.PROCEDURAL, INPUTS_PANEL_TABS.TEXT_TO_IMAGE] as const
-const isGenerating = ref(false)
 
-const handleTabChange = (tab: InputsPanelTab) => {
-  state.activeTab = tab
-}
-
-const handleTypeChange = (type: string) => {
-  state.proceduralType = type
-}
+// 创建上下文
+const { state, actions } = createInputsPanelContext((event, imageData) => emit(event, imageData))
 </script>

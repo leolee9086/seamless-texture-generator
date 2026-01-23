@@ -12,6 +12,12 @@ const AppComponent = isMobile ? App : Desktop
 
 import VueKonva from 'vue-konva'
 
+// 初始化画布模式管理器
+import { initializeCanvasModes } from './composables/canvas-mode/modes/initialize'
+
 const app = createApp(AppComponent)
 app.use(VueKonva)
 app.mount('#app')
+
+// 在应用挂载后初始化画布模式
+initializeCanvasModes()

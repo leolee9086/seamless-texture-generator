@@ -10,12 +10,16 @@ import { useHSLAdjustment } from './useHSLAdjustment'
 import { useImageHandling } from './useImageHandling'
 import { createTextureControlEventHandler } from './useControlEventConfig'
 import { setupTextureWatchers } from './useTextureGenerator.watch'
+import { 同步处理结果到画布模式 } from './useTextureGenerator.canvas.ctx'
 import type { UseTextureGeneratorOptions } from './useTextureGenerator.types'
 
 /** 纹理生成器的共享逻辑可组合函数 */
 export function useTextureGenerator(options: UseTextureGeneratorOptions = {}) {
   const { enableCamera = false } = options
   const state = useTextureState(options)
+  
+  // 同步处理结果到画布模式管理器
+  同步处理结果到画布模式(state.processedImage)
   const adjustmentParams = useAdjustmentParams()
   const lutControl = useLUTControl()
   const watermarkState = useWatermarkState()

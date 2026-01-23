@@ -10,6 +10,10 @@ import { Slider } from '../imports'
 
 // Re-export composables
 import { useProceduralTextureState } from '../imports'
+import { useCanvasModeManager } from '../../../composables/canvas-mode/index'
+import { CANVAS_MODE_IDS } from '../../../composables/canvas-mode/constants'
+import type { CanvasMode } from '../../../composables/canvas-mode/types'
+import type { ProceduralModeInstance } from '../../../composables/canvas-mode/modes/proceduralMode/types'
 
 // Re-export utils
 import { horizontalScroll } from '../../../utils/common-utils'
@@ -45,11 +49,21 @@ import { buildProxyUrl } from '../../../api/templates'
 // Re-export Vue reactivity APIs
 import { ref, computed, watch, onMounted, type Ref, type ComputedRef } from 'vue'
 
-export type { SliderItem, VueComponent, TaskStatusResponse, Ref, ComputedRef }
+export type {
+  SliderItem,
+  VueComponent,
+  TaskStatusResponse,
+  Ref,
+  ComputedRef,
+  CanvasMode,
+  ProceduralModeInstance
+}
 export {
   createComponentWrapper,
   Slider,
   useProceduralTextureState,
+  useCanvasModeManager,
+  CANVAS_MODE_IDS,
   horizontalScroll,
   horizontalScrollButtons,
   WoodPanel,

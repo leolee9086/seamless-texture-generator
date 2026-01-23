@@ -96,11 +96,13 @@
 </template>
 
 <script setup lang="ts">
-import { ref } from 'vue'
+import { ref, computed } from 'vue'
 import '@leolee9086/slider-component/dist/slider-component.css'
 import './MobileControls.css'
 import { useControlsLogic } from '../../composables/useControlsLogic'
 import { horizontalScroll } from '../../utils/common-utils'
+import { useCanvasModeManager } from '../../composables/canvas-mode/index'
+import { CANVAS_MODE_IDS } from '../../composables/canvas-mode/constants'
 import type { DehazeParams } from '../../adjustments/dehaze/types'
 import type { ClarityParams } from '../../adjustments/clarity'
 import type { LuminanceAdjustmentParams } from '../../adjustments/luminance'
@@ -145,7 +147,7 @@ const emit = defineEmits<{
 
 const {
   activeGroup,
-  groups,
+  groups: allGroups,
   inputSliderItems,
   settingsSliderItems,
   viewSliderItems,
@@ -164,6 +166,25 @@ const {
   handleMaskUpdate,
   setImage
 } = useControlsLogic(props, emit)
+
+// 画布模式管理器
+const canvasModeManager = useCanvasModeManager()
+
+// 效果调节器组ID列表（在程序化模式下需要禁用）
+const EFFECT_ADJUSTMENT_GROUP_IDS = ['crop', 'lut', 'hsl', 'exposure', 'dehaze', 'clarity', 'luminance', 'watermark', 'tileablesettings']
+
+// 根据画布模式过滤可用的调节器组
+const groups = computed(() => {
+  const currentMode = canvasModeManager.activeModeId.value
+  
+  // 程序化模式下，禁用效果调节器
+  if (currentMode === CANVAS_MODE_IDS.PROCEDURAL) {
+    return allGroups.filter(group => !EFFECT_ADJUSTMENT_GROUP_IDS.includes(group.id))
+  }
+  
+  // 其他模式下，显示所有调节器
+  return allGroups
+})
 
 const navContainer = ref<HTMLElement>()
 

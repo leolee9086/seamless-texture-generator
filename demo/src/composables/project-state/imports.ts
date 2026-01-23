@@ -16,6 +16,10 @@ import { projectFS } from '../../infra/ProjectFileSystem'
 import { 默认去雾参数, 默认清晰度参数, 默认亮度参数 } from '../useAdjustmentParams.presets'
 import { DEFAULT_CLAHE_CONFIG } from '../../adjustments/exposure/exposureAdjustment.types'
 
+// 画布模式管理
+import { useCanvasModeManager } from '../canvas-mode/index'
+import { CANVAS_MODE_IDS } from '../canvas-mode/constants'
+
 export {
     ref,
     shallowRef,
@@ -25,7 +29,9 @@ export {
     默认去雾参数,
     默认清晰度参数,
     默认亮度参数,
-    DEFAULT_CLAHE_CONFIG
+    DEFAULT_CLAHE_CONFIG,
+    useCanvasModeManager,
+    CANVAS_MODE_IDS
 }
 
 export type {

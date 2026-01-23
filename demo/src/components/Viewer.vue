@@ -13,22 +13,22 @@
     </div>
 
     <!-- 原有的图像查看器 -->
-    <div v-else-if="originalImage && containerWidth > 0 && containerHeight > 0" class="w-full h-full relative">
+    <div v-else-if="displayOriginalImage && containerWidth > 0 && containerHeight > 0" class="w-full h-full relative">
       <!-- 下载按钮 -->
-      <button v-if="originalImage" @click="downloadOriginal"
+      <button v-if="displayOriginalImage" @click="downloadOriginal"
         class="absolute top-4 left-4 z-20 glass-btn p-2 rounded-full bg-black/50 hover:bg-black/70 text-white/80 hover:text-white transition-colors"
         title="下载原始图像">
         <div class="i-carbon-download text-lg"></div>
       </button>
 
-      <button v-if="processedImage" @click="downloadProcessedImage"
+      <button v-if="displayProcessedImage" @click="downloadProcessedImage"
         class="absolute top-4 right-4 z-20 glass-btn p-2 rounded-full bg-black/50 hover:bg-black/70 text-white/80 hover:text-white transition-colors"
         title="下载处理后图像">
         <div class="i-carbon-download text-lg"></div>
       </button>
 
-      <SplitViewer ref="splitViewerRef" :key="viewerKey" :leftImage="originalImage"
-        :rightImage="processedImage || originalImage" :width="containerWidth" :height="containerHeight"
+      <SplitViewer ref="splitViewerRef" :key="viewerKey" :leftImage="displayOriginalImage"
+        :rightImage="displayProcessedImage || displayOriginalImage" :width="containerWidth" :height="containerHeight"
         :splitPosition="splitPosition" :magnifier="magnifierConfig" @split-change="handleSplitChange"
         @image-load="handleImageLoad" class="w-full h-full" />
     </div>
@@ -44,7 +44,7 @@
       <span>{{ errorMessage }}</span>
     </div>
 
-    <div v-if="!originalImage && !isProcessing && !previewOverlay" class="flex-col-center text-white/30 gap-4">
+    <div v-if="!displayOriginalImage && !isProcessing && !previewOverlay" class="flex-col-center text-white/30 gap-4">
       <div class="i-carbon-image text-6xl"></div>
       <div class="text-lg">No Image Selected</div>
     </div>
@@ -52,9 +52,10 @@
 </template>
 
 <script setup lang="ts">
-import { ref, computed, watch, nextTick, onMounted, onUnmounted } from 'vue'
+import { ref, computed, watch, nextTick, onMounted, onUnmounted, toRef } from 'vue'
 import { SplitViewer, } from '@leolee9086/split-viewer'
 import { saveOriginalImage, saveProcessedImage } from './common/imports'
+import { createViewerImageSource } from './Viewer.ctx'
 
 import type { Component } from 'vue'
 
@@ -73,6 +74,15 @@ const props = defineProps<{
   zoomLevel: number,
   previewOverlay?: PreviewOverlayData | null
 }>()
+
+// 创建画布模式感知的图像源
+const fallbackOriginal = toRef(props, 'originalImage')
+const fallbackProcessed = toRef(props, 'processedImage')
+const imageSource = createViewerImageSource(fallbackOriginal, fallbackProcessed)
+
+// 使用画布模式感知的图像源
+const displayOriginalImage = imageSource.originalImage
+const displayProcessedImage = imageSource.processedImage
 
 const emit = defineEmits(['update:splitPosition', 'image-load', 'clear-overlay'])
 
