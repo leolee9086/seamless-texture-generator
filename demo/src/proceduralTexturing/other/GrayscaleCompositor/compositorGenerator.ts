@@ -258,7 +258,18 @@ async function bufferToDataURL(
     ctx.putImageData(imageData, 0, 0)
     readBuffer.unmap()
 
-    return canvas.toDataURL(CANVAS_CONSTANTS.OUTPUT_FORMAT)
+    return new Promise<string>((resolve, reject) => {
+        canvas.toBlob(
+            (blob) => {
+                if (!blob) {
+                    reject(new Error(IMAGE_CONSTANTS.FAILED_TO_CREATE_BLOB))
+                    return
+                }
+                resolve(URL.createObjectURL(blob))
+            },
+            CANVAS_CONSTANTS.OUTPUT_FORMAT
+        )
+    })
 }
 
 /**

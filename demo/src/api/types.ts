@@ -129,3 +129,30 @@ export interface SiyuanProxyData {
   bodyEncoding?: string
   headers?: Record<string, string[]>
 }
+
+/**
+ * 获取图片参数
+ */
+export interface FetchImageParams {
+  imageUrl: string
+  proxyUrl?: string
+  siyuanConfig?: SiyuanConfig
+}
+
+/**
+ * 获取图片并返回 Blob 的结果类型
+ */
+export interface FetchImageAsBlobResult {
+  blob: Blob
+  blobUrl: string
+  mimeType: string
+}
+
+/**
+ * SiYuan 代理响应类型
+ */
+export interface SiyuanProxyResponse {
+  code: number
+  msg: string
+  data: SiyuanProxyData | null
+}

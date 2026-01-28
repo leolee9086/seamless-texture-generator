@@ -6,7 +6,8 @@
 export const IMAGE_CONSTANTS = {
     CROSS_ORIGIN: 'anonymous' as const,
     FAILED_TO_LOAD_IMAGE: 'Failed to load image' as const,
-    WEBGPU_NOT_SUPPORTED: 'WebGPU不支持' as const
+    WEBGPU_NOT_SUPPORTED: 'WebGPU不支持' as const,
+    FAILED_TO_CREATE_BLOB: 'Failed to create blob from canvas' as const
 } as const;
 
 // Canvas相关常量

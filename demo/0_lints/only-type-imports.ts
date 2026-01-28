@@ -5,12 +5,14 @@
  */
 export const ONLY_ALLOW_TYPE_IMPORTS = [
   {
-    selector: 'ImportDeclaration[importKind!="type"]:not([source.value=/(\\.utils|\\.guard|\\.code|\\.constants|\\.presets|\\.templates|\\.prompts|\\.ctx|\\imports|index|templates)$/])',
+    selector: 'ImportDeclaration[importKind!="type"]:not([source.value=/(\\.utils|\\.guard|\\.code|\\.constants|\\.presets|\\.templates|\\.prompts|\\.ctx|\\.imports|index|templates)$/])',
     message: `
       架构严令：禁止从业务文件进行"值导入" (Value Import)。
       ------------------------------------------------
       ❌ 违规行为: 你正在引入一个具体的业务实现 (Service, Class, Logic)。
-      
+      首选的修正方案是将值作为参数传入,并由调用方进行处理(依赖反转),当且仅当技术上绝无可能以此方案解决并经过用户明确同意后,方可考虑下方列出的例外后缀说明。
+      ------------------------------------------------
+      ✅ 可能的
       修正方案1: 请使用 import type 引入接口，并通过参数传递上下文等方式获取它的实例。
       修正方案2: 如果这是一个较为通用的逻辑,使用.utils文件进行组合转发。
       修正方案3: 如果这是一个领域上下文逻辑,使用.ctx文件进行组合转发。

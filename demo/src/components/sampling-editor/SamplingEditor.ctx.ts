@@ -30,12 +30,12 @@ export function useSamplingEditorLogic(
     )
 
     // 4. Actions (Confirm/Cancel)
-    const actions = useSamplingEditorActions(
-        state.imageObj,
-        pointsLogic.points,
+    const actions = useSamplingEditorActions({
+        imageObj: state.imageObj,
+        points: pointsLogic.points,
         emit,
-        state.isProcessing
-    )
+        isProcessing: state.isProcessing
+    })
 
     // 5. Lifecycle / Watchers
     watch(() => props.visible, (newVal) => {

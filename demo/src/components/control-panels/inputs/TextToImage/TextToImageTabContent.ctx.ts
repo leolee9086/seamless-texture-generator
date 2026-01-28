@@ -4,7 +4,7 @@
 
 import { useTextToImageState } from './TextToImageTabContent.state'
 import { generateTextToImage } from './TextToImageTabContent.utils'
-import { fetchImageWithProxy, buildProxyUrl } from './imports'
+import { fetchImageWithProxyAsBlob, buildProxyUrl } from './imports'
 import {
   VALIDATION_ERRORS,
   STATUS_MESSAGES,
@@ -12,7 +12,7 @@ import {
   DEFAULTS,
 } from './TextToImageTabContent.constants'
 import { PROXY_CHECK } from './ProxyWarningModal.constants'
-import { cacheImage } from './TextToImageTabContent.cache'
+import { cacheImageBlob } from './TextToImageTabContent.indexedDB.ctx'
 import type { UseTextToImageReturn, TextToImageParams } from './TextToImageTabContent.types'
 import { secureKeyManager, API_KEY_PREFIX, EMPTY_API_KEY } from './imports'
 
@@ -91,34 +91,33 @@ async function generateWithFileMode(
     token: params.siyuanToken || ''
   } : undefined
 
-  // 1. 并行下载并缓存所有图片
-  // 这样可以避免多次请求同一张图片，并确保在更新 UI 前数据已准备好
+  // 1. 并行下载并缓存所有图片（使用 Blob 避免 Base64 编码开销）
   const downloadPromises = imageUrls.map(async (imageUrl) => {
-    // 缓存 key：普通代理用代理URL，思源代理用原始URL
     const cacheKey = isSiyuanProxy ? imageUrl : (proxyUrl ? buildProxyUrl(imageUrl, proxyUrl) : imageUrl)
     try {
-      const imageBase64 = await fetchImageWithProxy({
+      const { blob, blobUrl, mimeType } = await fetchImageWithProxyAsBlob({
         imageUrl,
         proxyUrl: isSiyuanProxy ? undefined : proxyUrl,
         siyuanConfig
       })
-      await cacheImage(imageBase64, cacheKey)
-      return { url: imageUrl, base64: imageBase64 }
+      await cacheImageBlob(blob, cacheKey, mimeType)
+      return { url: imageUrl, blobUrl }
     } catch (error) {
-      console.warn(`Failed to download and cache image: ${imageUrl}`, error)
+      console.warn(ERROR_MESSAGES.DOWNLOAD_FAILED, imageUrl, error)
       return null
     }
   })
 
   const downloadedImages = await Promise.all(downloadPromises)
-  const validImages = downloadedImages.filter((img): img is { url: string, base64: string } => img !== null)
+  const validImages = downloadedImages.filter((img): img is { url: string; blobUrl: string } => img !== null)
 
-  // 2. 将最新的一张图像发送到主画布
+  // 2. 将最新的一张图像发送到主画布（使用 Blob URL）
   if (validImages.length > 0) {
     const firstImage = validImages[0]
-    onImageGenerated && onImageGenerated(firstImage.base64)
-  } else if (imageUrls.length > 0) {
-    // 如果下载失败但有 URL，尝试抛出错误或只是警告
+    onImageGenerated?.(firstImage.blobUrl)
+  }
+
+  if (validImages.length === 0 && imageUrls.length > 0) {
     throw new Error(ERROR_MESSAGES.NO_IMAGE_URL)
   }
 
@@ -170,34 +169,33 @@ async function generateWithTempMode(
     token: params.siyuanToken || ''
   } : undefined
 
-  // 1. 并行下载并缓存所有图片
-  // 这样可以避免多次请求同一张图片，并确保在更新 UI 前数据已准备好
+  // 1. 并行下载并缓存所有图片（使用 Blob 避免 Base64 编码开销）
   const downloadPromises = imageUrls.map(async (imageUrl) => {
-    // 缓存 key：普通代理用代理URL，思源代理用原始URL
     const cacheKey = isSiyuanProxy ? imageUrl : (proxyUrl ? buildProxyUrl(imageUrl, proxyUrl) : imageUrl)
     try {
-      const imageBase64 = await fetchImageWithProxy({
+      const { blob, blobUrl, mimeType } = await fetchImageWithProxyAsBlob({
         imageUrl,
         proxyUrl: isSiyuanProxy ? undefined : proxyUrl,
         siyuanConfig
       })
-      await cacheImage(imageBase64, cacheKey)
-      return { url: imageUrl, base64: imageBase64 }
+      await cacheImageBlob(blob, cacheKey, mimeType)
+      return { url: imageUrl, blobUrl }
     } catch (error) {
-      console.warn(`Failed to download and cache image: ${imageUrl}`, error)
+      console.warn(ERROR_MESSAGES.DOWNLOAD_FAILED, imageUrl, error)
       return null
     }
   })
 
   const downloadedImages = await Promise.all(downloadPromises)
-  const validImages = downloadedImages.filter((img): img is { url: string, base64: string } => img !== null)
+  const validImages = downloadedImages.filter((img): img is { url: string; blobUrl: string } => img !== null)
 
-  // 2. 将最新的一张图像发送到主画布
+  // 2. 将最新的一张图像发送到主画布（使用 Blob URL）
   if (validImages.length > 0) {
     const firstImage = validImages[0]
-    onImageGenerated && onImageGenerated(firstImage.base64)
-  } else if (imageUrls.length > 0) {
-    // 如果下载失败但有 URL，尝试抛出错误或只是警告
+    onImageGenerated?.(firstImage.blobUrl)
+  }
+
+  if (validImages.length === 0 && imageUrls.length > 0) {
     throw new Error(ERROR_MESSAGES.NO_IMAGE_URL)
   }
 

@@ -389,5 +389,16 @@ export async function generateFilmGradeTexture(params: FilmGradeTuringParams, wi
 
     ctx.putImageData(idata, 0, 0);
     readBuffer.unmap();
-    return canvas.toDataURL('image/png');
+    return new Promise<string>((resolve, reject) => {
+        canvas.toBlob(
+            (blob) => {
+                if (blob) {
+                    resolve(URL.createObjectURL(blob))
+                } else {
+                    reject(new Error('Failed to create blob from canvas'))
+                }
+            },
+            'image/png'
+        )
+    })
 }

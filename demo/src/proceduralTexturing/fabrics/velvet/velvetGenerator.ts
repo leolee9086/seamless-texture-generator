@@ -239,5 +239,16 @@ export async function generateVelvetTexture(params: VelvetParams, width: number,
     ctx.putImageData(imageData, 0, 0);
     readBuffer.unmap();
 
-    return canvas.toDataURL('image/png');
+    return new Promise<string>((resolve, reject) => {
+        canvas.toBlob(
+            (blob) => {
+                if (blob) {
+                    resolve(URL.createObjectURL(blob))
+                } else {
+                    reject(new Error('Failed to create blob from canvas'))
+                }
+            },
+            'image/png'
+        )
+    })
 }

@@ -1,9 +1,18 @@
-import { isHTMLInputElement, isFileReader, isFileReaderResultString } from './imageHandlers.guard'
+import { isHTMLInputElement } from './imageHandlers.guard'
 
 /**
  * 处理图像上传
+ * 使用 URL.createObjectURL() 创建 Blob URL，比 FileReader.readAsDataURL() 更高效
+ *
+ * 注意：Blob URL 在以下情况会自动释放：
+ * - 页面卸载时
+ * - 文档被关闭时
+ *
+ * 如果需要手动释放内存（例如频繁上传场景），调用方可以在不再需要时调用：
+ * URL.revokeObjectURL(blobUrl)
+ *
  * @param event 文件上传事件
- * @param onImageLoaded 图像加载完成回调
+ * @param onImageLoaded 图像加载完成回调，返回 Blob URL 字符串
  */
 export function handleImageUpload(event: Event, onImageLoaded: (imageData: string) => void): void {
     if (!isHTMLInputElement(event.target)) {
@@ -13,21 +22,8 @@ export function handleImageUpload(event: Event, onImageLoaded: (imageData: strin
     const file = event.target.files?.[0]
 
     if (file) {
-        const reader = new FileReader()
-        reader.onload = (progressEvent: ProgressEvent<FileReader>): void => {
-            if (!isFileReader(progressEvent.target)) {
-                return
-            }
-
-            const result = progressEvent.target.result
-            if (isFileReaderResultString(result)) {
-                onImageLoaded(result)
-            }
-        }
-        reader.onerror = (): void => {
-            console.error('文件读取失败', { fileName: file.name, fileSize: file.size })
-        }
-        reader.readAsDataURL(file)
+        const blobUrl = URL.createObjectURL(file)
+        onImageLoaded(blobUrl)
     }
 }
 

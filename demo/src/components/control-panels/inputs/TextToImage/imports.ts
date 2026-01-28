@@ -13,6 +13,10 @@ import {
 } from '../imports'
 
 import { fetchImageWithProxy } from '../../../../api/modelscope.api'
+import { fetchImageWithProxyAsBlob } from '../../../../api/imageFetcher.api'
+
+// Re-export IndexDBFS for cache operations
+import { IndexDBFS } from '../../../../infra/IndexDBFS.class'
 
 // Re-export SecureApiKeyInput components and utilities
 import { secureKeyManager } from '../SecureApiKeyInput/SecureApiKeyInput.ctx'
@@ -44,5 +48,7 @@ export {
   PromptInput,
   ParameterGrid,
   StatusDisplay,
-  fetchImageWithProxy
+  fetchImageWithProxy,
+  fetchImageWithProxyAsBlob,
+  IndexDBFS
 }

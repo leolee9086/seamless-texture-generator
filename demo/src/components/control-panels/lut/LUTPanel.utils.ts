@@ -106,7 +106,17 @@ export function 创建对比缩略图(参数: 缩略图创建参数): Promise<st
                 半宽, 0, 半宽, 高度
             )
 
-            resolve(canvas.toDataURL('image/png'))
+            // 使用 toBlob + Blob URL 替代 toDataURL，避免 Base64 编码开销
+            canvas.toBlob(
+                (blob) => {
+                    if (!blob) {
+                        reject(new Error('Failed to create blob from canvas'))
+                        return
+                    }
+                    resolve(URL.createObjectURL(blob))
+                },
+                'image/png'
+            )
         }
     })
 }

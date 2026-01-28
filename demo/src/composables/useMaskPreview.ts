@@ -72,7 +72,19 @@ export function useMaskPreview(
             const maskImageData = createMaskPreviewData(fullSizeMask, img, canvasWidth, canvasHeight)
             ctx.putImageData(maskImageData, 0, 0)
 
-            return canvas.toDataURL('image/png')
+            // 使用 toBlob + Blob URL 替代 toDataURL，避免 Base64 编码开销
+            return new Promise<string>((resolve, reject) => {
+                canvas.toBlob(
+                    (blob) => {
+                        if (!blob) {
+                            reject(new Error('Failed to create blob from canvas'))
+                            return
+                        }
+                        resolve(URL.createObjectURL(blob))
+                    },
+                    'image/png'
+                )
+            })
         } catch (error) {
             console.error('生成蒙版预览图像失败:', error)
             return null

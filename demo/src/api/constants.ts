@@ -51,3 +51,10 @@ export const SIYUAN_TOKEN_PREFIX = 'Token '
 export const REQUEST_TIMEOUT_MS = 60000
 export const METHOD_POST = 'POST'
 export const METHOD_GET = 'GET'
+
+// Image Fetch Constants
+export const DEFAULT_MIME_TYPE = 'image/png'
+export const RESPONSE_ENCODING_BASE64 = 'base64'
+export const BODY_ENCODING_TEXT = 'text'
+export const HEADER_CONTENT_TYPE_KEY = 'Content-Type'
+export const HEADER_CONTENT_TYPE_KEY_LOWER = 'content-type'

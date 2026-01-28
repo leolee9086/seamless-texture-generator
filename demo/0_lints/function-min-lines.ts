@@ -75,6 +75,13 @@ function hasExemptComment(node: any, sourceCode: any): boolean {
     const comments = sourceCode.getCommentsBefore(node);
     if (comments.some((comment: any) => comment.value.includes(EXEMPT_COMMENT))) return true;
 
+    // 检查 JSDoc 注释（对于类方法，getCommentsBefore 可能返回空数组）
+    const jsdoc = sourceCode.getJSDocComment?.(node);
+    if (jsdoc?.value.includes(EXEMPT_COMMENT)) return true;
+
+    // 检查 leadingComments 属性（某些解析器会将注释附加到节点上）
+    if (node.leadingComments?.some((comment: any) => comment.value.includes(EXEMPT_COMMENT))) return true;
+
     // 检查父节点
     if (node.parent) {
         // 对于 export function，注释可能在 ExportNamedDeclaration 上

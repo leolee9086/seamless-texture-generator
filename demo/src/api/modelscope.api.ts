@@ -12,7 +12,8 @@ import type {
   GetTaskStatusParams,
   PerformFetchContext,
   SiyuanConfig,
-  SiyuanProxyData
+  SiyuanProxyData,
+  FetchImageParams
 } from './types'
 import { robustFetch, createAuthHeaders } from './fetchWrapper.api'
 import {
@@ -34,7 +35,7 @@ import {
 import {
   buildProxyUrl,
   IMAGE_GENERATION_URL,
-  TASK_STATUS_URL,
+  TASK_STATUS_URL
 } from './templates'
 
 /**
@@ -270,14 +271,9 @@ export function handleApiError(error: unknown): ApiError {
   }
 }
 
-interface FetchImageParams {
-  imageUrl: string
-  proxyUrl?: string
-  siyuanConfig?: SiyuanConfig
-}
-
 /**
  * 通过代理（思源代理或传统代理）获取图片并返回 Base64
+ * @deprecated 建议使用 fetchImageWithProxyAsBlob 获取 Blob 对象，避免 Base64 编码开销
  */
 export async function fetchImageWithProxy(params: FetchImageParams): Promise<string> {
   const { imageUrl, proxyUrl, siyuanConfig } = params

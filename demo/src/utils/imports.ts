@@ -14,7 +14,7 @@
 // 这是一个长期任务,可以在完成一部分之后分别更新DONE和TODO注释块标记进度
 
 // 类型导入转发 - 仅来自父级目录
-import type { ImageDownloadParams } from '../types/download.types'
+import type { ImageDownloadParams, BlobFetcher } from '../types/download.types'
 import type { ControlEvent, ControlEventDetail } from '../types/controlEvents'
 import type { PipelineData, baseOptions, GeneralSynthesisPipelineStep } from '../types/PipelineData.type'
 import type { DehazeParams } from '../adjustments/dehaze/types'
@@ -30,5 +30,5 @@ import { IndexDBFS } from '../infra/IndexDBFS.class'
 import { z } from 'zod'
 import type { Component } from 'vue'
 
-export type { ImageDownloadParams, ControlEvent, ControlEventDetail, PipelineData, baseOptions, GeneralSynthesisPipelineStep, DehazeParams, ClarityParams, LuminanceAdjustmentParams, HSLAdjustmentLayer, Component, 水印配置 }
+export type { ImageDownloadParams, BlobFetcher, ControlEvent, ControlEventDetail, PipelineData, baseOptions, GeneralSynthesisPipelineStep, DehazeParams, ClarityParams, LuminanceAdjustmentParams, HSLAdjustmentLayer, Component, 水印配置 }
 export { z, IndexDBFS }

@@ -28,3 +28,11 @@ export interface 预设列表元数据 {
     id: string
     预设IDs: string[]
 }
+
+/** 水印渲染上下文 */
+export interface 水印渲染上下文 {
+    ctx: CanvasRenderingContext2D
+    width: number
+    height: number
+    config: 水印配置
+}

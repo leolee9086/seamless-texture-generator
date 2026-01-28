@@ -25,6 +25,7 @@ export const ERROR_MESSAGES = {
   TASK_SUCCEEDED_NO_IMAGE: '任务成功但未找到图像 URL',
   TASK_FAILED: '任务失败',
   UNKNOWN_ERROR: '未知错误',
+  DOWNLOAD_FAILED: '下载图像失败:',
 } as const
 
 // 默认值
@@ -98,5 +99,7 @@ export const INDEXED_DB = {
     FAILED_TO_GET_IMAGE: 'Failed to get cached image by URL:',
     FAILED_TO_GET_URL_LIST: 'Failed to get URL list:',
     FAILED_TO_CLEAR_CACHE: 'Failed to clear all cache:',
+    INVALID_BASE64_FORMAT: 'Invalid base64 data URL format',
+    FAILED_TO_MIGRATE_V1_TO_V2: 'Failed to migrate V1 cache to V2:',
   }
 } as const

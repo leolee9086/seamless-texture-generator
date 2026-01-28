@@ -299,5 +299,16 @@ export async function generateLeatherTexture(params: LeatherParams, width: numbe
     ctxBack.putImageData(imageData, 0, 0);
     readBuffer.unmap();
 
-    return canvasBack.toDataURL('image/png');
+    return new Promise<string>((resolve, reject) => {
+        canvasBack.toBlob(
+            (blob) => {
+                if (blob) {
+                    resolve(URL.createObjectURL(blob))
+                } else {
+                    reject(new Error('Failed to create blob from canvas'))
+                }
+            },
+            'image/png'
+        )
+    })
 }

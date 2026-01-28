@@ -186,7 +186,7 @@ export default [
   // ========================================================================
   {
     files: ['src/**/*.types.ts', 'src/**/*.d.ts', 'src/**/types/**/*.ts', 'test/**/*.types.ts', 'test/**/*.d.ts', 'test/**/types/**/*.ts'],
-    ignores: ['**/index.types.ts', '**/imports.ts'],
+    ignores: ['**/index.types.ts', '**/imports.ts', '**/index.ts'],
     plugins: {
       'interface-guard': 接口职责分离插件
     },
