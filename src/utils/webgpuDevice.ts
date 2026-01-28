@@ -46,10 +46,18 @@ export const 获取WebGPU设备 = async (): Promise<GPUDevice> => {
     2147483644 // 错误信息中提到的适配器支持的最大值
   );
 
-  // 请求设备时指定更高的存储缓冲区绑定大小限制
+  // 计算所需的缓冲区大小限制
+  // 解决 Buffer size exceeds the max buffer size limit 错误
+  const 所需缓冲区大小限制 = Math.min(
+    适配器限制.maxBufferSize || 268435456, // 默认256MB
+    2147483648 // 最大可设置为2GB
+  );
+
+  // 请求设备时指定更高的存储缓冲区绑定大小限制和缓冲区大小限制
   缓存.设备 = await 缓存.适配器.requestDevice({
     requiredLimits: {
-      maxStorageBufferBindingSize: 所需存储缓冲区限制
+      maxStorageBufferBindingSize: 所需存储缓冲区限制,
+      maxBufferSize: 所需缓冲区大小限制
     }
   });
   if (!缓存.设备) {

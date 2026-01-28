@@ -21,7 +21,29 @@ export async function initializeGPU(): Promise<GPUDevice> {
         throw new Error('Failed to get GPU adapter')
     }
 
-    const device = await adapter.requestDevice()
+    // 获取适配器限制信息
+    const 适配器限制 = adapter.limits
+
+    // 计算所需的存储缓冲区大小限制
+    const 所需存储缓冲区限制 = Math.min(
+        适配器限制.maxStorageBufferBindingSize || 134217728, // 默认128MB
+        2147483644 // 适配器支持的最大值
+    )
+
+    // 计算所需的缓冲区大小限制
+    // 解决 Buffer size exceeds the max buffer size limit 错误
+    const 所需缓冲区大小限制 = Math.min(
+        适配器限制.maxBufferSize || 268435456, // 默认256MB
+        2147483648 // 最大可设置为2GB
+    )
+
+    // 请求设备时指定存储缓冲区绑定大小限制和缓冲区大小限制
+    const device = await adapter.requestDevice({
+        requiredLimits: {
+            maxStorageBufferBindingSize: 所需存储缓冲区限制,
+            maxBufferSize: 所需缓冲区大小限制
+        }
+    })
     resourcePool = new ResourcePool(device)
     return device
 }
