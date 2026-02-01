@@ -29,7 +29,8 @@
 <script setup lang="ts">
 import WatermarkSettings from './WatermarkSettings.vue'
 import { createUpdateDataEvent } from './imports'
-import type { 水印配置, ControlEvent } from './imports'
+import type { ControlEvent } from './imports'
+import type { 水印配置 } from './watermark.types'
 
 const props = defineProps<{
     originalImage: string | null

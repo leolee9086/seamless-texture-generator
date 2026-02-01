@@ -95,3 +95,6 @@ export const PRESET_ID_PREFIX = 'preset_'
 
 /** 预设 ID 分隔符 */
 export const PRESET_ID_SEPARATOR = '_'
+
+/** 类型检查常量 */
+export const TYPE_OBJECT = 'object' as const

@@ -181,3 +181,23 @@ export function isValidFontWeight(value: unknown): value is 文本样式配置['
     const validWeights = ['100', '200', '300', '400', '500', '600', '700', '800', '900', 'normal', 'bold']
     return validWeights.includes(value)
 }
+
+/**
+ * 检查值是否为对象类型（非 null）
+ * @简洁函数 这是一个类型守卫谓词函数
+ * @param value 待检查的值
+ * @returns 是否为对象
+ */
+export function isObject(value: unknown): value is Record<string, unknown> {
+    return value !== null && typeof value === 'object'
+}
+
+/**
+ * 检查值是否为数组类型
+ * @简洁函数 这是一个类型守卫谓词函数
+ * @param value 待检查的值
+ * @returns 是否为数组
+ */
+export function isArray(value: unknown): value is unknown[] {
+    return Array.isArray(value)
+}
