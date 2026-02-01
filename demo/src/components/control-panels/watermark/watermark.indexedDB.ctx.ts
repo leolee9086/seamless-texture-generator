@@ -4,6 +4,7 @@
 import { IndexDBFS } from '../../../infra/IndexDBFS.class'
 import { WATERMARK_DB } from './watermark.constants'
 import type { 水印预设, 预设列表元数据 } from './watermark.types'
+import { is旧版水印配置, migrateWatermarkConfig } from './watermark.guard'
 
 /** 文件系统实例 */
 const fs = new IndexDBFS(
@@ -40,10 +41,20 @@ export async function 获取所有预设(): Promise<水印预设[]> {
 }
 
 /**
- * 获取单个预设
+ * 获取单个预设（自动迁移旧格式）
+ * @简洁函数 IndexedDB 读取封装
  */
 export async function 获取预设(id: string): Promise<水印预设 | null> {
-    return await fs.read<水印预设>(`${WATERMARK_DB.PRESETS_STORE}/${id}`)
+    const rawPreset = await fs.read<水印预设>(`${WATERMARK_DB.PRESETS_STORE}/${id}`)
+    if (!rawPreset) {
+        return null
+    }
+    // 检查是否需要迁移旧格式
+    if (is旧版水印配置(rawPreset.配置)) {
+        const migratedConfig = migrateWatermarkConfig(rawPreset.配置)
+        return { ...rawPreset, 配置: migratedConfig }
+    }
+    return rawPreset
 }
 
 /**

@@ -9,9 +9,12 @@ import {
     ERROR_IMAGE_LOAD_FAILED,
     ERROR_CANVAS_TO_BLOB_FAILED,
     TEXT_ALIGN_CENTER,
-    TEXT_BASELINE_MIDDLE
+    TEXT_BASELINE_MIDDLE,
+    DEFAULT_ROTATION_ANGLE,
+    DEGREES_IN_HALF_CIRCLE
 } from './watermark.constants'
 import { 生成字体样式 } from './watermark.templates'
+import { normalizeSpacing } from './watermark.guard'
 
 /**
  * 在 Canvas 上应用水印
@@ -98,7 +101,7 @@ function loadImage(imageUrl: string): Promise<HTMLImageElement> {
  */
 function 设置水印文本样式(renderCtx: 水印渲染上下文): void {
     const { ctx, config } = renderCtx
-    ctx.font = 生成字体样式(config.字体大小)
+    ctx.font = 生成字体样式(config.字体大小, config.字体)
     ctx.fillStyle = config.颜色
     ctx.globalAlpha = config.不透明度
     ctx.textAlign = TEXT_ALIGN_CENTER
@@ -106,7 +109,8 @@ function 设置水印文本样式(renderCtx: 水印渲染上下文): void {
 }
 
 /**
- * 渲染 45 度网格水印
+ * 渲染网格水印
+ * 支持独立的行间距、列间距和自定义旋转角度
  */
 function 渲染网格水印(renderCtx: 水印渲染上下文): void {
     const { ctx, width, height, config } = renderCtx
@@ -114,18 +118,26 @@ function 渲染网格水印(renderCtx: 水印渲染上下文): void {
 
     设置水印文本样式(renderCtx)
 
-    const 间距 = config.网格间距
+    // 获取行列间距（兼容旧配置）
+    const 间距 = normalizeSpacing(config.网格间距)
+    const 行间距 = 间距.行间距
+    const 列间距 = 间距.列间距
+
+    // 使用自定义旋转角度（默认 45 度）
+    const 旋转角度 = config.旋转角度 ?? DEFAULT_ROTATION_ANGLE
+    const 旋转弧度 = (旋转角度 * Math.PI) / DEGREES_IN_HALF_CIRCLE
+
     const 对角线长度 = Math.sqrt(width * width + height * height)
-    const 行数 = Math.ceil(对角线长度 / 间距) * 2
-    const 列数 = Math.ceil(对角线长度 / 间距) * 2
+    const 行数 = Math.ceil(对角线长度 / 行间距) * 2
+    const 列数 = Math.ceil(对角线长度 / 列间距) * 2
 
     ctx.translate(width / 2, height / 2)
-    ctx.rotate(-Math.PI / 4) // 45度
+    ctx.rotate(-旋转弧度)
 
     for (let row = -行数; row <= 行数; row++) {
         for (let col = -列数; col <= 列数; col++) {
-            const x = col * 间距
-            const y = row * 间距
+            const x = col * 列间距
+            const y = row * 行间距
             ctx.fillText(config.文本, x, y)
         }
     }

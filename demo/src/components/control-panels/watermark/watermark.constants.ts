@@ -17,13 +17,24 @@ export const WATERMARK_DB = {
     VERSION: 1
 } as const
 
+/** 默认字体族名称 */
+export const DEFAULT_FONT_FAMILY = 'Arial'
+
+/** 字体回退列表 */
+export const FONT_FALLBACK = 'Arial, sans-serif'
+
 /** 默认水印配置 */
 export const 默认水印配置: 水印配置 = {
     样式: 'grid',
     文本: 'WATERMARK',
     字体大小: 24,
+    字体: DEFAULT_FONT_FAMILY,
     不透明度: 0.3,
-    网格间距: 150,
+    网格间距: {
+        行间距: 150,
+        列间距: 150
+    },
+    旋转角度: 45,
     颜色: '#888888'
 }
 
@@ -31,6 +42,10 @@ export const 默认水印配置: 水印配置 = {
 export const 配置范围 = {
     字体大小: { min: 8, max: 72, step: 1 },
     不透明度: { min: 0.05, max: 1, step: 0.05 },
+    行间距: { min: 30, max: 400, step: 5 },
+    列间距: { min: 30, max: 400, step: 5 },
+    旋转角度: { min: 0, max: 360, step: 1 },
+    /** @deprecated 使用 行间距 和 列间距 替代 */
     网格间距: { min: 50, max: 400, step: 10 }
 } as const
 
@@ -45,3 +60,13 @@ export const ERROR_CANVAS_TO_BLOB_FAILED = 'Canvas toBlob 失败'
 /** Canvas 文本对齐常量 */
 export const TEXT_ALIGN_CENTER = 'center' as const
 export const TEXT_BASELINE_MIDDLE = 'middle' as const
+
+/** 旋转角度相关常量 */
+export const DEFAULT_ROTATION_ANGLE = 45
+export const DEGREES_IN_HALF_CIRCLE = 180
+
+/** 预设 ID 前缀 */
+export const PRESET_ID_PREFIX = 'preset_'
+
+/** 预设 ID 分隔符 */
+export const PRESET_ID_SEPARATOR = '_'

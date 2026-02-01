@@ -5,13 +5,50 @@
 /** 水印样式 */
 export type 水印样式 = 'grid' | 'center'
 
+/** 字体信息 */
+export interface 字体信息 {
+    family: string      // 字体族名称
+    fullName: string    // 完整显示名称
+    style?: string      // 字体样式（Regular, Bold 等）
+}
+
+/** Local Font Access API 字体数据接口 */
+export interface FontData {
+    family: string
+    fullName: string
+    style: string
+    postscriptName: string
+}
+
+/** 查询本地字体的函数类型 */
+export type QueryLocalFontsFunction = () => Promise<FontData[]>
+
+
+/** 网格间距配置 */
+export interface 网格间距配置 {
+    行间距: number
+    列间距: number
+}
+
 /** 水印配置 */
 export interface 水印配置 {
     样式: 水印样式
     文本: string
     字体大小: number
+    字体: string        // 字体族名称
     不透明度: number
-    网格间距: number // 仅 grid 样式有效
+    网格间距: 网格间距配置 // 仅 grid 样式有效
+    旋转角度: number // 旋转角度（度），范围 0-360
+    颜色: string
+}
+
+/** 旧版水印配置（用于迁移兼容） */
+export interface 旧版水印配置 {
+    样式: 水印样式
+    文本: string
+    字体大小: number
+    不透明度: number
+    网格间距: number // 旧版为单一数值
     颜色: string
 }
 
@@ -36,3 +73,18 @@ export interface 水印渲染上下文 {
     height: number
     config: 水印配置
 }
+
+/** 滑块项配置类型 */
+export type SliderItemConfig = {
+    id: string
+    label: string
+    value: number
+    min: number
+    max: number
+    step: number
+    valuePosition: 'after'
+    showRuler: false
+}
+
+/** 滑块处理器类型 */
+export type SliderHandler = (value: number) => void
