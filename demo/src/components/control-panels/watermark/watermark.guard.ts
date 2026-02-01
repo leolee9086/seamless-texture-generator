@@ -1,7 +1,7 @@
 /**
  * 水印功能类型守卫与数据迁移
  */
-import type { 网格间距配置, 水印配置, 水印样式, FontData, QueryLocalFontsFunction } from './watermark.types'
+import type { 网格间距配置, 水印配置, 水印样式, FontData, QueryLocalFontsFunction, 文本样式配置 } from './watermark.types'
 import { DEFAULT_ROTATION_ANGLE, 默认水印配置 } from './watermark.constants'
 
 /**
@@ -123,7 +123,8 @@ export function migrateWatermarkConfig(oldConfig: unknown): 水印配置 {
         不透明度: isNumber(config['不透明度']) ? config['不透明度'] : 默认水印配置.不透明度,
         网格间距,
         旋转角度,
-        颜色: (config['颜色'] as string) ?? 默认水印配置.颜色
+        颜色: (config['颜色'] as string) ?? 默认水印配置.颜色,
+        文本样式: 默认水印配置.文本样式 // 新增：为旧配置添加默认文本样式
     }
 }
 
@@ -166,4 +167,17 @@ export function getQueryLocalFontsFromWindow(): QueryLocalFontsFunction | undefi
         return queryLocalFonts
     }
     return undefined
+}
+
+/**
+ * 检查值是否为有效的字重值
+ * @param value 待检查的值
+ * @returns 是否为有效字重
+ */
+export function isValidFontWeight(value: unknown): value is 文本样式配置['字重'] {
+    if (!isString(value)) {
+        return false
+    }
+    const validWeights = ['100', '200', '300', '400', '500', '600', '700', '800', '900', 'normal', 'bold']
+    return validWeights.includes(value)
 }

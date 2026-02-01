@@ -101,11 +101,25 @@ function loadImage(imageUrl: string): Promise<HTMLImageElement> {
  */
 function 设置水印文本样式(renderCtx: 水印渲染上下文): void {
     const { ctx, config } = renderCtx
-    ctx.font = 生成字体样式(config.字体大小, config.字体)
+    
+    // 使用新的字体样式生成函数
+    ctx.font = 生成字体样式({
+        字体大小: config.字体大小,
+        字体: config.字体,
+        字重: config.文本样式?.字重,
+        斜体: config.文本样式?.斜体
+    })
+    
     ctx.fillStyle = config.颜色
     ctx.globalAlpha = config.不透明度
     ctx.textAlign = TEXT_ALIGN_CENTER
     ctx.textBaseline = TEXT_BASELINE_MIDDLE
+    
+    // 设置描边样式
+    if (config.文本样式?.描边宽度 && config.文本样式.描边宽度 > 0) {
+        ctx.strokeStyle = config.文本样式.描边颜色
+        ctx.lineWidth = config.文本样式.描边宽度
+    }
 }
 
 /**
@@ -138,6 +152,11 @@ function 渲染网格水印(renderCtx: 水印渲染上下文): void {
         for (let col = -列数; col <= 列数; col++) {
             const x = col * 列间距
             const y = row * 行间距
+            
+            // 先绘制描边，再绘制填充
+            if (config.文本样式?.描边宽度 && config.文本样式.描边宽度 > 0) {
+                ctx.strokeText(config.文本, x, y)
+            }
             ctx.fillText(config.文本, x, y)
         }
     }
@@ -153,7 +172,15 @@ function 渲染居中水印(renderCtx: 水印渲染上下文): void {
     ctx.save()
 
     设置水印文本样式(renderCtx)
-    ctx.fillText(config.文本, width / 2, height / 2)
+    
+    const centerX = width / 2
+    const centerY = height / 2
+    
+    // 先绘制描边，再绘制填充
+    if (config.文本样式?.描边宽度 && config.文本样式.描边宽度 > 0) {
+        ctx.strokeText(config.文本, centerX, centerY)
+    }
+    ctx.fillText(config.文本, centerX, centerY)
 
     ctx.restore()
 }

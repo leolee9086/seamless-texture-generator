@@ -8,6 +8,7 @@ import type { 水印样式, 水印配置, 水印预设, 字体信息 } from './w
 import { SAFE_FONTS } from './watermark.fonts'
 import WatermarkFontSelector from './WatermarkFontSelector.vue'
 import WatermarkPresetManager from './WatermarkPresetManager.vue'
+import WatermarkAdvancedStyles from './WatermarkAdvancedStyles.vue'
 
 const props = defineProps<{ config: 水印配置 }>()
 const emit = defineEmits<{ 'update:config': [config: 水印配置] }>()
@@ -48,6 +49,17 @@ onMounted(async () => {
             <div class="flex items-center gap-2"><span class="text-xs text-white/50 font-mono">{{ config.颜色 }}</span>
                 <input type="color" :value="config.颜色" @input="更新颜色" class="w-6 h-6 rounded cursor-pointer bg-transparent border-none p-0 overflow-hidden" /></div>
         </div>
+        
+        <!-- 高级样式设置 -->
+        <details class="bg-white/5 rounded-lg border border-white/10">
+            <summary class="p-3 cursor-pointer text-xs text-white/70 uppercase tracking-wider font-medium hover:text-white transition-colors">
+                Advanced Styles
+            </summary>
+            <div class="px-3 pb-3">
+                <WatermarkAdvancedStyles :config="config" @update:config="emit('update:config', $event)" />
+            </div>
+        </details>
+        
         <WatermarkPresetManager :presets="预设列表" @save="保存" @apply="应用" @delete="删除" />
     </div>
 </template>

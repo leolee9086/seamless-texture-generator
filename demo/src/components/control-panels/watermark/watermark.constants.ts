@@ -23,6 +23,29 @@ export const DEFAULT_FONT_FAMILY = 'Arial'
 /** 字体回退列表 */
 export const FONT_FALLBACK = 'Arial, sans-serif'
 
+/** 字重选项列表 */
+export const FONT_WEIGHT_OPTIONS = [
+    { value: 'normal', label: '正常 (400)' },
+    { value: 'bold', label: '粗体 (700)' },
+    { value: '100', label: '极细 (100)' },
+    { value: '200', label: '特细 (200)' },
+    { value: '300', label: '细体 (300)' },
+    { value: '400', label: '正常 (400)' },
+    { value: '500', label: '中等 (500)' },
+    { value: '600', label: '半粗 (600)' },
+    { value: '700', label: '粗体 (700)' },
+    { value: '800', label: '特粗 (800)' },
+    { value: '900', label: '极粗 (900)' }
+] as const
+
+/** 默认文本样式配置 */
+export const 默认文本样式配置 = {
+    字重: 'normal' as const,
+    斜体: false,
+    描边宽度: 0,
+    描边颜色: '#000000'
+}
+
 /** 默认水印配置 */
 export const 默认水印配置: 水印配置 = {
     样式: 'grid',
@@ -35,7 +58,8 @@ export const 默认水印配置: 水印配置 = {
         列间距: 150
     },
     旋转角度: 45,
-    颜色: '#888888'
+    颜色: '#888888',
+    文本样式: 默认文本样式配置
 }
 
 /** 配置范围限制 */
@@ -45,6 +69,7 @@ export const 配置范围 = {
     行间距: { min: 30, max: 400, step: 5 },
     列间距: { min: 30, max: 400, step: 5 },
     旋转角度: { min: 0, max: 360, step: 1 },
+    描边宽度: { min: 0, max: 5, step: 0.5 },
     /** @deprecated 使用 行间距 和 列间距 替代 */
     网格间距: { min: 50, max: 400, step: 10 }
 } as const

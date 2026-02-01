@@ -18,7 +18,8 @@ export function buildSliderItems(config: 水印配置): SliderItemConfig[] {
     const 间距 = normalizeSpacing(config.网格间距)
     const base: SliderItemConfig[] = [
         { id: 'wm-fontsize', label: 'Size', value: config.字体大小, ...配置范围.字体大小, valuePosition: SLIDER_VALUE_POSITION, showRuler: SLIDER_SHOW_RULER },
-        { id: 'wm-opacity', label: 'Opacity', value: config.不透明度, ...配置范围.不透明度, valuePosition: SLIDER_VALUE_POSITION, showRuler: SLIDER_SHOW_RULER }
+        { id: 'wm-opacity', label: 'Opacity', value: config.不透明度, ...配置范围.不透明度, valuePosition: SLIDER_VALUE_POSITION, showRuler: SLIDER_SHOW_RULER },
+        { id: 'wm-stroke-width', label: 'Stroke', value: config.文本样式?.描边宽度 ?? 0, ...配置范围.描边宽度, valuePosition: SLIDER_VALUE_POSITION, showRuler: SLIDER_SHOW_RULER }
     ]
     if (config.样式 !== 'grid') return base
     return [
@@ -40,9 +41,17 @@ export function createSliderHandlers(
     updateFn: (partial: Partial<水印配置>) => void
 ): Record<string, SliderHandler> {
     const 间距 = normalizeSpacing(config.网格间距)
+    const 当前文本样式 = config.文本样式 ?? { 字重: 'normal', 斜体: false, 描边宽度: 0, 描边颜色: '#000000' }
+    
+    /** @简洁函数 描边宽度滑块处理器 */
+    const handleStrokeWidth = (value: number): void => {
+        updateFn({ 文本样式: { ...当前文本样式, 描边宽度: value } })
+    }
+    
     return {
         'wm-fontsize': (value: number): void => updateFn({ 字体大小: value }),
         'wm-opacity': (value: number): void => updateFn({ 不透明度: value }),
+        'wm-stroke-width': handleStrokeWidth,
         'wm-row-spacing': (value: number): void => updateFn({ 网格间距: { ...间距, 行间距: value } }),
         'wm-col-spacing': (value: number): void => updateFn({ 网格间距: { ...间距, 列间距: value } }),
         'wm-rotation': (value: number): void => updateFn({ 旋转角度: value })
