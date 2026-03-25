@@ -47,12 +47,6 @@ const transformCache = new WeakMap<object, { key: string; value: Record<string, 
 //   return getSafeProps(component);
 // }
 
-/**
- * 获取组件事件
- */
-function getComponentEmits(component: VueComponent): Record<string, unknown> | string[] {
-  return getSafeEmits(component);
-}
 
 /**
  * 应用默认值到props
@@ -388,7 +382,7 @@ export function createComponentWrapper<TProps = unknown, TEmit = unknown>(
   } = config;
 
   // 获取组件信息
-  const componentEmits = getComponentEmits(component);
+  const componentEmits = getSafeEmits(component);
 
   // 创建包装后的组件
   const WrappedComponent = defineComponent({
