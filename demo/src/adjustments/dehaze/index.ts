@@ -24,6 +24,7 @@ export async function applyDehazeAdjustment(
   imageData: ImageData,
   params: DehazeParams
 ): Promise<ImageData> {
+  // 单张图片处理结束后立即释放该次去雾产生的图像相关缓存，避免污染下一张图片
   try {
     // 确保WebGPU设备已初始化
     await preInitializeDevice()
@@ -65,6 +66,8 @@ export async function applyDehazeAdjustment(
   } catch (error) {
     console.error('去雾处理失败:', error)
     throw new Error(dehazeFailed(error))
+  } finally {
+    clearDehazeCache()
   }
 }
 
