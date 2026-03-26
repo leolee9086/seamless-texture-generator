@@ -167,7 +167,7 @@ const reactionSliderItems = computed(() => [
         value: turingParams.flowDirection,
         min: 0.0,
         max: 6.28,
-        step: 0.1,
+        step: 0.01,
         valuePosition: 'after' as const,
         showRuler: false
     }

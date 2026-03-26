@@ -50,7 +50,7 @@ export const handleBasicSliderUpdate = (
         updates.t0 = data.value
     }
     if (data.id === 'windowSize') {
-        updates.windowSize = Math.round(data.value / 2) * 2 + 1 // 确保为奇数
+        updates.windowSize = Math.max(1, Math.min(31, Math.round((data.value - 1) / 2) * 2 + 1)) // 确保为 1-31 的奇数
     }
 
     Object.assign(ctx.dehazeParams.value, updates)

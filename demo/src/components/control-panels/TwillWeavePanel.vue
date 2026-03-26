@@ -269,7 +269,7 @@ const threadWeaveSliderItems = computed(() => [
         value: state.twillWeaveParams.threadUnevenness,
         min: 0.0,
         max: 1.0,
-        step: 0.05,
+        step: 0.01,
         valuePosition: 'after' as const,
         showRuler: false
     },
@@ -279,7 +279,7 @@ const threadWeaveSliderItems = computed(() => [
         value: state.twillWeaveParams.weaveImperfection,
         min: 0.0,
         max: 1.0,
-        step: 0.05,
+        step: 0.01,
         valuePosition: 'after' as const,
         showRuler: false
     }
@@ -313,7 +313,7 @@ const advancedWeaveSliderItems = computed(() => [
         value: state.twillWeaveParams.noiseFrequency,
         min: 1.0,
         max: 10.0,
-        step: 0.5,
+        step: 0.1,
         valuePosition: 'after' as const,
         showRuler: false
     },

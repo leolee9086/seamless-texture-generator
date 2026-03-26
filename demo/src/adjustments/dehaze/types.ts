@@ -7,7 +7,7 @@ export interface DehazeParams {
   omega: number;
   /** 最小透射率阈值 (0.01-0.3) */
   t0: number;
-  /** 暗通道窗口大小 (3-31) */
+  /** 暗通道窗口大小 (1-31，奇数) */
   windowSize: number;
   /** 大气光估计比例 (0.01-0.5) */
   topRatio: number;

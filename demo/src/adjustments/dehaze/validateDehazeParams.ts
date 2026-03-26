@@ -27,7 +27,7 @@ function getValidationConfig(): ParamValidationConfig {
       errorMessage: DEHAZE_VALIDATION_ERROR_MESSAGES.T0_RANGE
     },
     windowSize: {
-      validate: (value) => value >= 3 && value <= 31 && value % 2 === 1,
+      validate: (value) => value >= 1 && value <= 31 && value % 2 === 1,
       errorMessage: DEHAZE_VALIDATION_ERROR_MESSAGES.WINDOW_SIZE_RANGE
     },
     topRatio: {
@@ -124,9 +124,9 @@ export const BasicParamsUIDefine = [
   {
     id: 'windowSize',
     label: '窗口大小',
-    min: 0,
+    min: 1,
     max: 31,
-    step: 1,
+    step: 2,
     gradient: 'linear-gradient(90deg, #5856d6 0%, #af52de 100%)',
     showRuler: true
   }

@@ -108,7 +108,7 @@ const reactionSliderItems = computed(() => [
         value: turingParams.feedRate,
         min: 0.010,
         max: 0.100,
-        step: 0.001,
+        step: 0.0001,
         valuePosition: 'after' as const,
         showRuler: false
     },
@@ -118,7 +118,7 @@ const reactionSliderItems = computed(() => [
         value: turingParams.killRate,
         min: 0.030,
         max: 0.070,
-        step: 0.001,
+        step: 0.0001,
         valuePosition: 'after' as const,
         showRuler: false
     },
